@@ -2,7 +2,7 @@
 
 import numpy as engine  # To be replaced with config and dynamic import.
 
-from ..core import Expr, Numeric, Numerical, Operator
+from ..expr import Expr, Numeric, Numerical, Operator
 
 
 def sin(x: Numeric | Numerical) -> Numeric | Numerical:

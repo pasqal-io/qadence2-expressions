@@ -2,7 +2,7 @@
 from IPython.lib.pretty import pretty
 
 from src import *
-from src.tools import collect_operators
+from src.transform import collect_operators
 
 
 def evaluate_single_expression(expr: str) -> None:

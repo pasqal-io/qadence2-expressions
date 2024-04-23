@@ -1,4 +1,4 @@
-from ..core import Expr, QSymbol, Operator
+from ..expr import Expr, QSymbol, Operator
 
 
 def collect_operators(expr) -> dict:

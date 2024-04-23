@@ -1,4 +1,4 @@
-from ..core import Expr, Operator
+from ..expr import Expr, Operator
 from .evaluate import evaluate
 
 
