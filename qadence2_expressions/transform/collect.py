@@ -8,7 +8,6 @@ def collect_operators(expr) -> dict:
 
 
 def collect_operators_core(expr, acc: dict):
-
     if isinstance(expr, QSymbol):
         acc[expr] = acc.get(expr, 0) + 1
 

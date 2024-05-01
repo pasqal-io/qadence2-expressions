@@ -1,8 +1,8 @@
 # %%
 from IPython.lib.pretty import pretty
 
-from src import *
-from src.transform import collect_operators
+from qadence2_expressions import *
+from qadence2_expressions.transform import collect_operators
 
 
 def evaluate_single_expression(expr: str) -> None:
@@ -70,10 +70,8 @@ evaluate_expressions(
     "X = QSymbol('X')",
     "Y = QSymbol('Y')",
     "Z = QSymbol('Z')",
-
     "Cnot = QSymbol('CNOT', ordered_support=True)",
     "Swap = QSymbol('SWAP')",
-
     "Rx = lambda angle : QSymbol('Rx', angle, is_hermitian=False)",
     "Ry = lambda angle : QSymbol('Ry', angle, is_hermitian=False)",
 )

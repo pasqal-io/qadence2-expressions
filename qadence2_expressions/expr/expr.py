@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Any, Protocol
 
 
 SPACE_SEPARATOR = "\u00a0"
@@ -9,23 +9,48 @@ SPACE_SEPARATOR = "\u00a0"
 Numerical = int | float | complex
 
 
+# TODO: please do type annotation for all the args
+
+
 class Numeric(Protocol):
-    def __mul__(self, other) -> Numeric | Numerical: ...
-    def __rmul__(self, other) -> Numeric | Numerical: ...
-    def __pow__(self, other) -> Numeric | Numerical: ...
-    def __rpow__(self, other) -> Numeric | Numerical: ...
-    def __truediv__(self, other) -> Numeric | Numerical: ...
-    def __rtruediv__(self, other) -> Numeric | Numerical: ...
-    def __add__(self, other) -> Numeric | Numerical: ...
-    def __radd__(self, other) -> Numeric | Numerical: ...
-    def __neg__(self) -> Numeric | Numerical: ...
-    def __sub__(self, other) -> Numeric | Numerical: ...
-    def __rsub__(self, other) -> Numeric | Numerical: ...
+    def __mul__(self, other) -> Numeric | Numerical:
+        ...
+
+    def __rmul__(self, other) -> Numeric | Numerical:
+        ...
+
+    def __pow__(self, other) -> Numeric | Numerical:
+        ...
+
+    def __rpow__(self, other) -> Numeric | Numerical:
+        ...
+
+    def __truediv__(self, other) -> Numeric | Numerical:
+        ...
+
+    def __rtruediv__(self, other) -> Numeric | Numerical:
+        ...
+
+    def __add__(self, other) -> Numeric | Numerical:
+        ...
+
+    def __radd__(self, other) -> Numeric | Numerical:
+        ...
+
+    def __neg__(self) -> Numeric | Numerical:
+        ...
+
+    def __sub__(self, other) -> Numeric | Numerical:
+        ...
+
+    def __rsub__(self, other) -> Numeric | Numerical:
+        ...
 
 
 class Adjoint(Protocol):  # pylint: disable=too-few-public-methods
     @property
-    def dag(self) -> Adjoint | Numerical: ...
+    def dag(self) -> Adjoint | Numerical:
+        ...
 
 
 class Operator:  # pylint: disable=too-few-public-methods
@@ -37,7 +62,7 @@ class Operator:  # pylint: disable=too-few-public-methods
 
 
 class Expr:
-    def __init__(self, head: str, *args) -> None:
+    def __init__(self, head: str, *args: Any) -> None:
         self.head: str = head
         self.args = args
 
@@ -45,7 +70,8 @@ class Expr:
         # for debug
         return f"{self.__class__.__name__}{self.head, self.args}"
 
-    def _repr_pretty_(self, p, _cycle):
+    # TODO: please do type annotation for all the args
+    def _repr_pretty_(self, p, _cycle) -> None:
         p.text(str(self))
 
     def __str__(self) -> str:
@@ -89,6 +115,7 @@ class Expr:
             f"Visualization with operator {self.head} not implemented"
         )
 
+    # TODO: please do type annotation for all the args
     def __eq__(self, other) -> bool:
         if not isinstance(other, Expr):
             return False

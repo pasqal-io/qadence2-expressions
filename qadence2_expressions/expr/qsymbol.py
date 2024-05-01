@@ -78,9 +78,8 @@ class QSymbol(NonCommutative):
         if not isinstance(other, QSymbol):
             return NotImplemented
 
-        return (
-            bool(set(self.support) & set(other.support))
-            or not (self.support and other.support)
+        return bool(set(self.support) & set(other.support)) or not (
+            self.support and other.support
         )
 
     def is_dagger_of(self, other) -> bool:
@@ -119,10 +118,7 @@ class QSymbol(NonCommutative):
                     )
                 ]
 
-            if (
-                self.same_subspace(other)
-                or self.collide_with(other)
-            ):
+            if self.same_subspace(other) or self.collide_with(other):
                 return [self, other]
 
             return [other, self] if other.support < self.support else [self, other]
