@@ -62,7 +62,7 @@ class Operator:  # pylint: disable=too-few-public-methods
 
 
 class Expr:
-    def __init__(self, head: str, *args: Any) -> None:
+    def __init__(self, head: str, *args) -> None:
         self.head: str = head
         self.args = args
 

@@ -38,7 +38,7 @@ evaluate_expressions(
 
 
 # %%
-# Product of sums are automatically expanded.
+# Product of sums is automatically expanded.
 evaluate_expressions("(a + b) * (a + b)")
 
 
