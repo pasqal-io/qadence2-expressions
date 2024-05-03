@@ -1,15 +1,19 @@
-from ..expr import Expr, Operator
+from __future__ import annotations
+
+from typing import Iterable
+
+from ..expr import Expr, Numeric, Numerical, Operator
 from . import functions as fun
 
 
-def prod(iterable):
+def prod(iterable: Iterable) -> Numeric | Numerical:
     acc = 1
     for el in iterable:
         acc = acc * el
     return acc
 
 
-def evaluate(value):
+def evaluate(value: Numeric | Numerical) -> Numeric | Numerical:
     if isinstance(value, Expr):
         args = [evaluate(elem) for elem in value.args]
         match value.head:
@@ -20,7 +24,7 @@ def evaluate(value):
             case Operator.POWER:
                 return args[0] ** args[1]
             case Operator.CALL:
-                return getattr(fun, args[0])(*args[1:])
+                return getattr(fun, args[0])(*args[1:])  # type: ignore
             case _:
                 raise NotImplementedError(f"Operator {value.head} not implemented.")
 

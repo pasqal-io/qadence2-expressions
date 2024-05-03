@@ -1,13 +1,15 @@
-from ..expr import Expr, QSymbol, Operator
+from __future__ import annotations
+
+from ..expr import Expr, Operator, QSymbol
 
 
-def collect_operators(expr) -> dict:
-    acc = {}
+def collect_operators(expr: object) -> dict:
+    acc: dict = {}
     collect_operators_core(expr, acc)
     return acc
 
 
-def collect_operators_core(expr, acc: dict):
+def collect_operators_core(expr: object, acc: dict) -> None:
     if isinstance(expr, QSymbol):
         acc[expr] = acc.get(expr, 0) + 1
 

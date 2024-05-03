@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Protocol
-
+from typing import Any, Protocol, get_args
 
 SPACE_SEPARATOR = "\u00a0"
 
@@ -13,37 +12,37 @@ Numerical = int | float | complex
 
 
 class Numeric(Protocol):
-    def __mul__(self, other) -> Numeric | Numerical:
+    def __mul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         ...
 
-    def __rmul__(self, other) -> Numeric | Numerical:
+    def __rmul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         ...
 
-    def __pow__(self, other) -> Numeric | Numerical:
+    def __pow__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         ...
 
-    def __rpow__(self, other) -> Numeric | Numerical:
+    def __rpow__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         ...
 
-    def __truediv__(self, other) -> Numeric | Numerical:
+    def __truediv__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         ...
 
-    def __rtruediv__(self, other) -> Numeric | Numerical:
+    def __rtruediv__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         ...
 
-    def __add__(self, other) -> Numeric | Numerical:
+    def __add__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         ...
 
-    def __radd__(self, other) -> Numeric | Numerical:
+    def __radd__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         ...
 
     def __neg__(self) -> Numeric | Numerical:
         ...
 
-    def __sub__(self, other) -> Numeric | Numerical:
+    def __sub__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         ...
 
-    def __rsub__(self, other) -> Numeric | Numerical:
+    def __rsub__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         ...
 
 
@@ -62,16 +61,15 @@ class Operator:  # pylint: disable=too-few-public-methods
 
 
 class Expr:
-    def __init__(self, head: str, *args) -> None:
+    def __init__(self, head: str, *args: Any) -> None:
         self.head: str = head
         self.args = args
 
     def __repr__(self) -> str:
-        # for debug
         return f"{self.__class__.__name__}{self.head, self.args}"
 
-    # TODO: please do type annotation for all the args
-    def _repr_pretty_(self, p, _cycle) -> None:
+    def _repr_pretty_(self, p, _cycle) -> None:  # type: ignore
+        # to avoid using `print` in IPython / Jupyter Notebook
         p.text(str(self))
 
     def __str__(self) -> str:
@@ -98,7 +96,7 @@ class Expr:
 
         if self.head == Operator.POWER:
             factor, power = list(map(str, self.args))
-            if isinstance(self.args[0], Expr) and not self.args[0].head in (
+            if isinstance(self.args[0], Expr) and self.args[0].head not in (
                 Operator.CALL,
                 Operator.NONCOMMUTE,
             ):
@@ -116,9 +114,9 @@ class Expr:
         )
 
     # TODO: please do type annotation for all the args
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Expr):
-            return False
+            return NotImplemented
         if self.head != other.head:
             return False
 
@@ -135,7 +133,7 @@ class Expr:
         # non-commutative operations
         return hash((self.head, self.args))
 
-    def __matmul__(self, other) -> Numeric | Numerical:
+    def __matmul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         if (
             self.head == Operator.NONCOMMUTE
             and isinstance(other, Expr)
@@ -146,11 +144,11 @@ class Expr:
 
         return NotImplemented
 
-    def __rmamtmul__(self, _other) -> Numeric | Numerical:
+    def __rmamtmul__(self, _other: Numeric | Numerical) -> Numeric | Numerical:
         return NotImplemented
 
     def __mul__(  # pylint: disable=too-many-return-statements
-        self, other
+        self, other: Numeric | Numerical
     ) -> Numeric | Numerical:
         # CASES:
 
@@ -177,14 +175,14 @@ class Expr:
         #   7. General case: e1 * e2 = E(*, [e1,e2,…])
 
         # <<< e * 0 = 0
-        if isinstance(other, Numerical) and other == 0:
+        if isinstance(other, get_args(Numerical)) and other == 0:
             return 0
 
         # <<< e * 1 = e
-        if isinstance(other, Numerical) and other == 1:
+        if isinstance(other, get_args(Numerical)) and other == 1:
             return self
 
-        if isinstance(other, Numerical | Symbol | Expr):
+        if isinstance(other, (*get_args(Numerical), Symbol, Expr)):
             # <<< E(^, [a,m]) * E(^, [a,n]) = a ^ (m+n)
             if (
                 self.head == Operator.POWER
@@ -192,11 +190,11 @@ class Expr:
                 and other.head == Operator.POWER
                 and self.args[0] == other.args[0]
             ):
-                return self.args[0] ** (self.args[1] + other.args[1])
+                return self.args[0] ** (self.args[1] + other.args[1])  # type: ignore
 
             # <<< E(^, [a,m]) * a = E(^, [a,m+1])
             if self.head == Operator.POWER and other == self.args[0]:
-                return self.args[0] ** (self.args[1] + 1)
+                return self.args[0] ** (self.args[1] + 1)  # type: ignore
 
             # <<< a * E(^, [a,m]) = E(^, [a,m+1])
             if (
@@ -217,11 +215,11 @@ class Expr:
 
             # <<< E(+, [a,b,…]) * ? = E(+, [a*?,b*?,…])
             if self.head == Operator.ADD:
-                return sum(el * other for el in self.args)
+                return sum(el * other for el in self.args)  # type: ignore
 
             # <<< ? * E(+, [a,b,…]) = E(+, [?*a,?*a,…])
             if isinstance(other, Expr) and other.head == Operator.ADD:
-                return sum(self * el for el in other.args)
+                return sum(self * el for el in other.args)  # type: ignore
 
             # <<< E(*, [a,…]) * E(*, [b,…]) = E(*, [a,b,…])
             if (
@@ -248,13 +246,13 @@ class Expr:
 
         return NotImplemented
 
-    def __rmul__(self, other) -> Numeric | Numerical:
-        if isinstance(other, Numerical | Symbol):
+    def __rmul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
+        if isinstance(other, (*get_args(Numerical), Symbol)):
             return self * other
 
         return NotImplemented
 
-    def __pow__(self, other) -> Numeric | Numerical:
+    def __pow__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         # CASES:
 
         #   - e^0 = 1
@@ -271,13 +269,13 @@ class Expr:
 
         #   - e ^ ? = E(^, [e, ?])
 
-        if isinstance(other, Numerical) and other == 0:
+        if isinstance(other, get_args(Numerical)) and other == 0:
             return 1
 
-        if isinstance(other, Numerical) and other == 1:
+        if isinstance(other, get_args(Numerical)) and other == 1:
             return self
 
-        if isinstance(other, Numerical | Symbol | Expr):
+        if isinstance(other, (*get_args(Numerical), Symbol, Expr)):
             # <<< E(^, [a,b]) ^ ? = E(^, [a,b*?])
             if self.head == Operator.POWER:
                 power = self.args[1] * other
@@ -297,19 +295,19 @@ class Expr:
 
         return NotImplemented
 
-    def __rpow__(self, other) -> Numeric | Numerical:
-        if isinstance(other, Numerical):
+    def __rpow__(self, other: Numeric | Numerical) -> Numeric | Numerical:
+        if isinstance(other, get_args(Numerical)):
             return Expr(Operator.POWER, other, self)
 
         return NotImplemented
 
-    def __truediv__(self, other) -> Numeric | Numerical:
+    def __truediv__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return self * other**-1
 
-    def __rtruediv__(self, other) -> Numeric | Numerical:
+    def __rtruediv__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return other * self**-1
 
-    def __add__(self, other) -> Numeric | Numerical:
+    def __add__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         # CASES:
 
         #   - e + 0 = e
@@ -320,10 +318,10 @@ class Expr:
 
         #   - e + ? = E(+, r[e,?])
 
-        if isinstance(other, Numerical) and other == 0:
+        if isinstance(other, get_args(Numerical)) and other == 0:
             return self
 
-        if isinstance(other, Numerical | Symbol | Expr):
+        if isinstance(other, (*get_args(Numerical), Symbol, Expr)):
             if (
                 self.head == Operator.ADD
                 and isinstance(other, Expr)
@@ -345,17 +343,17 @@ class Expr:
 
         return NotImplemented
 
-    def __radd__(self, other) -> Numeric | Numerical:
+    def __radd__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         # addition is commutative
         return self.__add__(other)
 
     def __neg__(self) -> Numeric | Numerical:
         return -1 * self
 
-    def __sub__(self, other) -> Numeric | Numerical:
+    def __sub__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return self + (-other)
 
-    def __rsub__(self, other) -> Numeric | Numerical:
+    def __rsub__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return (-self) + other
 
     @property
@@ -364,30 +362,30 @@ class Expr:
 
 
 class Symbol:
-    def __init__(self, name) -> None:
+    def __init__(self, name: str) -> None:
         self.name = name
 
     def __repr__(self) -> str:
-        # for debug
         return f"{self.__class__.__name__}({self.name})"
 
-    def _repr_pretty_(self, p, _cycle):
+    def _repr_pretty_(self, p, _cycle):  # type: ignore
+        # to avoid using `print` in IPython / Jupyter Notebook
         p.text(str(self))
 
     def __str__(self) -> str:
         return self.name
 
-    def __eq__(self, other: Symbol) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Symbol):
-            return False
+            return NotImplemented
         return self.name == other.name
 
-    def __lt__(self, other) -> bool:
+    def __lt__(self, other: Numeric | Numerical) -> bool:
         if isinstance(other, Symbol):
             return self.name < other.name
         return NotImplemented
 
-    def __gt__(self, other) -> bool:
+    def __gt__(self, other: Numeric | Numerical) -> bool:
         if isinstance(other, Symbol):
             return self.name > other.name
         return NotImplemented
@@ -395,130 +393,130 @@ class Symbol:
     def __hash__(self) -> int:
         return hash(self.name)
 
-    def __mul__(self, other) -> Numeric | Numerical:
+    def __mul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         # cases:
 
         #   - s * 0 = 0
         #   - s * 1 = s
         #   - s * ? = E(*, [1,s]) * ?  ; type casting: Symbol -> Expr
 
-        if isinstance(other, Numerical) and other == 0:
+        if isinstance(other, get_args(Numerical)) and other == 0:
             return 0
 
-        if isinstance(other, Numerical) and other == 1:
+        if isinstance(other, get_args(Numerical)) and other == 1:
             return self
 
-        if isinstance(other, Numerical | Symbol | Expr):
+        if isinstance(other, (*get_args(Numerical), Symbol, Expr)):
             return Expr(Operator.TIMES, 1, self) * other
 
         return NotImplemented
 
-    def __rmul__(self, other) -> Numeric | Numerical:
+    def __rmul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         # assuming commutative multiplication
         return self.__mul__(other)
 
-    def __pow__(self, other) -> Numeric | Numerical:
+    def __pow__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         # cases:
         #   - s ^ 0 = 1
         #   - s ^ 1 = s
         #   - s ^ ? = E(^, [s, ?])
 
-        if isinstance(other, Numerical) and other == 0:
+        if isinstance(other, get_args(Numerical)) and other == 0:
             return 1
 
-        if isinstance(other, Numerical) and other == 1:
+        if isinstance(other, get_args(Numerical)) and other == 1:
             return self
 
-        if isinstance(other, Numerical | Symbol | Expr):
+        if isinstance(other, (*get_args(Numerical), Symbol, Expr)):
             return Expr(Operator.POWER, self, other)
 
         return NotImplemented
 
-    def __rpow__(self, other) -> Numeric | Numerical:
-        if isinstance(other, Numerical):
+    def __rpow__(self, other: Numeric | Numerical) -> Numeric | Numerical:
+        if isinstance(other, get_args(Numerical)):
             return Expr(Operator.POWER, other, self)
 
         return NotImplemented
 
-    def __truediv__(self, other) -> Numeric | Numerical:
+    def __truediv__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return self * other**-1
 
-    def __rtruediv__(self, other) -> Numeric | Numerical:
+    def __rtruediv__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return other * self**-1
 
-    def __add__(self, other) -> Numeric | Numerical:
+    def __add__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         # CASES:
 
         #   - s + 0 = s
         #   - s + ? = E(+, [s]) + ?  ; type casting Symbol -> Expr
 
-        if isinstance(other, Numerical) and other == 0:
+        if isinstance(other, get_args(Numerical)) and other == 0:
             return self
 
-        if isinstance(other, Numerical | Symbol | Expr):
+        if isinstance(other, (*get_args(Numerical), Symbol, Expr)):
             return Expr(Operator.ADD, self) + other
 
         return NotImplemented
 
-    def __radd__(self, other) -> Numeric | Numerical:
+    def __radd__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         # addition is commutative
         return self.__add__(other)
 
     def __neg__(self) -> Numeric | Numerical:
         return Expr(Operator.TIMES, -1, self)
 
-    def __sub__(self, other) -> Numeric | Numerical:
+    def __sub__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         if isinstance(other, Symbol) and other == self:
             return 0
         return self + (-other)
 
-    def __rsub__(self, other) -> Numeric | Numerical:
+    def __rsub__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         if isinstance(other, Symbol) and other == self:
             return 0
         return (-self) + other
 
 
 class NonCommutative:
-    def __mul__(self, other) -> Numeric | Numerical:
+    def __mul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return Expr(Operator.NONCOMMUTE, self) * other
 
-    def __rmul__(self, other) -> Numeric | Numerical:
+    def __rmul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return other * Expr(Operator.NONCOMMUTE, self)
 
-    def __pow__(self, other) -> Numeric | Numerical:
+    def __pow__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return Expr(Operator.NONCOMMUTE, self) ** other
 
-    def __rpow__(self, other) -> Numeric | Numerical:
+    def __rpow__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return other ** Expr(Operator.NONCOMMUTE, self)
 
-    def __truediv__(self, other) -> Numeric | Numerical:
+    def __truediv__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return Expr(Operator.NONCOMMUTE, self) / other
 
-    def __rtruediv__(self, other) -> Numeric | Numerical:
+    def __rtruediv__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return other / Expr(Operator.NONCOMMUTE, self)
 
-    def __add__(self, other) -> Numeric | Numerical:
+    def __add__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return Expr(Operator.NONCOMMUTE, self) + other
 
-    def __radd__(self, other) -> Numeric | Numerical:
+    def __radd__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return other + Expr(Operator.NONCOMMUTE, self)
 
     def __neg__(self) -> Numeric | Numerical:
         return -1 * Expr(Operator.NONCOMMUTE, self)
 
-    def __sub__(self, other) -> Numeric | Numerical:
+    def __sub__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return Expr(Operator.NONCOMMUTE, self) - other
 
-    def __rsub__(self, other) -> Numeric | Numerical:
+    def __rsub__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return other - Expr(Operator.NONCOMMUTE, self)
 
 
-def args_reduce_mul(*args) -> tuple:
-    factors = {}
-    noncommuters = ()
+def args_reduce_mul(*args: Any) -> tuple:
+    factors: dict[Expr, Numerical] = {}
+    noncommuters: tuple[Any, ...] = ()
     acc = 1
     for arg in args:
-        if isinstance(arg, Numerical):
+        if isinstance(arg, get_args(Numerical)):
             acc *= arg
 
         elif isinstance(arg, Expr) and arg.head == Operator.NONCOMMUTE:
@@ -544,11 +542,11 @@ def args_reduce_mul(*args) -> tuple:
     return (acc, *new_factors)
 
 
-def args_reduce_sum(*args) -> tuple:
-    terms = {}
+def args_reduce_sum(*args: Any) -> tuple:
+    terms: dict = {}
     acc = 0
     for arg in args:
-        if isinstance(arg, Numerical):
+        if isinstance(arg, get_args(Numerical)):
             acc += arg
 
         elif isinstance(arg, Expr) and arg.head == Operator.TIMES:
@@ -590,10 +588,10 @@ def conjugate(value: Numerical | Numeric | Adjoint) -> Numerical | Numeric | Adj
         args = [conjugate(el) for el in value.args]
         return Expr(value.head, *args)
 
-    if isinstance(value, Numerical):
+    if hasattr(value, "conjugate"):
         return value.conjugate()
 
     if hasattr(value, "dag"):
-        return value.dag  # type: ignore
+        return value.dag
 
     return value

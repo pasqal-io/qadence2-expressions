@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 from .expr import NonCommutative
 
 
@@ -9,18 +11,18 @@ class QSymbol(NonCommutative):
     def __init__(
         self,
         name: str,
-        *params,
+        *params: Any,
         ordered_support: bool = False,
         is_hermitian: bool = True,
     ) -> None:
         self.name = name
-        self.support: tuple[int] = tuple()
+        self.support: tuple[int, ...] = tuple()
         self.has_ordered_support = ordered_support
         self.is_hermitian = is_hermitian
         self.is_dagger = False
         self.params = params
 
-    def __call__(self, *support) -> QSymbol:
+    def __call__(self, *support: Any) -> QSymbol:
         new_qsymbol = QSymbol(
             self.name,
             *self.params,
@@ -36,7 +38,7 @@ class QSymbol(NonCommutative):
         support = f"{ordered}{self.support}" if self.support else ""
         return f"{self.__class__.__name__}({self.name}{support})"
 
-    def _repr_pretty_(self, p, cycle):
+    def _repr_pretty_(self, p, _cycle):  # type: ignore
         # to avoid using `print` in IPython / Jupyter Notebook
         p.text(str(self))
 
@@ -46,7 +48,7 @@ class QSymbol(NonCommutative):
         params = "" if not self.params else "(" + ",".join(map(str, self.params)) + ")"
         return f"{self.name}{dagger}{params}[{support}]"
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, QSymbol):
             return False
 
@@ -62,7 +64,7 @@ class QSymbol(NonCommutative):
     def __hash__(self) -> int:
         return hash((self.name, self.support))
 
-    def same_subspace(self, other) -> bool:
+    def same_subspace(self, other: QSymbol) -> bool:
         if not isinstance(other, QSymbol):
             return NotImplemented
 
@@ -82,7 +84,7 @@ class QSymbol(NonCommutative):
             self.support and other.support
         )
 
-    def is_dagger_of(self, other) -> bool:
+    def is_dagger_of(self, other: QSymbol) -> bool:
         if isinstance(other, QSymbol):
             if self.is_hermitian and other.is_hermitian:
                 return self.name == other.name and self.same_subspace(other)
@@ -98,7 +100,7 @@ class QSymbol(NonCommutative):
 
         return NotImplemented
 
-    def __matmul__(self, other) -> list:
+    def __matmul__(self, other: QSymbol) -> list:
         if isinstance(other, QSymbol):
             if self.is_dagger_of(other):
                 return []
@@ -125,7 +127,7 @@ class QSymbol(NonCommutative):
 
         return NotImplemented
 
-    def __rmatmul__(self, other) -> list:
+    def __rmatmul__(self, other: QSymbol) -> list:
         if isinstance(other, list):
             if not other:
                 return [self]

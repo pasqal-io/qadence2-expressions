@@ -1,7 +1,9 @@
 # %%
+from __future__ import annotations
+
 from IPython.lib.pretty import pretty
 
-from qadence2_expressions import *
+from qadence2_expressions import *  # ruff: noqa: F403
 from qadence2_expressions.transform import collect_operators
 
 
