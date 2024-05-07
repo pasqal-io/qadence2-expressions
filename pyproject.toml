@@ -36,7 +36,9 @@ classifiers = [
 # always specify a version for each package
 # to maintain consistency
 dependencies = [
-  "numpy"
+  "numpy",
+  "torch",
+  "pyqtorch"
 ]
 
 [tool.hatch.metadata]
