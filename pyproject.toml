@@ -13,6 +13,16 @@ keywords = ["quantum"]
 authors = [
   { name = "Kaonan Micadei", email = "kaonan.micadei@pasqal.com" },
   { name = "Eduardo Maschio", email = "eduardo.maschio@pasqal.com" },
+  { name = "Aleksander Wennersteen", email = "aleksander.wennersteen@pasqal.com" },
+  { name = "Gert-Jan Both", email = "gert-jan.both@pasqal.com" },
+  { name = "Niklas Heim", email = "niklas.heim@pasqal.com" },
+  { name = "Mario Dagrada", email = "mario.dagrada@pasqal.com" },
+  { name = "Vincent Elfving", email = "vincent.elfving@pasqal.com" },
+  { name = "Dominik Seitz", email = "dominik.seitz@pasqal.com" },
+  { name = "Roland Guichard", email = "roland.guichard@pasqal.com" },
+  { name = "Joao P. Moutinho", email = "joao.moutinho@pasqal.com"},
+  { name = "Vytautas Abramavicius", email = "vytautas.abramavicius@pasqal.com" },
+  { name = "Gergana Velikova", email = "gergana.velikova@pasqal.com" },
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
