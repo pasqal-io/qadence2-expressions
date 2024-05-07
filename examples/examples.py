@@ -60,6 +60,7 @@ evaluate_expressions(
     "x = a + b",
     "y = a + 2 * cos(x) ** 2",
     "z = replace(y, {a: 2})",
+    "replace(z, {b: 1.1415926535897931})",
     "replace(y, {a: 2*b, b: a})",
     "replace(y, {b+a: 2*b})",
     "replace(2 ** (a+b), {a: 2*b})",
