@@ -22,7 +22,7 @@ Documentation guidelines
 Before making a contribution, please review our [code of conduct](docs/getting_started/CODE_OF_CONDUCT.md).
 
 - **Submitting Issues:** To submit bug reports or feature requests, please use our [issue tracker](https://github.com/pasqal-io/wip-qadence2-expressions/issues).
-- **Developing in qadence:** To learn more about how to develop within `qadence`, please refer to [contributing guidelines](docs/getting_started/CONTRIBUTING.md).
+- **Developing in qadence expressions:** To learn more about how to develop within `qadence-expressions`, please refer to [contributing guidelines](docs/getting_started/CONTRIBUTING.md).
 
 
 ## License
