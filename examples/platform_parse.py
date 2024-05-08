@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from functools import reduce
+from operator import mul
+
 import pyqtorch as pyq
 import torch
 
@@ -41,9 +44,47 @@ def parse_expression(expr_or_symbol: Expr | QSymbol | Symbol) -> pyq.QuantumCirc
         raise NotImplementedError(f"Not supported operation: {expr_or_symbol}")
 
 
+def hea(n_qubits: int) -> Expr:
+    def idx():
+        _idx = 0
+        while True:
+            yield _idx
+            _idx += 1
+
+    def get_idx():
+        yield from idx()
+
+    idx_generator = get_idx()
+    return reduce(
+        mul,
+        [
+            QSymbol(op, Symbol(p + str(next(idx_generator))))(qubit)
+            for op, p in zip(["RX", "RY", "RX"], ["theta_" for _ in range(3)])
+            for qubit in range(n_qubits)
+        ]
+        + [QSymbol("CNOT")(i % n_qubits, (i + 1) % n_qubits) for i in range(n_qubits)],
+    )
+
+
+def hea_example() -> None:
+    ansatz = hea(2)
+    pyqcirc = pyq.QuantumCircuit(2, parse_expression(ansatz))
+    param_dict = {
+        op.param_name: torch.rand(1, requires_grad=True)
+        for op in pyqcirc.operations
+        if isinstance(op, pyq.parametric.Parametric)
+    }
+    return pyqcirc(pyq.zero_state(2), param_dict)
+
+
+def scale_example() -> None:
+    x = QSymbol("X")(0)
+    symbol_name = "scale"
+    scale = Symbol(symbol_name)
+    pyqscale = parse_expression(scale * x)
+    return pyqscale(pyq.zero_state(1), {symbol_name: torch.rand(1)})
+
+
 if __name__ == "__main__":
-    x = QSymbol("X")(1)
-    rx = QSymbol("RX", Symbol("theta"))(0)
-    cnot = QSymbol("CNOT")(0, 1)
-    pyqcirc = parse_expression(Symbol("a") * (rx * x * cnot))
-    print(pyqcirc(pyq.zero_state(2), {"theta": torch.rand(1), "a": torch.rand(1)}))
+    print(scale_example())
+    print(hea_example())
