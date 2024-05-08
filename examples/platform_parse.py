@@ -18,22 +18,27 @@ def parse_expression(expr_or_symbol: Expr | QSymbol | Symbol) -> pyq.QuantumCirc
         native_operator = OpMap[expr_or_symbol.head]
         instructions = list(map(parse_expression, expr_or_symbol.args))
         if expr_or_symbol.head == Operator.TIMES:
-            _, param_name, sequence = instructions
-            return native_operator(sequence, param_name.name)
+            _, symbol, sequence = instructions
+            return native_operator(sequence, symbol.name)
         else:
             return native_operator(instructions)
 
     elif isinstance(expr_or_symbol, QSymbol):
         native = getattr(pyq, expr_or_symbol.name)
         if expr_or_symbol.params != ():
-            return native(expr_or_symbol.support, expr_or_symbol.params[0].name)
+            if len(expr_or_symbol.params) > 1:
+                raise NotImplementedError(
+                    "Gates with more than one parameter not supported."
+                )
+            symbol = expr_or_symbol.params[0]
+            return native(expr_or_symbol.support, symbol.name)
         else:
             return native(*expr_or_symbol.support)
     elif isinstance(expr_or_symbol, (Symbol, int)):
         return expr_or_symbol
 
     else:
-        raise TypeError(f"Not supported operation {expr_or_symbol}")
+        raise NotImplementedError(f"Not supported operation: {expr_or_symbol}")
 
 
 if __name__ == "__main__":
