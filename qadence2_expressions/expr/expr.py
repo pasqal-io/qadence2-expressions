@@ -46,13 +46,13 @@ class Numeric(Protocol):
         ...
 
 
-class Adjoint(Protocol):  # pylint: disable=too-few-public-methods
+class Adjoint(Protocol):
     @property
     def dag(self) -> Adjoint | Numerical:
         ...
 
 
-class Operator:  # pylint: disable=too-few-public-methods
+class Operator:
     ADD = "+"
     TIMES = "*"
     NONCOMMUTE = "@"
