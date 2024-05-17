@@ -4,7 +4,12 @@ from ..expr import Expr, Operator, QSymbol
 
 
 def collect_operators(expr: object) -> dict:
-    acc: dict = {}
+    """Collect the coefficients of noncommutative expression, e.g.
+
+    Z(1) + 2 * Z(1) * Z (2) - X(3)  --> {Z(1): 1, Z(1) * Z (2): 2, Z(3): -1}
+    """
+
+    acc: dict = dict()
     collect_operators_core(expr, acc)
     return acc
 

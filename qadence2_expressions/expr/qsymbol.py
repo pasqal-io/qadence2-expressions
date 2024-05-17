@@ -6,7 +6,15 @@ from .expr import NonCommutative
 
 
 class QSymbol(NonCommutative):
-    """QSymbol are part of U and SU groups, A^dag == A^-1."""
+    """QSymbol class define quantum operators and quantum gates.
+
+    QSymbols are part of U and SU groups, meaning A^dag == A^-1, and they can be
+    parametrised with acceptable parameters being numbers, symbols, and expresions.
+
+    An instance of a QSymbol is a callable object which the arguments list is the indices of
+    subspace the symbol acts on. If no index is provided, the QSymbol is assumed to act on all
+    subspaces.
+    """
 
     def __init__(
         self,
@@ -38,8 +46,8 @@ class QSymbol(NonCommutative):
         support = f"{ordered}{self.support}" if self.support else ""
         return f"{self.__class__.__name__}({self.name}{support})"
 
-    def _repr_pretty_(self, p, _cycle):  # type: ignore
-        # to avoid using `print` in IPython / Jupyter Notebook
+    def _repr_pretty_(self, p, _cycle) -> None:  # type: ignore
+        """Provide a friendly representation when using IPython/Jupyter notebook."""
         p.text(str(self))
 
     def __str__(self) -> str:
@@ -50,7 +58,7 @@ class QSymbol(NonCommutative):
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, QSymbol):
-            return False
+            return NotImplemented
 
         return (
             self.name == other.name
@@ -65,6 +73,8 @@ class QSymbol(NonCommutative):
         return hash((self.name, self.support))
 
     def same_subspace(self, other: QSymbol) -> bool:
+        """Return true is two QSymbols act over the same Hilbert space."""
+
         if not isinstance(other, QSymbol):
             return NotImplemented
 
@@ -77,6 +87,10 @@ class QSymbol(NonCommutative):
         return False
 
     def collide_with(self, other: QSymbol) -> bool:
+        """Return true if two QSymbols have overlap indices, e.g. `X_ij` and `Y_jk` collide since
+        both act on subspace `j`.
+        """
+
         if not isinstance(other, QSymbol):
             return NotImplemented
 
@@ -85,71 +99,85 @@ class QSymbol(NonCommutative):
         )
 
     def is_dagger_of(self, other: QSymbol) -> bool:
-        if isinstance(other, QSymbol):
-            if self.is_hermitian and other.is_hermitian:
-                return self.name == other.name and self.same_subspace(other)
+        """Returns true if two QSymbols are the inverse of each other."""
 
-            if not (self.is_hermitian or other.is_hermitian):
-                return (
-                    self.name == other.name
-                    and self.same_subspace(other)
-                    and self.is_dagger ^ other.is_dagger
-                )
+        if not isinstance(other, QSymbol):
+            return NotImplemented
 
-            return False
+        if self.is_hermitian and other.is_hermitian:
+            return self.name == other.name and self.same_subspace(other)
 
-        return NotImplemented
+        if not (self.is_hermitian or other.is_hermitian):
+            return (
+                self.name == other.name
+                and self.same_subspace(other)
+                and self.is_dagger ^ other.is_dagger
+            )
+
+        return False
 
     def __matmul__(self, other: QSymbol) -> list:
-        if isinstance(other, QSymbol):
-            if self.is_dagger_of(other):
-                return []
+        """Multiplication of two QSymbols returns either a empty list if both elements
+        cancel each other, or a list with the two original element such that, if the elements
+        subspace overlaps, the order of element is preserved, otherwise they are ordered by
+        indices.
+        """
 
-            if self.name == other.name and self.same_subspace(other):
-                sign1 = 1 - 2 * self.is_dagger
-                sign2 = 1 - 2 * other.is_dagger
-                params = [
-                    sign1 * p1 + sign2 * p2 for p1, p2 in zip(self.params, other.params)
-                ]
-                return [
-                    QSymbol(
-                        self.name,
-                        *params,
-                        ordered_support=self.has_ordered_support,
-                        is_hermitian=self.is_hermitian,
-                    )
-                ]
+        if not isinstance(other, QSymbol):
+            return NotImplemented
 
-            if self.same_subspace(other) or self.collide_with(other):
-                return [self, other]
+        if self.is_dagger_of(other):
+            return []
 
-            return [other, self] if other.support < self.support else [self, other]
+        if self.name == other.name and self.same_subspace(other):
+            sign1 = 1 - 2 * self.is_dagger
+            sign2 = 1 - 2 * other.is_dagger
+            params = [
+                sign1 * p1 + sign2 * p2 for p1, p2 in zip(self.params, other.params)
+            ]
+            return [
+                QSymbol(
+                    self.name,
+                    *params,
+                    ordered_support=self.has_ordered_support,
+                    is_hermitian=self.is_hermitian,
+                )
+            ]
 
-        return NotImplemented
+        if self.same_subspace(other) or self.collide_with(other):
+            return [self, other]
 
-    def __rmatmul__(self, other: QSymbol) -> list:
-        if isinstance(other, list):
-            if not other:
-                return [self]
+        return [other, self] if other.support < self.support else [self, other]
 
-            acc = []
-            for i in range(len(other) - 1, -1, -1):
-                ii = i + 1
+    def __rmatmul__(self, other: list) -> list:
+        """Handles the cancelation properties for multiplication of noncommutative
+        expression when a QSymbol is used in a expression.
+        """
 
-                if other[i].collide_with(self):
-                    acc = [*other[:i], *(other[i] @ self), *other[ii:]]
-                    break
+        if not isinstance(other, list):
+            return NotImplemented
 
-                if self.support > other[i].support:
-                    acc = [*other[:ii], self, *other[ii:]]
-                    break
+        if not other:
+            return [self]
 
-                if i == 0:
-                    acc = [self, *other]
+        # Uses a insertion sort-like to arrange the list of QSymbols accordingly to the
+        # multiplication property.
+        acc = []
+        for i in range(len(other) - 1, -1, -1):
+            ii = i + 1
 
-            return acc
+            if other[i].collide_with(self):
+                acc = [*other[:i], *(other[i] @ self), *other[ii:]]
+                break
 
-        return NotImplemented
+            if self.support > other[i].support:
+                acc = [*other[:ii], self, *other[ii:]]
+                break
+
+            if i == 0:
+                acc = [self, *other]
+
+        return acc
 
     @property
     def dag(self) -> QSymbol:

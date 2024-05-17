@@ -7,6 +7,8 @@ from . import functions as fun
 
 
 def prod(iterable: Iterable) -> Numeric | Numerical:
+    """ "Equivalement of `sum` for multiplication."""
+
     acc = 1
     for el in iterable:
         acc = acc * el
