@@ -9,7 +9,7 @@ Numerical = int | float | complex
 
 
 class Numeric(Protocol):
-    """Static duck typing convering algebraic properties."""
+    """Covering objects with basic algebraic operations implements."""
 
     def __mul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         ...
@@ -46,6 +46,9 @@ class Numeric(Protocol):
 
 
 class Adjoint(Protocol):
+    """Apply to objects with Hermitian conjugate property. That covers complex numebers
+    and quantum operators.
+    """
     @property
     def dag(self) -> Adjoint | Numerical:
         ...
@@ -65,7 +68,7 @@ class Operator:
     the remaining elements are passed as its arguments.
     """
 
-    ADD = "+"
+    PLUS = "+"
     TIMES = "*"
     NONCOMMUTE = "@"
     POWER = "^"
@@ -97,7 +100,7 @@ class Expr:
         p.text(str(self))
 
     def __str__(self) -> str:
-        if self.head == Operator.ADD:
+        if self.head == Operator.PLUS:
             return f" {self.head} ".join(map(str, self.args))
 
         if self.head == Operator.NONCOMMUTE:
@@ -110,7 +113,7 @@ class Expr:
                     map(
                         lambda x: (
                             f"({x})"
-                            if isinstance(x, Expr) and x.head == Operator.ADD
+                            if isinstance(x, Expr) and x.head == Operator.PLUS
                             else str(x)
                         ),
                         self.args[1:],
@@ -147,7 +150,7 @@ class Expr:
         if self.head != other.head:
             return False
 
-        if self.head == Operator.ADD or self.head == Operator.TIMES:
+        if self.head == Operator.PLUS or self.head == Operator.TIMES:
             return set(self.args) == set(other.args)
 
         return self.args == other.args
@@ -155,7 +158,7 @@ class Expr:
     def __hash__(self) -> int:
         # For commutative operations, the arguments are hashed using `frozenset`
         # to discard their order.
-        if self.head == Operator.ADD or self.head == Operator.TIMES:
+        if self.head == Operator.PLUS or self.head == Operator.TIMES:
             return hash((self.head, frozenset(self.args)))
 
         # With noncommutative operations, the order of the argument are relevant
@@ -252,11 +255,11 @@ class Expr:
                 return self @ other
 
             # Left distributive, (a + b) * c = a*c + b*c.
-            if self.head == Operator.ADD:
+            if self.head == Operator.PLUS:
                 return sum(el * other for el in self.args)  # type: ignore
 
             # <<< Right distributive, a * (b + c) = a*b + a*c.
-            if isinstance(other, Expr) and other.head == Operator.ADD:
+            if isinstance(other, Expr) and other.head == Operator.PLUS:
                 return sum(self * el for el in other.args)  # type: ignore
 
             # <<< E(*, [a,…]) * E(*, [b,…]) = E(*, [a,b,…])
@@ -361,23 +364,23 @@ class Expr:
 
         if isinstance(other, (*get_args(Numerical), Symbol, Expr)):
             if (
-                self.head == Operator.ADD
+                self.head == Operator.PLUS
                 and isinstance(other, Expr)
-                and other.head == Operator.ADD
+                and other.head == Operator.PLUS
             ):
                 args = args_reduce_sum(*self.args, *other.args)
-                return Expr(Operator.ADD, *args)
+                return Expr(Operator.PLUS, *args)
 
-            if self.head == Operator.ADD:
+            if self.head == Operator.PLUS:
                 args = args_reduce_sum(*self.args, other)
-                return Expr(Operator.ADD, *args)
+                return Expr(Operator.PLUS, *args)
 
-            if isinstance(other, Expr) and other.head == Operator.ADD:
+            if isinstance(other, Expr) and other.head == Operator.PLUS:
                 args = args_reduce_sum(self, *other.args)
-                return Expr(Operator.ADD, *args)
+                return Expr(Operator.PLUS, *args)
 
             args = args_reduce_sum(self, other)
-            return Expr(Operator.ADD, *args)
+            return Expr(Operator.PLUS, *args)
 
         return NotImplemented
 
@@ -507,7 +510,7 @@ class Symbol:
             return self
 
         if isinstance(other, (*get_args(Numerical), Symbol, Expr)):
-            return Expr(Operator.ADD, self) + other
+            return Expr(Operator.PLUS, self) + other
 
         return NotImplemented
 
