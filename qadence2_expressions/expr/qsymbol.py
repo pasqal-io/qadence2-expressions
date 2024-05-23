@@ -112,6 +112,7 @@ class QSymbol(NonCommutative):
                 self.name == other.name
                 and self.same_subspace(other)
                 and self.is_dagger ^ other.is_dagger
+                and self.params == other.params
             )
 
         return False
@@ -132,17 +133,20 @@ class QSymbol(NonCommutative):
         if self.name == other.name and self.same_subspace(other):
             sign1 = 1 - 2 * self.is_dagger
             sign2 = 1 - 2 * other.is_dagger
+            
             params = [
                 sign1 * p1 + sign2 * p2 for p1, p2 in zip(self.params, other.params)
             ]
-            return [
-                QSymbol(
-                    self.name,
-                    *params,
-                    ordered_support=self.has_ordered_support,
-                    is_hermitian=self.is_hermitian,
-                )
-            ]
+            
+            new_qsymbol = QSymbol(
+                self.name,
+                *params,
+                ordered_support=self.has_ordered_support,
+                is_hermitian=self.is_hermitian,
+            )
+            new_qsymbol.support = self.support
+            
+            return [new_qsymbol]
 
         if self.same_subspace(other) or self.collide_with(other):
             return [self, other]
