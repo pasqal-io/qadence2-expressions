@@ -49,6 +49,7 @@ class Adjoint(Protocol):
     """Apply to objects with Hermitian conjugate property. That covers complex numebers
     and quantum operators.
     """
+
     @property
     def dag(self) -> Adjoint | Numerical:
         ...
@@ -182,9 +183,7 @@ class Expr:
     def __rmamtmul__(self, _other: Numeric | Numerical) -> Numeric | Numerical:
         return NotImplemented
 
-    def __mul__(  # pylint: disable=too-many-return-statements
-        self, other: Numeric | Numerical
-    ) -> Numeric | Numerical:
+    def __mul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         """ "Multiplication involving expressions are made acording to the following
         rules in the order as described.
 
@@ -269,21 +268,37 @@ class Expr:
                 and other.head == Operator.TIMES
             ):
                 args = args_reduce_mul(*self.args, *other.args)
-                return args[0] if len(args) == 1 else Expr(Operator.TIMES, *args)
+                if len(args) == 1:
+                    return args[0]  # type: ignore
+                if len(args) == 2 and args[0] == 1:
+                    return args[1]  # type: ignore
+                return Expr(Operator.TIMES, *args)
 
             # <<< E(*, [a,…]) * ? = E(*, [a,?,…])
             if self.head == Operator.TIMES:
                 args = args_reduce_mul(*self.args, other)
-                return args[0] if len(args) == 1 else Expr(Operator.TIMES, *args)
+                if len(args) == 1:
+                    return args[0]  # type: ignore
+                if len(args) == 2 and args[0] == 1:
+                    return args[1]  # type: ignore
+                return Expr(Operator.TIMES, *args)
 
             # <<< ? * E(*, [a,…]) = E(*, [?,a,…])
             if isinstance(other, Expr) and other.head == Operator.TIMES:
                 args = args_reduce_mul(self, *other.args)
-                return args[0] if len(args) == 1 else Expr(Operator.TIMES, *args)
+                if len(args) == 1:
+                    return args[0]  # type: ignore
+                if len(args) == 2 and args[0] == 1:
+                    return args[1]  # type: ignore
+                return Expr(Operator.TIMES, *args)
 
             # General case.
             args = args_reduce_mul(self, other)
-            return args[0] if len(args) == 1 else Expr(Operator.TIMES, *args)
+            if len(args) == 1:
+                return args[0]  # type: ignore
+            if len(args) == 2 and args[0] == 1:
+                return args[1]  # type: ignore
+            return Expr(Operator.TIMES, *args)
 
         return NotImplemented
 
@@ -369,18 +384,18 @@ class Expr:
                 and other.head == Operator.PLUS
             ):
                 args = args_reduce_sum(*self.args, *other.args)
-                return Expr(Operator.PLUS, *args)
+                return Expr(Operator.PLUS, *args) if len(args) > 1 else args[0]
 
             if self.head == Operator.PLUS:
                 args = args_reduce_sum(*self.args, other)
-                return Expr(Operator.PLUS, *args)
+                return Expr(Operator.PLUS, *args) if len(args) > 1 else args[0]
 
             if isinstance(other, Expr) and other.head == Operator.PLUS:
                 args = args_reduce_sum(self, *other.args)
-                return Expr(Operator.PLUS, *args)
+                return Expr(Operator.PLUS, *args) if len(args) > 1 else args[0]
 
             args = args_reduce_sum(self, other)
-            return Expr(Operator.PLUS, *args)
+            return Expr(Operator.PLUS, *args) if len(args) > 1 else args[0]
 
         return NotImplemented
 

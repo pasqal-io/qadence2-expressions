@@ -73,7 +73,7 @@ class QSymbol(NonCommutative):
         return hash((self.name, self.support))
 
     def same_subspace(self, other: QSymbol) -> bool:
-        """Return true is two QSymbols act over the same Hilbert space."""
+        """Return true if two QSymbols act over the same Hilbert space."""
 
         if not isinstance(other, QSymbol):
             return NotImplemented

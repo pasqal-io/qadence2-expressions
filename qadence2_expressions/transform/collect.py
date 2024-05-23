@@ -35,6 +35,6 @@ def collect_operators_core(expr: object, acc: dict) -> None:
         )
         acc[key] = acc.get(key, 0) + value
 
-    if isinstance(expr, Expr) and expr.head == Operator.ADD:
+    if isinstance(expr, Expr) and expr.head == Operator.PLUS:
         for arg in expr.args:
             collect_operators_core(arg, acc)
