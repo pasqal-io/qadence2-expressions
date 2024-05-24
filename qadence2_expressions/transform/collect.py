@@ -1,14 +1,20 @@
-from ..expr import Expr, QSymbol, Operator
+from __future__ import annotations
+
+from ..expr import Expr, Operator, QSymbol
 
 
-def collect_operators(expr) -> dict:
-    acc = {}
+def collect_operators(expr: object) -> dict:
+    """Collect the coefficients of noncommutative expression, e.g.
+
+    Z(1) + 2 * Z(1) * Z (2) - X(3)  --> {Z(1): 1, Z(1) * Z (2): 2, Z(3): -1}
+    """
+
+    acc: dict = dict()
     collect_operators_core(expr, acc)
     return acc
 
 
-def collect_operators_core(expr, acc: dict):
-
+def collect_operators_core(expr: object, acc: dict) -> None:
     if isinstance(expr, QSymbol):
         acc[expr] = acc.get(expr, 0) + 1
 
@@ -29,6 +35,6 @@ def collect_operators_core(expr, acc: dict):
         )
         acc[key] = acc.get(key, 0) + value
 
-    if isinstance(expr, Expr) and expr.head == Operator.ADD:
+    if isinstance(expr, Expr) and expr.head == Operator.PLUS:
         for arg in expr.args:
             collect_operators_core(arg, acc)

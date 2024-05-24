@@ -1,8 +1,10 @@
 # %%
+from __future__ import annotations
+
 from IPython.lib.pretty import pretty
 
-from src import *
-from src.transform import collect_operators
+from qadence2_expressions import *  # ruff: noqa: F403
+from qadence2_expressions.transform import collect_operators
 
 
 def evaluate_single_expression(expr: str) -> None:
@@ -34,11 +36,14 @@ evaluate_expressions(
     "a / a",
     "a + b",
     "a / (2*b)",
+    "a ** 0",
+    "a ** 1",
+    "2 ** (a + b)",
 )
 
 
 # %%
-# Product of sums are automatically expanded.
+# Product of sums is automatically expanded.
 evaluate_expressions("(a + b) * (a + b)")
 
 
@@ -58,6 +63,7 @@ evaluate_expressions(
     "x = a + b",
     "y = a + 2 * cos(x) ** 2",
     "z = replace(y, {a: 2})",
+    "replace(z, {b: 1.1415926535897931})",
     "replace(y, {a: 2*b, b: a})",
     "replace(y, {b+a: 2*b})",
     "replace(2 ** (a+b), {a: 2*b})",
@@ -70,10 +76,8 @@ evaluate_expressions(
     "X = QSymbol('X')",
     "Y = QSymbol('Y')",
     "Z = QSymbol('Z')",
-
     "Cnot = QSymbol('CNOT', ordered_support=True)",
     "Swap = QSymbol('SWAP')",
-
     "Rx = lambda angle : QSymbol('Rx', angle, is_hermitian=False)",
     "Ry = lambda angle : QSymbol('Ry', angle, is_hermitian=False)",
 )
@@ -112,14 +116,14 @@ evaluate_expressions(
 def valid_transformation(lhs, rhs) -> bool:
     lhs_coefs = set(collect_operators(lhs).items())
     rhs_coefs = set(collect_operators(rhs).items())
-    # False is a operator appears on both sides with
+    # False if a operator appears on both sides with
     # the same coefficient.
     return not (lhs_coefs & rhs_coefs)
 
 
 evaluate_expressions(
     "valid_transformation(h1, h1 - h2)",
-    "valid_transformation(h1, h1-h3)",
+    "valid_transformation(h1, h1 - h3)",
 )
 
 
