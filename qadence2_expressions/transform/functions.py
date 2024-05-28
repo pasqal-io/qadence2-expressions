@@ -4,30 +4,30 @@ from typing import get_args
 
 # Exclusive for experiments for now.
 # This will be better implemented soon.
-import numpy as backend
+# import numpy as backend
 
 from ..expr import Expr, Numeric, Numerical, Operator
 
 
 def sin(x: Numeric | Numerical) -> Numeric | Numerical:
-    if isinstance(x, get_args(Numerical)):
-        return getattr(backend, sin.__name__)(x)  # type: ignore
+    # if isinstance(x, get_args(Numerical)):
+    #     return getattr(backend, sin.__name__)(x)  # type: ignore
     return Expr(Operator.CALL, sin.__name__, x)
 
 
 def cos(x: Numeric | Numerical) -> Numeric | Numerical:
-    if isinstance(x, get_args(Numerical)):
-        return getattr(backend, cos.__name__)(x)  # type: ignore
+    # if isinstance(x, get_args(Numerical)):
+    #     return getattr(backend, cos.__name__)(x)  # type: ignore
     return Expr(Operator.CALL, cos.__name__, x)
 
 
 def exp(x: Numeric | Numerical) -> Numeric | Numerical:
-    if isinstance(x, get_args(Numerical)):
-        return getattr(backend, exp.__name__)(x)  # type: ignore
+    # if isinstance(x, get_args(Numerical)):
+    #     return getattr(backend, exp.__name__)(x)  # type: ignore
     return Expr(Operator.CALL, exp.__name__, x)
 
 
 def log(x: Numeric | Numerical) -> Numeric | Numerical:
-    if isinstance(x, get_args(Numerical)):
-        return getattr(backend, log.__name__)(x)  # type: ignore
+    # if isinstance(x, get_args(Numerical)):
+    #     return getattr(backend, log.__name__)(x)  # type: ignore
     return Expr(Operator.CALL, log.__name__, x)
