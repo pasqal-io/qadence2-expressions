@@ -36,6 +36,9 @@ evaluate_expressions(
     "a / a",
     "a + b",
     "a / (2*b)",
+    "a ** 0",
+    "a ** 1",
+    "2 ** (a + b)",
 )
 
 
@@ -113,14 +116,14 @@ evaluate_expressions(
 def valid_transformation(lhs, rhs) -> bool:
     lhs_coefs = set(collect_operators(lhs).items())
     rhs_coefs = set(collect_operators(rhs).items())
-    # False is a operator appears on both sides with
+    # False if a operator appears on both sides with
     # the same coefficient.
     return not (lhs_coefs & rhs_coefs)
 
 
 evaluate_expressions(
     "valid_transformation(h1, h1 - h2)",
-    "valid_transformation(h1, h1-h3)",
+    "valid_transformation(h1, h1 - h3)",
 )
 
 

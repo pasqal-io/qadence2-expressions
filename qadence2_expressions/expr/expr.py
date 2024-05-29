@@ -8,10 +8,9 @@ SPACE_SEPARATOR = "\u00a0"
 Numerical = int | float | complex
 
 
-# TODO: please do type annotation for all the args
-
-
 class Numeric(Protocol):
+    """Covering objects with basic algebraic operations implements."""
+
     def __mul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         ...
 
@@ -46,14 +45,31 @@ class Numeric(Protocol):
         ...
 
 
-class Adjoint(Protocol):  # pylint: disable=too-few-public-methods
+class Adjoint(Protocol):
+    """Apply to objects with Hermitian conjugate property. That covers complex numebers
+    and quantum operators.
+    """
+
     @property
     def dag(self) -> Adjoint | Numerical:
         ...
 
 
-class Operator:  # pylint: disable=too-few-public-methods
-    ADD = "+"
+class Operator:
+    """Qadence expressions can be: a sum, a multiplication or a power. Negative terms
+    are store with a negative constant while division is represented with negative power.
+    These datastructs choices were made to simplify some symbolic multiplications.
+
+    By default, addition and multiplication are considered commutative. This behaviour can
+    be changed wrapping the terms in a noncommutative expression in order to protect the
+    elements order.
+
+    Functions can be represented as expressions as well using the "call" operator. In that
+    case, the first argument of the expression is a string naming a callable object, and
+    the remaining elements are passed as its arguments.
+    """
+
+    PLUS = "+"
     TIMES = "*"
     NONCOMMUTE = "@"
     POWER = "^"
@@ -61,6 +77,18 @@ class Operator:  # pylint: disable=too-few-public-methods
 
 
 class Expr:
+    """Qadence expression system class holds mathematical and circuit expressions
+    in a s-expression. The first element holds a `Operator` while the other are
+    its arguments. For instance, the expression `2 * x + 3 * y + 8` is stored as
+        Expr(+, Expr(*, 2, x), Expr(*, 3, y), 8)
+
+    By default, qadence expression are expanded to keep the addition as the most
+    external expression (root). So expression like `a * (b + c + 2)` will be expanded
+    to `a*b + a*c + 2*a`. This behaviour, however, doesn't happen in case of power of
+    a sum like `a * (b + c)^2`. This choice was made to help simplify power terms like
+        (a + b) * (a + b) ^ 0.5 / (a + b)^2 == (a + b) ^ -0.5
+    """
+
     def __init__(self, head: str, *args: Any) -> None:
         self.head: str = head
         self.args = args
@@ -69,11 +97,11 @@ class Expr:
         return f"{self.__class__.__name__}{self.head, self.args}"
 
     def _repr_pretty_(self, p, _cycle) -> None:  # type: ignore
-        # to avoid using `print` in IPython / Jupyter Notebook
+        """Provide a friendly representation when using IPython/Jupyter notebook."""
         p.text(str(self))
 
     def __str__(self) -> str:
-        if self.head == Operator.ADD:
+        if self.head == Operator.PLUS:
             return f" {self.head} ".join(map(str, self.args))
 
         if self.head == Operator.NONCOMMUTE:
@@ -86,7 +114,7 @@ class Expr:
                     map(
                         lambda x: (
                             f"({x})"
-                            if isinstance(x, Expr) and x.head == Operator.ADD
+                            if isinstance(x, Expr) and x.head == Operator.PLUS
                             else str(x)
                         ),
                         self.args[1:],
@@ -113,27 +141,35 @@ class Expr:
             f"Visualization with operator {self.head} not implemented"
         )
 
-    # TODO: please do type annotation for all the args
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Expr):
+            # It use the standard Python implementation returning a `NotImplemented`
+            # as a way to delgate the interpreter the task to handle incompatible
+            # types.
             return NotImplemented
+
         if self.head != other.head:
             return False
 
-        if self.head == Operator.ADD or self.head == Operator.TIMES:
+        if self.head == Operator.PLUS or self.head == Operator.TIMES:
             return set(self.args) == set(other.args)
 
         return self.args == other.args
 
     def __hash__(self) -> int:
-        # commutative operations
-        if self.head == Operator.ADD or self.head == Operator.TIMES:
+        # For commutative operations, the arguments are hashed using `frozenset`
+        # to discard their order.
+        if self.head == Operator.PLUS or self.head == Operator.TIMES:
             return hash((self.head, frozenset(self.args)))
 
-        # non-commutative operations
+        # With noncommutative operations, the order of the argument are relevant
+        # for the hashing.
         return hash((self.head, self.args))
 
     def __matmul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
+        """Uses the matmul operator to concatenate noncommutative expressions."""
+
+        # Only two noncommutative expressions can be concatenated
         if (
             self.head == Operator.NONCOMMUTE
             and isinstance(other, Expr)
@@ -147,42 +183,46 @@ class Expr:
     def __rmamtmul__(self, _other: Numeric | Numerical) -> Numeric | Numerical:
         return NotImplemented
 
-    def __mul__(  # pylint: disable=too-many-return-statements
-        self, other: Numeric | Numerical
-    ) -> Numeric | Numerical:
-        # CASES:
+    def __mul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
+        """ "Multiplication involving expressions are made acording to the following
+        rules in the order as described.
 
-        #   1. Multiply by zero: e * 0 = 0
-        #   2. Multiply by one: e * 1 = e
+          1. Multiply by zero: e * 0 = 0   (shortcut case)
+          2. Multiply by one: e * 1 = e    (shortcut case)
 
-        #   3. Power:
-        #       - e^m * e^n = e^(m+n)
-        #       - e^m * e   = e^(m+1)
-        #       - e   * e^m = e^(m+1)
+          3. Power:
+              - e^m * e^n = e^(m+n)
+              - e^m * e   = e^(m+1)
+              - e   * e^m = e^(m+1)
 
-        #   4. Noncommutative multiplication:
-        #       E(@, [a,…]) * E(@, [b,…]) = E(@, [a,…]) @ E(@, [b,…])
+          4. Noncommutative multiplication:
+              E(@, [a,…]) * E(@, [b,…]) = E(@, [a,…]) @ E(@, [b,…])
 
-        #   5. Distributive:
-        #       - (a + b) * ? = (a*? + b*?)
-        #       - ? * (a + b) = (?*a + ?*b)
+          5. Distributive:
+              - (a + b) * ? = (a*? + b*?)
+              - ? * (a + b) = (?*a + ?*b)
 
-        #   6. Multiplication:
-        #       - E(*, [a,…]) * E(*, [b,…]) = E(*, [a,b,…])
-        #       - E(*, [a,…]) * ? = E(*, [a,?,…])
-        #       - ? * E(*, [a,…]) = E(*, [?,a,…])
+          6. Multiplication:
+              - E(*, [a,…]) * E(*, [b,…]) = E(*, [a,b,…])
+              - E(*, [a,…]) * ? = E(*, [a,?,…])
+              - ? * E(*, [a,…]) = E(*, [?,a,…])
 
-        #   7. General case: e1 * e2 = E(*, [e1,e2,…])
+          7. General case: e1 * e2 = E(*, [e1,e2,…])
+        """
 
-        # <<< e * 0 = 0
-        if isinstance(other, get_args(Numerical)) and other == 0:
+        # WARNING: The conditions below can be regrouped in different ways. Depending
+        # on how the code is rearranged, the multiplication rules may be be clear.
+        # Please, keep that in mind when refactor the code.
+
+        # shortcuts
+        if other == 0:
             return 0
 
-        # <<< e * 1 = e
-        if isinstance(other, get_args(Numerical)) and other == 1:
+        if other == 1:
             return self
 
         if isinstance(other, (*get_args(Numerical), Symbol, Expr)):
+            # Multiplication of power.
             # <<< E(^, [a,m]) * E(^, [a,n]) = a ^ (m+n)
             if (
                 self.head == Operator.POWER
@@ -205,7 +245,7 @@ class Expr:
                 power = other.args[1] + 1
                 return 1 if not power else Expr(Operator.POWER, self, power)
 
-            # <<< E(@, [a,…]) * E(@, [b,…]) = E(@, [a,…,b,…])
+            # Multiplication of noncommutative elements.
             if (
                 self.head == Operator.NONCOMMUTE
                 and isinstance(other, Expr)
@@ -213,12 +253,12 @@ class Expr:
             ):
                 return self @ other
 
-            # <<< E(+, [a,b,…]) * ? = E(+, [a*?,b*?,…])
-            if self.head == Operator.ADD:
+            # Left distributive, (a + b) * c = a*c + b*c.
+            if self.head == Operator.PLUS:
                 return sum(el * other for el in self.args)  # type: ignore
 
-            # <<< ? * E(+, [a,b,…]) = E(+, [?*a,?*a,…])
-            if isinstance(other, Expr) and other.head == Operator.ADD:
+            # <<< Right distributive, a * (b + c) = a*b + a*c.
+            if isinstance(other, Expr) and other.head == Operator.PLUS:
                 return sum(self * el for el in other.args)  # type: ignore
 
             # <<< E(*, [a,…]) * E(*, [b,…]) = E(*, [a,b,…])
@@ -228,21 +268,37 @@ class Expr:
                 and other.head == Operator.TIMES
             ):
                 args = args_reduce_mul(*self.args, *other.args)
-                return args[0] if len(args) == 1 else Expr(Operator.TIMES, *args)
+                if len(args) == 1:
+                    return args[0]  # type: ignore
+                if len(args) == 2 and args[0] == 1:
+                    return args[1]  # type: ignore
+                return Expr(Operator.TIMES, *args)
 
             # <<< E(*, [a,…]) * ? = E(*, [a,?,…])
             if self.head == Operator.TIMES:
                 args = args_reduce_mul(*self.args, other)
-                return args[0] if len(args) == 1 else Expr(Operator.TIMES, *args)
+                if len(args) == 1:
+                    return args[0]  # type: ignore
+                if len(args) == 2 and args[0] == 1:
+                    return args[1]  # type: ignore
+                return Expr(Operator.TIMES, *args)
 
             # <<< ? * E(*, [a,…]) = E(*, [?,a,…])
             if isinstance(other, Expr) and other.head == Operator.TIMES:
                 args = args_reduce_mul(self, *other.args)
-                return args[0] if len(args) == 1 else Expr(Operator.TIMES, *args)
+                if len(args) == 1:
+                    return args[0]  # type: ignore
+                if len(args) == 2 and args[0] == 1:
+                    return args[1]  # type: ignore
+                return Expr(Operator.TIMES, *args)
 
-            # <<< e1 * e2 = E(*, [e1,e2,…])
+            # General case.
             args = args_reduce_mul(self, other)
-            return args[0] if len(args) == 1 else Expr(Operator.TIMES, *args)
+            if len(args) == 1:
+                return args[0]  # type: ignore
+            if len(args) == 2 and args[0] == 1:
+                return args[1]  # type: ignore
+            return Expr(Operator.TIMES, *args)
 
         return NotImplemented
 
@@ -253,26 +309,23 @@ class Expr:
         return NotImplemented
 
     def __pow__(self, other: Numeric | Numerical) -> Numeric | Numerical:
-        # CASES:
+        """Power involving expressions are made acording to the following rules in
+        the order as described.
 
-        #   - e^0 = 1
-        #   - e^1 = e
+          1. e^0 = 1  (shortcut case)
+          2. e^1 = e  (shortcut case)
 
-        #   - E(^, [a,b]) ^ ? = E(^, [a,b*?])
-        #   - E(*, [a,b,…]) ^ ? = E(*, [a^?,b^?,…])
+          3. Poewr of power: E(^, [a,b]) ^ ? = E(^, [a,b*?])
+          4. Power of multiplication: E(*, [a,b,…]) ^ ? = E(*, [a^?,b^?,…])
 
-        #   <<<
-        #    This option was left out to prioritise division simplitication.
-        #       - n:Nat, n>1 -> E(+, [a,b,…]) ^ n = E(+, [a,b,…]) * E(+, [a,b,…]) * … ; n times
-        #       - n:Nat, n>1 -> E(+, [a,b,…]) ^ -n = E(^, [E(+, [a,b,…]) ^ n, -1])
-        #   >>>
+          5. General case: e ^ ? = E(^, [e, ?])
+        """
 
-        #   - e ^ ? = E(^, [e, ?])
-
-        if isinstance(other, get_args(Numerical)) and other == 0:
+        # shortcuts
+        if other == 0:
             return 1
 
-        if isinstance(other, get_args(Numerical)) and other == 1:
+        if other == 1:
             return self
 
         if isinstance(other, (*get_args(Numerical), Symbol, Expr)):
@@ -308,38 +361,41 @@ class Expr:
         return other * self**-1
 
     def __add__(self, other: Numeric | Numerical) -> Numeric | Numerical:
-        # CASES:
+        """Addition involving expressions are made acording to the following rules
+        in the order as described.
 
-        #   - e + 0 = e
+          1. Neutral element: e + 0 = e  (shortcut case)
 
-        #   - E(+, [a,…]) + E(+, [b,…]) = E(+, [a,b,…])
-        #   - E(+, [a,…]) + b = E(+, [a,b,…])
-        #   - a + E(+, [b,…]) = E(+, [a,b,…])
+          2. Sum with addition expression:
+              - E(+, [a,…]) + E(+, [b,…]) = E(+, [a,b,…])
+              - E(+, [a,…]) + b = E(+, [a,b,…])
+              - a + E(+, [b,…]) = E(+, [a,b,…])
 
-        #   - e + ? = E(+, r[e,?])
+          3. General case: e + ? = E(+, r[e,?])
+        """
 
-        if isinstance(other, get_args(Numerical)) and other == 0:
+        if other == 0:
             return self
 
         if isinstance(other, (*get_args(Numerical), Symbol, Expr)):
             if (
-                self.head == Operator.ADD
+                self.head == Operator.PLUS
                 and isinstance(other, Expr)
-                and other.head == Operator.ADD
+                and other.head == Operator.PLUS
             ):
                 args = args_reduce_sum(*self.args, *other.args)
-                return Expr(Operator.ADD, *args)
+                return Expr(Operator.PLUS, *args) if len(args) > 1 else args[0]
 
-            if self.head == Operator.ADD:
+            if self.head == Operator.PLUS:
                 args = args_reduce_sum(*self.args, other)
-                return Expr(Operator.ADD, *args)
+                return Expr(Operator.PLUS, *args) if len(args) > 1 else args[0]
 
-            if isinstance(other, Expr) and other.head == Operator.ADD:
+            if isinstance(other, Expr) and other.head == Operator.PLUS:
                 args = args_reduce_sum(self, *other.args)
-                return Expr(Operator.ADD, *args)
+                return Expr(Operator.PLUS, *args) if len(args) > 1 else args[0]
 
             args = args_reduce_sum(self, other)
-            return Expr(Operator.ADD, *args)
+            return Expr(Operator.PLUS, *args) if len(args) > 1 else args[0]
 
         return NotImplemented
 
@@ -362,6 +418,10 @@ class Expr:
 
 
 class Symbol:
+    """Creates symbolic variables with algebraic properties which concrete type and value are
+    defined later by the backend.
+    """
+
     def __init__(self, name: str) -> None:
         self.name = name
 
@@ -369,7 +429,7 @@ class Symbol:
         return f"{self.__class__.__name__}({self.name})"
 
     def _repr_pretty_(self, p, _cycle):  # type: ignore
-        # to avoid using `print` in IPython / Jupyter Notebook
+        """Provide a friendly representation when using IPython/Jupyter notebook."""
         p.text(str(self))
 
     def __str__(self) -> str:
@@ -380,12 +440,13 @@ class Symbol:
             return NotImplemented
         return self.name == other.name
 
-    def __lt__(self, other: Numeric | Numerical) -> bool:
+    # Symbols can be ordered by their names.
+    def __lt__(self, other: object) -> bool:
         if isinstance(other, Symbol):
             return self.name < other.name
         return NotImplemented
 
-    def __gt__(self, other: Numeric | Numerical) -> bool:
+    def __gt__(self, other: object) -> bool:
         if isinstance(other, Symbol):
             return self.name > other.name
         return NotImplemented
@@ -394,11 +455,15 @@ class Symbol:
         return hash(self.name)
 
     def __mul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
-        # cases:
+        """Multiplication involving symbols are made acording to the following
+        rules in the order as described.
 
-        #   - s * 0 = 0
-        #   - s * 1 = s
-        #   - s * ? = E(*, [1,s]) * ?  ; type casting: Symbol -> Expr
+          1. Multipy be zero: s * 0 = 0  (shortcut case)
+          2. Identity multiplication: s * 1 = s  (shortcut case)
+
+          3. General case:
+              s * ? = E(*, [1,s]) * ?  ; type casting: Symbol -> Expr
+        """
 
         if isinstance(other, get_args(Numerical)) and other == 0:
             return 0
@@ -416,15 +481,18 @@ class Symbol:
         return self.__mul__(other)
 
     def __pow__(self, other: Numeric | Numerical) -> Numeric | Numerical:
-        # cases:
-        #   - s ^ 0 = 1
-        #   - s ^ 1 = s
-        #   - s ^ ? = E(^, [s, ?])
+        """Power involving symbols are made acording to the following rules in the
+        order as described.
 
-        if isinstance(other, get_args(Numerical)) and other == 0:
+          1. s ^ 0 = 1
+          2. s ^ 1 = s
+          3. s ^ ? = E(^, [s, ?])
+        """
+
+        if other == 0:
             return 1
 
-        if isinstance(other, get_args(Numerical)) and other == 1:
+        if other == 1:
             return self
 
         if isinstance(other, (*get_args(Numerical), Symbol, Expr)):
@@ -445,16 +513,19 @@ class Symbol:
         return other * self**-1
 
     def __add__(self, other: Numeric | Numerical) -> Numeric | Numerical:
-        # CASES:
+        """Addition involving symbols require two simple rules.
 
-        #   - s + 0 = s
-        #   - s + ? = E(+, [s]) + ?  ; type casting Symbol -> Expr
+        1. s + 0 = s  (shorcut case)
+
+        2. General case:
+            s + ? = E(+, [s]) + ?  ; type casting Symbol -> Expr
+        """
 
         if isinstance(other, get_args(Numerical)) and other == 0:
             return self
 
         if isinstance(other, (*get_args(Numerical), Symbol, Expr)):
-            return Expr(Operator.ADD, self) + other
+            return Expr(Operator.PLUS, self) + other
 
         return NotImplemented
 
@@ -477,6 +548,11 @@ class Symbol:
 
 
 class NonCommutative:
+    """This base class allows to create objects that are automatic promoted to noncommutative
+    expression terms when used in symbolic expression. Example of such objects are quantum
+    operators.
+    """
+
     def __mul__(self, other: Numeric | Numerical) -> Numeric | Numerical:
         return Expr(Operator.NONCOMMUTE, self) * other
 
@@ -512,8 +588,13 @@ class NonCommutative:
 
 
 def args_reduce_mul(*args: Any) -> tuple:
+    """Auxiliar function to simplify arguments in multiplicative expression by combining expoents
+    like in `a*b*a == a^2 * b` and removing elements with null expoent from the arguments list.
+    """
+
     factors: dict[Expr, Numerical] = {}
     noncommuters: tuple[Any, ...] = ()
+
     acc = 1
     for arg in args:
         if isinstance(arg, get_args(Numerical)):
@@ -543,7 +624,12 @@ def args_reduce_mul(*args: Any) -> tuple:
 
 
 def args_reduce_sum(*args: Any) -> tuple:
+    """Auxiliar function to simplify arguments in addition expression by combining elements like in
+    `a + b + a == 2*a + b` and removing elements with null coefficient from the arguments list.
+    """
+
     terms: dict = {}
+
     acc = 0
     for arg in args:
         if isinstance(arg, get_args(Numerical)):
@@ -573,6 +659,10 @@ def args_reduce_sum(*args: Any) -> tuple:
 
 
 def args_reduce_noncomm(lhs: list | tuple, rhs: list | tuple) -> tuple:
+    """Auxiliar function to possible reduce arguments on noncommutaive expression
+    in case does elements have cancelation properties (implemented by the derivate class).
+    """
+
     acc = list(lhs)
     for term in rhs:
         acc = acc @ term
@@ -580,6 +670,12 @@ def args_reduce_noncomm(lhs: list | tuple, rhs: list | tuple) -> tuple:
 
 
 def conjugate(value: Numerical | Numeric | Adjoint) -> Numerical | Numeric | Adjoint:
+    """Apply the conjugate operation recursively in expressions.
+
+    For noncommutative expression the arguments are reversed to match the algebraic
+    properperties of quantum operators.
+    """
+
     if isinstance(value, Expr) and value.head == Operator.NONCOMMUTE:
         args = [conjugate(el) for el in value.args[::-1]]
         return Expr(value.head, *args)

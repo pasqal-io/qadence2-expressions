@@ -7,6 +7,8 @@ from . import functions as fun
 
 
 def prod(iterable: Iterable) -> Numeric | Numerical:
+    """ "Equivalement of `sum` but for multiplication."""
+
     acc = 1
     for el in iterable:
         acc = acc * el
@@ -19,7 +21,7 @@ def evaluate(value: Numeric | Numerical) -> Numeric | Numerical:
         match value.head:
             case Operator.TIMES | Operator.NONCOMMUTE:
                 return prod(args)
-            case Operator.ADD:
+            case Operator.PLUS:
                 return sum(args)
             case Operator.POWER:
                 return args[0] ** args[1]

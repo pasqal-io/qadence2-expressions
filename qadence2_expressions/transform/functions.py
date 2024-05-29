@@ -1,9 +1,13 @@
+"""
+This module provides basic implementation of functions as symbols to be extened.
+"""
+
 from __future__ import annotations
 
 from typing import get_args
 
-# Exclusive for experiments for now.
-# This will be better implemented soon.
+# Only for examples for the moment.
+# TODO: Remove default backend for functions.
 import numpy as backend
 
 from ..expr import Expr, Numeric, Numerical, Operator
