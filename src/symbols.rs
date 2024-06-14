@@ -28,16 +28,8 @@ impl Add for Numeric {
     }
 }
 
-impl PartialEq<Numeric> for Numeric {
-    fn eq(&self, other: &Numeric) -> bool {
-	self == other
-    }
-}
-
-
-pub struct Symbol {
-    name: &'static str
-}
+#[derive(Debug, PartialEq)]
+pub struct Symbol (&'static str);
 
 
 #[cfg(test)]
