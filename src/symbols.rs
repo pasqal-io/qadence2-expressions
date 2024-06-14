@@ -37,19 +37,20 @@ impl fmt::Display for Numerical {
     }
 }
 
+impl Add for Numerical {
+    type Output = Numerical;
 
     fn add(self, rhs: Self) -> Self {
 	match (self, rhs) {
-	    (Numeric::Int(i1), Numeric::Int(i2)) => Numeric::Int(i1 + i2),
-	    (Numeric::Int(i1), Numeric::Float(f2)) => Numeric::Float(i1 as f64 + f2),
-	    (Numeric::Int(i1), Numeric::Complex(c2)) => Numeric::Complex(Complex::new(i1 as f64, 0.) + c2),
-	    (Numeric::Float(f1), Numeric::Int(i2)) => Numeric::Float(f1 + i2 as f64),
-	    (Numeric::Float(f1), Numeric::Float(f2)) => Numeric::Float(f1 + f2),
-	    (Numeric::Float(f1), Numeric::Complex(c2)) => Numeric::Complex(Complex::new(f1,0.) + c2),
-	    (Numeric::Complex(c1), Numeric::Int(i2)) => Numeric::Complex(c1 + Complex::new(i2 as f64,0.)),
-	    (Numeric::Complex(c1), Numeric::Float(f2)) => Numeric::Complex(c1 + Complex::new(f2, 0.)),
-	    (Numeric::Complex(c1), Numeric::Complex(c2)) => Numeric::Complex(c1+c2),
-	    
+	    (Numerical::Int(i1), Numerical::Int(i2)) => Numerical::Int(i1 + i2),
+	    (Numerical::Int(i1), Numerical::Float(f2)) => Numerical::Float(i1 as f64 + f2),
+	    (Numerical::Int(i1), Numerical::Complex(c2)) => Numerical::Complex(Complex::new(i1 as f64, 0.) + c2),
+	    (Numerical::Float(f1), Numerical::Int(i2)) => Numerical::Float(f1 + i2 as f64),
+	    (Numerical::Float(f1), Numerical::Float(f2)) => Numerical::Float(f1 + f2),
+	    (Numerical::Float(f1), Numerical::Complex(c2)) => Numerical::Complex(Complex::new(f1, 0.) + c2),
+	    (Numerical::Complex(c1), Numerical::Int(i2)) => Numerical::Complex(c1 + Complex::new(i2 as f64,0.)),
+	    (Numerical::Complex(c1), Numerical::Float(f2)) => Numerical::Complex(c1 + Complex::new(f2, 0.)),
+	    (Numerical::Complex(c1), Numerical::Complex(c2)) => Numerical::Complex(c1+c2),
  	}
     }
 }
