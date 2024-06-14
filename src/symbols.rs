@@ -4,26 +4,26 @@ use std::fmt;
 
 
 #[derive(Debug, PartialEq)]
-pub enum Numeric {
+pub enum Numerical {
     Int(i64),
     Float(f64),
     Complex(Complex<f64>),
 }
 
-impl Numeric {
-    /// Convenience method to create a Numeric::Int
+impl Numerical {
+    /// Convenience method to create a Numerical::Int
     pub fn int(value: i64) -> Self {
-        Numeric::Int(value)
+        Numerical::Int(value)
     }
 
-    /// Convenience method to create a Numeric::Float
+    /// Convenience method to create a Numerical::Float
     pub fn float(value: f64) -> Self {
-        Numeric::Float(value)
+        Numerical::Float(value)
     }
 
-    /// Convenience method to create a Numeric::Complex
+    /// Convenience method to create a Numerical::Complex
     pub fn complex(re: f64, im: f64) -> Self {
-        Numeric::Complex(Complex::new(re, im))
+        Numerical::Complex(Complex::new(re, im))
     }
 }
 
