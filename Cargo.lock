@@ -244,7 +244,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "qadence2-expressions"
+name = "qadence2_expressions"
 version = "0.1.0"
 dependencies = [
  "num",
