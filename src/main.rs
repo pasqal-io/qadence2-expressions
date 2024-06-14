@@ -1,10 +1,6 @@
-mod expression;
-use expression::Operator;
-mod symbols;
-use symbols::Numeric;
-
+// use crate::operator::Operator;
 
 fn main() {
     println!("Hello, world!");
-    println!("{}", Operator::ADD.as_str());
+    // println!("{}", Operator::ADD.as_str());
 }
