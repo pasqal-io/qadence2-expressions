@@ -2,7 +2,7 @@ use num::Complex;
 use std::ops::Add;
 
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Numeric {
     Int(i64),
     Float(f64),
