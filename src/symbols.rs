@@ -9,6 +9,22 @@ pub enum Numeric {
     Complex(Complex<f64>),
 }
 
+impl Numeric {
+    /// Convenience method to create a Numeric::Int
+    pub fn int(value: i64) -> Self {
+        Numeric::Int(value)
+    }
+
+    /// Convenience method to create a Numeric::Float
+    pub fn float(value: f64) -> Self {
+        Numeric::Float(value)
+    }
+
+    /// Convenience method to create a Numeric::Complex
+    pub fn complex(re: f64, im: f64) -> Self {
+        Numeric::Complex(Complex::new(re, im))
+    }
+}
 impl Add for Numeric {
     type Output = Numeric;
 
