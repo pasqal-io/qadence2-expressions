@@ -1,5 +1,6 @@
 use num::Complex;
 use std::ops::Add;
+use std::fmt;
 
 
 #[derive(Debug, PartialEq)]
