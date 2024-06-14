@@ -65,86 +65,86 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_add_int_to_int() {
-        let n1 = Numeric::int(5);
-        let n2 = Numeric::int(10);
-        assert_eq!(n1 + n2, Numeric::int(15));
+    fn test_numerical_add_int_to_int() {
+        let n1 = Numerical::int(5);
+        let n2 = Numerical::int(10);
+        assert_eq!(n1 + n2, Numerical::int(15));
     }
 
     #[test]
-    fn test_add_int_to_float() {
-        let n1 = Numeric::int(5);
-        let n2 = Numeric::float(10.5);
-        assert_eq!(n1 + n2, Numeric::float(15.5));
+    fn test_numerical_add_int_to_float() {
+        let n1 = Numerical::int(5);
+        let n2 = Numerical::float(10.5);
+        assert_eq!(n1 + n2, Numerical::float(15.5));
     }
     
     #[test]
-    fn test_add_int_to_complex() {
-        let n1 = Numeric::int(5);
-        let n2 = Numeric::complex(10.0, 5.0);
-        assert_eq!(n1 + n2, Numeric::complex(15.0, 5.0));
+    fn test_numerical_add_int_to_complex() {
+        let n1 = Numerical::int(5);
+        let n2 = Numerical::complex(10.0, 5.0);
+        assert_eq!(n1 + n2, Numerical::complex(15.0, 5.0));
     }
 
     #[test]
-    fn test_add_float_to_int() {
-        let n1 = Numeric::float(5.0);
-        let n2 = Numeric::int(10);
-        assert_eq!(n1 + n2, Numeric::float(15.0));
+    fn test_numerical_add_float_to_int() {
+        let n1 = Numerical::float(5.0);
+        let n2 = Numerical::int(10);
+        assert_eq!(n1 + n2, Numerical::float(15.0));
     }
 
     #[test]
-    fn test_add_float_to_float() {
-        let n1 = Numeric::float(5.0);
-        let n2 = Numeric::float(10.0);
-        assert_eq!(n1 + n2, Numeric::float(15.0));
+    fn test_numerical_add_float_to_float() {
+        let n1 = Numerical::float(5.0);
+        let n2 = Numerical::float(10.0);
+        assert_eq!(n1 + n2, Numerical::float(15.0));
     }
     
     #[test]
-    fn test_add_float_to_complex() {
-        let n1 = Numeric::float(5.0);
-        let n2 = Numeric::complex(3.0, 4.0);
-        assert_eq!(n1 + n2, Numeric::complex(8.0, 4.0));
+    fn test_numerical_add_float_to_complex() {
+        let n1 = Numerical::float(5.0);
+        let n2 = Numerical::complex(3.0, 4.0);
+        assert_eq!(n1 + n2, Numerical::complex(8.0, 4.0));
     }
     
     #[test]
-    fn test_add_complex_to_int() {
-        let n1 = Numeric::complex(5.0, 4.0);
-        let n2 = Numeric::int(3);
-        assert_eq!(n1 + n2, Numeric::complex(8.0, 4.0));
+    fn test_numerical_add_complex_to_int() {
+        let n1 = Numerical::complex(5.0, 4.0);
+        let n2 = Numerical::int(3);
+        assert_eq!(n1 + n2, Numerical::complex(8.0, 4.0));
     }
     
     #[test]
-    fn test_add_complex_to_float() {
-        let n1 = Numeric::complex(5.0, 4.0);
-        let n2 = Numeric::float(3.0);
-        assert_eq!(n1 + n2, Numeric::complex(8.0, 4.0));
+    fn test_numerical_add_complex_to_float() {
+        let n1 = Numerical::complex(5.0, 4.0);
+        let n2 = Numerical::float(3.0);
+        assert_eq!(n1 + n2, Numerical::complex(8.0, 4.0));
     }
 
     #[test]
-    fn test_add_complex_to_complex() {
-        let n1 = Numeric::complex(5.0, 4.0);
-        let n2 = Numeric::complex(3.0, 2.0);
-        assert_eq!(n1 + n2, Numeric::complex(8.0, 6.0));
+    fn test_numerical_add_complex_to_complex() {
+        let n1 = Numerical::complex(5.0, 4.0);
+        let n2 = Numerical::complex(3.0, 2.0);
+        assert_eq!(n1 + n2, Numerical::complex(8.0, 6.0));
     }
     
     // #[test]
     // fn test_eq_int_and_float() {
-    //     let n1 = Numeric::Int(5);
-    //     let n2 = Numeric::Float(5.0);
+    //     let n1 = Numerical::Int(5);
+    //     let n2 = Numerical::Float(5.0);
     //     assert_eq!(n1, n2);
     // }
 
     // #[test]
     // fn test_eq_complex_and_int() {
-    //     let n1 = Numeric::Complex(Complex::new(5.0, 0.0));
-    //     let n2 = Numeric::Int(5);
+    //     let n1 = Numerical::Complex(Complex::new(5.0, 0.0));
+    //     let n2 = Numerical::Int(5);
     //     assert_eq!(n1, n2);
     // }
 
     
     // #[test]
     // fn test_numeric() {
-    //     // assert_eq!(Numeric::Int(1)+Numeric::Int(2), Numeric::Int(2));
+    //     // assert_eq!(Numerical::Int(1)+Numerical::Int(2), Numerical::Int(2));
     //     // assert_eq!(Operator::MUL.as_str(), "*");
     //     // assert_eq!(Operator::NONCOMMUTE.as_str(), "@");
     //     // assert_eq!(Operator::POWER.as_str(), "^");
