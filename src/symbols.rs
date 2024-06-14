@@ -27,8 +27,16 @@ impl Numerical {
     }
 }
 
-impl Add for Numeric {
-    type Output = Numeric;
+impl fmt::Display for Numerical {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Numerical::Int(value) => write!(f, "{}", value),
+            Numerical::Float(value) => write!(f, "{}", value),
+            Numerical::Complex(value) => write!(f, "{} + {}i", value.re, value.im),
+        }
+    }
+}
+
 
     fn add(self, rhs: Self) -> Self {
 	match (self, rhs) {
