@@ -1,5 +1,5 @@
 use num::Complex;
-use std::ops::Add;
+use std::ops::{Add, Div, Mul, Sub};
 use std::fmt;
 
 
@@ -37,23 +37,43 @@ impl fmt::Display for Numerical {
     }
 }
 
-impl Add for Numerical {
-    type Output = Numerical;
+macro_rules! impl_binary_operator {
+    ($binop:ident, $method:ident) => {
+        impl $binop for Numerical {
+            type Output = Self;
+            
+            fn $method(self, other: Self) -> Self {
+                use Numerical::*;
+                use num::Complex as complex;
 
-    fn add(self, rhs: Self) -> Self {
-	match (self, rhs) {
-	    (Numerical::Int(i1), Numerical::Int(i2)) => Numerical::Int(i1 + i2),
-	    (Numerical::Int(i1), Numerical::Float(f2)) => Numerical::Float(i1 as f64 + f2),
-	    (Numerical::Int(i1), Numerical::Complex(c2)) => Numerical::Complex(Complex::new(i1 as f64, 0.) + c2),
-	    (Numerical::Float(f1), Numerical::Int(i2)) => Numerical::Float(f1 + i2 as f64),
-	    (Numerical::Float(f1), Numerical::Float(f2)) => Numerical::Float(f1 + f2),
-	    (Numerical::Float(f1), Numerical::Complex(c2)) => Numerical::Complex(Complex::new(f1, 0.) + c2),
-	    (Numerical::Complex(c1), Numerical::Int(i2)) => Numerical::Complex(c1 + Complex::new(i2 as f64,0.)),
-	    (Numerical::Complex(c1), Numerical::Float(f2)) => Numerical::Complex(c1 + Complex::new(f2, 0.)),
-	    (Numerical::Complex(c1), Numerical::Complex(c2)) => Numerical::Complex(c1+c2),
- 	}
-    }
+                match (self, other) {
+                    // Complex and Complex
+                    (Complex(a), Complex(b)) => Complex(a.$method(b)),
+                    
+                    // Complex with Float or Int
+                    (Complex(a), Float(b)) | (Float(b), Complex(a)) => Complex(a.$method(complex::from(b))),
+                    (Complex(a), Int(b)) | (Int(b), Complex(a)) => Complex(a.$method(complex::from(b as f64))),
+                    
+                    // Float and Float
+                    (Float(a), Float(b)) => Float(a.$method(b)),
+                    
+                    // Float with Int
+                    (Float(a), Int(b)) => Float(a.$method(b as f64)),
+                    (Int(a), Float(b)) => Float((a as f64).$method(b)),
+                    
+                    // Int and Int
+                    (Int(a), Int(b)) => Int(a.$method(b)),
+                }
+            }
+        }
+    };
 }
+
+// Implement the binary operators for Numerical using the macro
+impl_binary_operator!(Add, add);
+impl_binary_operator!(Sub, sub);
+impl_binary_operator!(Mul, mul);
+impl_binary_operator!(Div, div);
 
 #[derive(Debug, PartialEq)]
 pub struct Symbol (&'static str);
