@@ -3,7 +3,7 @@ use std::ops::{Add, Div, Mul, Sub};
 use std::fmt;
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Numerical {
     Int(i64),
     Float(f64),
