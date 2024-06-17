@@ -38,8 +38,8 @@ impl fmt::Display for Numerical {
 }
 
 macro_rules! impl_binary_operator_for_numerical {
-    ($binop:ident, $method:ident) => {
-        impl $binop for Numerical {
+    ($trait:ident, $method:ident) => {
+        impl $trait for Numerical {
             type Output = Self;
             
             fn $method(self, other: Self) -> Self {
