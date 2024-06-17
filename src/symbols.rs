@@ -37,7 +37,7 @@ impl fmt::Display for Numerical {
     }
 }
 
-macro_rules! impl_binary_operator {
+macro_rules! impl_binary_operator_for_numerical {
     ($binop:ident, $method:ident) => {
         impl $binop for Numerical {
             type Output = Self;
@@ -70,10 +70,10 @@ macro_rules! impl_binary_operator {
 }
 
 // Implement the binary operators for Numerical using the macro
-impl_binary_operator!(Add, add);
-impl_binary_operator!(Sub, sub);
-impl_binary_operator!(Mul, mul);
-impl_binary_operator!(Div, div);
+impl_binary_operator_for_numerical!(Add, add);
+impl_binary_operator_for_numerical!(Sub, sub);
+impl_binary_operator_for_numerical!(Mul, mul);
+impl_binary_operator_for_numerical!(Div, div);
 
 #[derive(Debug, PartialEq)]
 pub struct Symbol (&'static str);

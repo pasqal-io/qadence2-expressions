@@ -11,6 +11,7 @@ impl Operator {
     pub fn as_str(&self) -> &'static str {
         match self {
             Operator::ADD => "+",
+	    
 	    Operator::MUL => "*",
 	    Operator::NONCOMMUTE => "@",
 	    Operator::POWER => "^",
