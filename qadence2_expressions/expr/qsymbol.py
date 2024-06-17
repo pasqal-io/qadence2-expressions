@@ -3,78 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from .expr import NonCommutative
-
-
-class Support:
-    def __init__(
-        self,
-        *indices: int,
-        target: tuple[int, ...] | None = None,
-        control: tuple[int, ...] | None = None,
-    ) -> None:
-        if indices and (target or control):
-            raise SyntaxError(
-                "Please, provide either qubit indices or target-control tuples"
-            )
-
-        if control and not target:
-            raise SyntaxError("A controlled operation needs both, control and target.")
-
-        if indices:
-            self.target: tuple[int, ...] = tuple(sorted(indices))
-            self.control: tuple[int, ...] = ()
-        else:
-            self.target = tuple(sorted(target)) if target else ()
-            self.control = tuple(sorted(control)) if control else ()
-
-    def __repr__(self) ->str:
-        targets = "*" if not self.target else " ".join(map(str, self.target))
-        controls = " ".join(map(str, self.control))
-        return f"[{targets}]" if  not controls else f"[{targets} ; {controls}]"
-
-    def __hash__(self) -> int:
-        return hash((frozenset(self.target), frozenset(self.control)))
-
-    @classmethod
-    def all(cls) -> Support:
-        return Support()
-    
-    @property
-    def subspace(self) -> set[int]:
-        return set(self.target) | set(self.control)
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Support):
-            return NotImplemented
-
-        return self.target == other.target and self.control == other.control
-    
-    def __lt__(self, other: object) -> bool:
-        if not isinstance(other, Support):
-            return NotImplemented
-        
-        if self.control == () or other.control == ():
-            return self.target < other.target
-        
-        return self.target < other.target and self.control < other.control
-    
-    def same_subspace(self, other: Support) -> bool:
-        return self.target == other.target and self.target == other.target
-
-    def overlap_with(self, other: Support) -> bool:
-        # A support applied to all qubits overlaps with any support.
-        if self.target == () or other.target == ():
-            return True
-        
-        # "Control" is not an operation. Whenever two supports have the same
-        # control subspace, only the targets are taking in account.
-        if self.control == other.control:
-            lhs = set(self.target)
-            rhs = set(other.target)
-            return bool(lhs & rhs)
-        
-        return bool(self.subspace & other.subspace)
-    
+from .qubit_support import Support
 
 class QSymbol(NonCommutative):
     """QSymbol class define quantum operators and quantum gates.
@@ -141,10 +70,7 @@ class QSymbol(NonCommutative):
             return self.name == other.name
 
         if not (self.is_hermitian or other.is_hermitian):
-            return (
-                self.name == other.name
-                and self.is_dagger ^ other.is_dagger
-            )
+            return self.name == other.name and self.is_dagger ^ other.is_dagger
 
         return False
 
