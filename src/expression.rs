@@ -90,10 +90,10 @@ macro_rules! impl_binary_operator_for_expression {
 }
 
 // Applying the macro to implement Add, Sub, Mul, and Div for Expression
-impl_expression_operator!(Add, add, Operator::ADD);
-impl_expression_operator!(Sub, sub, Operator::SUB);
-impl_expression_operator!(Mul, mul, Operator::MUL);
-impl_expression_operator!(Div, div, Operator::DIV);
+impl_binary_operator_for_expression!(Add, add, Operator::ADD);
+// impl_binary_operator_for_expression!(Sub, sub, Operator::SUB);
+impl_binary_operator_for_expression!(Mul, mul, Operator::MUL);
+// impl_binary_operator_for_expression!(Div, div, Operator::DIV);
 
 
 
