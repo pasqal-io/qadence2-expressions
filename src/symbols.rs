@@ -50,9 +50,12 @@ macro_rules! impl_binary_operator_for_numerical {
                     // Complex and Complex
                     (Complex(a), Complex(b)) => Complex(a.$method(b)),
                     
-                    // Complex with Float or Int
+                    // Complex with Float
                     (Complex(a), Float(b)) | (Float(b), Complex(a)) => Complex(a.$method(complex::from(b))),
-                    (Complex(a), Int(b)) | (Int(b), Complex(a)) => Complex(a.$method(complex::from(b as f64))),
+
+		    // Complex with Int
+                    (Complex(a), Int(b)) => Complex(a.$method(complex::from(b as f64))),
+		    (Int(a), Complex(b)) => Complex(complex::from(a as f64).$method(b)),
                     
                     // Float and Float
                     (Float(a), Float(b)) => Float(a.$method(b)),
