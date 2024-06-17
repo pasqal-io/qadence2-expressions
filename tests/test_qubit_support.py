@@ -112,14 +112,28 @@ def test_support_not_overlap() -> None:
     assert not s1.overlap_with(s2)
 
 
-def test_join() -> None:
-    s1 = Support()
-    s2 = Support(1, 3)
-    s3 = Support(4, 5)
-    s4 = Support(target=(3,), control=(1, 2))
+def test_join_self() -> None:
+    s = Support(target=(3,), control=(1, 2))
+    
+    assert s.join(s) == s
 
-    assert s1.join(s2) == Support()
-    assert s1.join(s3) == Support()
-    assert s2.join(s3) == Support(1, 3, 4, 5)
-    assert s2.join(s4) == Support(1, 2, 3)
-    assert s3.join(s4) == Support(target=(3, 4, 5), control=(1, 2))
+
+def test_join_target_all() -> None:
+    s1 = Support(1)
+    s2 = Support(target=(2, 3), control=(1,))
+    
+    assert s1.join(Support.target_all()) == Support.target_all()
+    assert s2.join(Support.target_all()) == Support.target_all()
+
+
+def test_join_target_control_overlap() -> None:
+    s1 = Support(1, 3)
+    s2 = Support(target=(3,), control=(1, 2))
+    assert s1.join(s2) == Support(1, 2, 3)
+
+
+def test_join() -> None:
+    s1 = Support(target=(3,), control=(1, 2))
+    s2 = Support(target=(0,), control=(1,))
+
+    assert s1.join(s2) == Support(target=(0, 3), control=(1, 2))
