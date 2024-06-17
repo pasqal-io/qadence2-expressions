@@ -1,7 +1,7 @@
 use crate::operator::Operator;
 use crate::symbols::{Numerical,Symbol};
 
-use std::ops::Add;
+use std::ops::{Add,Div,Mul,Sub};
 use num::Complex;
 
 
