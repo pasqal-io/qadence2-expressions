@@ -70,13 +70,13 @@ macro_rules! impl_binary_operator_for_expression {
                     },
 
                     // Left side is an Expression with the same operator, append the right side.
-                    (Expr { head: op_lhs, mut args: args_lhs }, rhs) if op_lhs == operator => {
+                    (Expr { head: op_lhs, args: mut args_lhs }, rhs) if op_lhs == operator => {
                         args_lhs.push(Box::new(rhs));
                         Expr { head: operator, args: args_lhs }
                     },
 
                     // Right side is an Expression with the same operator, prepend the left side.
-                    (lhs, Expr { head: op_rhs, mut args: args_rhs }) if op_rhs == operator => {
+                    (lhs, Expr { head: op_rhs, args: mut args_rhs }) if op_rhs == operator => {
                         args_rhs.insert(0, Box::new(lhs));
                         Expr { head: operator, args: args_rhs }
                     },
