@@ -4,7 +4,7 @@ from qadence2_expressions import Symbol
 from qadence2_expressions.expr import Expr, Operator
 
 
-def test_symbol() -> None:
+def test_symbol_arithimetic() -> None:
     a = Symbol("a")
 
     assert a + 0 == a
@@ -21,18 +21,26 @@ def test_symbol() -> None:
     assert 2**a == Expr(Operator.POWER, 2, a)
 
 
-def test_expression() -> None:
+def test_expression_default_simplifications() -> None:
     a = Symbol("a")
     b = Symbol("b")
 
-    # Default simplifications
     assert (2 * a) * (3 * a) == 6 * a**2
     assert a / (2 * a) == 0.5
     assert (a + b) * (a - b) == a**2 - b**2
     assert (a + b) * (a + b) == a**2 + 2 * a * b + b**2
 
-    # Power of sum is not expanded
+
+def test_expression_power_sum_not_expand() -> None:
+    a = Symbol("a")
+    b = Symbol("b")
+
+    assert (a + b) * (a + b) == a**2 + 2 * a * b + b**2
     assert (a + b) ** 2 != a**2 + 2 * a * b + b**2
+
+def test_expression_power_sum_simplification() -> None:
+    a = Symbol("a")
+    b = Symbol("b")
 
     lhs = (a + b) * (a + b) ** 0.5 / (a + b) ** 2
     rhs = (a + b) ** -0.5

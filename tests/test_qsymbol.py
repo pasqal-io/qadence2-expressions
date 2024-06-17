@@ -1,30 +1,35 @@
 from __future__ import annotations
 
-from typing import Any
-
-from qadence2_expressions import QSymbol, Symbol, cos, sin
+from qadence2_expressions import QSymbol
 from qadence2_expressions.expr import Expr, Operator
 
 
-def test_qsymbol_basics() -> None:
+def test_qsymbol_hermitian() -> None:
     X = QSymbol("X")
     Y = QSymbol("Y")
 
-    # Hermitian property
     assert X.is_hermitian
     assert X * X == 1
 
-    # Different subspaces
+
+def test_qsymbol_distinct_subspaces() -> None:
+    X = QSymbol("X")
+    Y = QSymbol("Y")
+
     assert X(1) * X(3) * X(2) == Expr(Operator.NONCOMMUTE, X(1), X(2), X(3))
     assert X(1) * Y(3) * X(2) == Expr(Operator.NONCOMMUTE, X(1), X(2), Y(3))
 
-    # Same subspaces
-    assert X(1) * Y(2) * X(1) == Expr(Operator.NONCOMMUTE, Y(2))
 
-    # Subspace overlap
+def test_qsymbol_subspace_overlap() -> None:
+    X = QSymbol("X")
+    Y = QSymbol("Y")
+
+    assert X(1) * Y() * X(1) == Expr(Operator.NONCOMMUTE, X(1), Y(), X(1))
     assert X(1) * Y(1, 2) * X(1) == Expr(Operator.NONCOMMUTE, X(1), Y(1, 2), X(1))
+    assert X(1) * Y(3, 2) * X(1) == Expr(Operator.NONCOMMUTE, Y(2, 3))
 
-    # Controlled support
+
+def test_qsymbol_target_control() -> None:
     NOT = QSymbol("NOT")
 
     op1 = NOT(control=(1,), target=(2,))
