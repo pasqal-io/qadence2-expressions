@@ -21,11 +21,19 @@ class Support:
             raise SyntaxError("A controlled operation needs both, control and target.")
 
         if indices:
-            self.target: tuple[int, ...] = indices
+            self.target: tuple[int, ...] = tuple(sorted(indices))
             self.control: tuple[int, ...] = ()
         else:
-            self.target = target or ()
-            self.control = control or ()
+            self.target = tuple(sorted(target)) if target else ()
+            self.control = tuple(sorted(control)) if control else ()
+
+    def __repr__(self) ->str:
+        targets = "*" if not self.target else " ".join(map(str, self.target))
+        controls = " ".join(map(str, self.control))
+        return f"[{targets}]" if  not controls else f"[{targets} ; {controls}]"
+
+    def __hash__(self) -> int:
+        return hash((frozenset(self.target), frozenset(self.control)))
 
     @classmethod
     def all(cls) -> Support:
@@ -39,14 +47,32 @@ class Support:
         if not isinstance(other, Support):
             return NotImplemented
 
-        return set(self.target) == set(other.target) and set(self.control) == set(
-            other.control
-        )
+        return self.target == other.target and self.control == other.control
+    
+    def __lt__(self, other: object) -> bool:
+        if not isinstance(other, Support):
+            return NotImplemented
+        
+        if self.control == () or other.control == ():
+            return self.target < other.target
+        
+        return self.target < other.target and self.control < other.control
     
     def same_subspace(self, other: Support) -> bool:
-        return self.subspace == other.subspace
-    
-    def collide_with(self, other: Support) -> bool:
+        return self.target == other.target and self.target == other.target
+
+    def overlap_with(self, other: Support) -> bool:
+        # A support applied to all qubits overlaps with any support.
+        if self.target == () or other.target == ():
+            return True
+        
+        # "Control" is not an operation. Whenever two supports have the same
+        # control subspace, only the targets are taking in account.
+        if self.control == other.control:
+            lhs = set(self.target)
+            rhs = set(other.target)
+            return bool(lhs & rhs)
+        
         return bool(self.subspace & other.subspace)
     
 
@@ -89,8 +115,7 @@ class QSymbol(NonCommutative):
 
     def __str__(self) -> str:
         dagger = "'" if self.is_dagger else ""
-        params = "" if not self.params else "(" + ",".join(map(str, self.params)) + ")"
-        return f"{self.name}{dagger}{params}{self.support}"
+        return f"{self.name}{dagger}{self.support}"
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, QSymbol):
@@ -113,14 +138,12 @@ class QSymbol(NonCommutative):
             return NotImplemented
 
         if self.is_hermitian and other.is_hermitian:
-            return self.name == other.name and self.same_subspace(other)
+            return self.name == other.name
 
         if not (self.is_hermitian or other.is_hermitian):
             return (
                 self.name == other.name
-                and self.same_subspace(other)
                 and self.is_dagger ^ other.is_dagger
-                and self.params == other.params
             )
 
         return False
@@ -138,12 +161,12 @@ class QSymbol(NonCommutative):
         if self.support.same_subspace(other.support) and self.is_dagger_of(other):
             return []
 
-        if self.support.same_subspace(other.support) or self.support.collide_with(other.support):
+        if self.support.overlap_with(other.support):
             return [self, other]
 
         return [other, self] if other.support < self.support else [self, other]
 
-    def __rmatmul__(self, other: list) -> list:
+    def __rmatmul__(self, other: list[QSymbol]) -> list:
         """Handles the cancelation properties for multiplication of noncommutative
         expression when a QSymbol is used in a expression.
         """
@@ -160,7 +183,7 @@ class QSymbol(NonCommutative):
         for i in range(len(other) - 1, -1, -1):
             ii = i + 1
 
-            if other[i].collide_with(self):
+            if other[i].support.overlap_with(self.support):
                 acc = [*other[:i], *(other[i] @ self), *other[ii:]]
                 break
 

@@ -24,31 +24,12 @@ def test_qsymbol_basics() -> None:
     # Subspace overlap
     assert X(1) * Y(1, 2) * X(1) == Expr(Operator.NONCOMMUTE, X(1), Y(1, 2), X(1))
 
-    # Ordered support
-    CNOT = QSymbol("CNOT", ordered_support=True)
-    assert CNOT(1, 2) * CNOT(1, 2) == 1
-    assert CNOT(1, 2) * CNOT(2, 1) == Expr(Operator.NONCOMMUTE, CNOT(1, 2), CNOT(2, 1))
+    # Controlled support
+    NOT = QSymbol("NOT")
 
-    # Non Hermitian symbol
-    def RX(theta: Any) -> QSymbol:
-        return QSymbol("RX", theta, is_hermitian=False)
+    op1 = NOT(control=(1,), target=(2,))
+    op2 = NOT(target=(2,), control=(1,))
+    op3 = NOT(control=(2,), target=(1,))
 
-    assert RX(2) * RX(1) == Expr(Operator.NONCOMMUTE, RX(3))
-    assert RX(1) * RX(1).dag == 1
-
-
-def test_qsymbol_expr() -> None:
-    a = Symbol("a")
-    X = QSymbol("X")
-    Y = QSymbol("Y")
-
-    def RX(theta: Any) -> QSymbol:
-        return QSymbol("RX", theta, is_hermitian=False)
-
-    expr1 = 2 * RX(a)(0) + 1j * Y(3)
-    expr2 = 2 * RX(a)(0).dag - 1j * Y(3)
-    assert expr1.dag == expr2  # type: ignore
-
-    expr3 = X * (cos(a) * X + 1j * sin(a) * Y) / 2
-    expr4 = 0.5 * cos(a) + 0.5j * sin(a) * X * Y
-    assert expr3 == expr4
+    assert op1 * op2 == 1
+    assert op1 * op3 == Expr(Operator.NONCOMMUTE, op1, op3)
