@@ -38,6 +38,7 @@ def test_expression_power_sum_not_expand() -> None:
     assert (a + b) * (a + b) == a**2 + 2 * a * b + b**2
     assert (a + b) ** 2 != a**2 + 2 * a * b + b**2
 
+
 def test_expression_power_sum_simplification() -> None:
     a = Symbol("a")
     b = Symbol("b")

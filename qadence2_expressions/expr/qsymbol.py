@@ -5,6 +5,7 @@ from typing import Any
 from .expr import NonCommutative
 from .qubit_support import Support
 
+
 class QSymbol(NonCommutative):
     """QSymbol class define quantum operators and quantum gates.
 
@@ -84,7 +85,7 @@ class QSymbol(NonCommutative):
         if not isinstance(other, QSymbol):
             return NotImplemented
 
-        if self.support.same_subspace(other.support) and self.is_dagger_of(other):
+        if self.support == other.support and self.is_dagger_of(other):
             return []
 
         if self.support.overlap_with(other.support):

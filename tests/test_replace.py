@@ -15,7 +15,7 @@ def test_replace_symbol_by_symbol() -> None:
 def test_replace_symbol_by_valuel() -> None:
     a = Symbol("a")
     b = Symbol("b")
-    
+
     expr0 = 2 * a + b
     expr1 = replace(expr0, {a: 2, b: -1})
     assert expr1 == 3
@@ -24,7 +24,7 @@ def test_replace_symbol_by_valuel() -> None:
 def test_replace_symbol_by_expression() -> None:
     a = Symbol("a")
     b = Symbol("b")
-    
+
     expr0 = 2 + a
     expr1 = replace(expr0, {a: a + b})
     expr2 = replace(expr1, {b: a})
