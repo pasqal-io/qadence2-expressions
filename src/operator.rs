@@ -1,21 +1,22 @@
 #[derive(Debug, PartialEq)]
 pub enum Operator {
     ADD,
+    CALL,
+    // DIV,
     MUL,
     NONCOMMUTE,
     POWER,
-    CALL,
+    // SUB,
 }
 
 impl Operator {
     pub fn as_str(&self) -> &'static str {
         match self {
             Operator::ADD => "+",
-	    
+	    Operator::CALL => "call",
 	    Operator::MUL => "*",
 	    Operator::NONCOMMUTE => "@",
 	    Operator::POWER => "^",
-	    Operator::CALL => "call",
         }
     }
 }
