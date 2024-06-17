@@ -114,14 +114,14 @@ def test_support_not_overlap() -> None:
 
 def test_join_self() -> None:
     s = Support(target=(3,), control=(1, 2))
-    
+
     assert s.join(s) == s
 
 
 def test_join_target_all() -> None:
     s1 = Support(1)
     s2 = Support(target=(2, 3), control=(1,))
-    
+
     assert s1.join(Support.target_all()) == Support.target_all()
     assert s2.join(Support.target_all()) == Support.target_all()
 
