@@ -1,12 +1,10 @@
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Operator {
     ADD,
     CALL,
-    // DIV,
     MUL,
     NONCOMMUTE,
     POWER,
-    // SUB,
 }
 
 impl Operator {
