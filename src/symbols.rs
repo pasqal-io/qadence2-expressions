@@ -51,7 +51,8 @@ macro_rules! impl_binary_operator_for_numerical {
                     (Complex(a), Complex(b)) => Complex(a.$method(b)),
                     
                     // Complex with Float
-                    (Complex(a), Float(b)) | (Float(b), Complex(a)) => Complex(a.$method(complex::from(b))),
+                    (Complex(a), Float(b)) => Complex(a.$method(complex::from(b))),
+                    (Float(a), Complex(b)) => Complex(complex::from(a).$method(b)),
 
 		    // Complex with Int
                     (Complex(a), Int(b)) => Complex(a.$method(complex::from(b as f64))),
@@ -128,61 +129,53 @@ mod tests {
     }
 
     #[test]
-    fn test_numerical_add_float_to_float() {
+    fn test_numerical_binary_ops_float_to_float() {
         let n1 = Numerical::float(5.0);
         let n2 = Numerical::float(10.0);
-        assert_eq!(n1 + n2, Numerical::float(15.0));
+        assert_eq!(n1 + n2, Numerical::Float(15.0));
+        assert_eq!(n1 - n2, Numerical::Float(-5.0));
+        assert_eq!(n1 * n2, Numerical::Float(50.0));
+        assert_eq!(n1 / n2, Numerical::Float(0.5));
     }
     
     #[test]
-    fn test_numerical_add_float_to_complex() {
+    fn test_numerical_binary_ops_float_to_complex() {
         let n1 = Numerical::float(5.0);
         let n2 = Numerical::complex(3.0, 4.0);
-        assert_eq!(n1 + n2, Numerical::complex(8.0, 4.0));
+        assert_eq!(n1 + n2, Numerical::Complex(Complex::new(8.0, 4.0)));
+        assert_eq!(n1 - n2, Numerical::Complex(Complex::new(2.0, -4.0)));
+        assert_eq!(n1 * n2, Numerical::Complex(Complex::new(15.0, 20.0)));
+        assert_eq!(n1 / n2, Numerical::Complex(Complex::new(15.0 / 25.0, -20.0 / 25.0)));
     }
     
     #[test]
-    fn test_numerical_add_complex_to_int() {
+    fn test_numerical_binary_ops_complex_to_int() {
         let n1 = Numerical::complex(5.0, 4.0);
         let n2 = Numerical::int(3);
-        assert_eq!(n1 + n2, Numerical::complex(8.0, 4.0));
+        assert_eq!(n1 + n2, Numerical::Complex(Complex::new(8.0, 4.0)));
+        assert_eq!(n1 - n2, Numerical::Complex(Complex::new(2.0, 4.0)));
+        assert_eq!(n1 * n2, Numerical::Complex(Complex::new(15.0, 12.0)));
+        assert_eq!(n1 / n2, Numerical::Complex(Complex::new(5.0 / 3.0, 4.0 / 3.0)));
     }
     
     #[test]
-    fn test_numerical_add_complex_to_float() {
+    fn test_numerical_binary_ops_complex_to_float() {
         let n1 = Numerical::complex(5.0, 4.0);
         let n2 = Numerical::float(3.0);
-        assert_eq!(n1 + n2, Numerical::complex(8.0, 4.0));
+        assert_eq!(n1 + n2, Numerical::Complex(Complex::new(8.0, 4.0)));
+        assert_eq!(n1 - n2, Numerical::Complex(Complex::new(2.0, 4.0)));
+        assert_eq!(n1 * n2, Numerical::Complex(Complex::new(15.0, 12.0)));
+        assert_eq!(n1 / n2, Numerical::Complex(Complex::new(5.0 / 3.0, 4.0 / 3.0)));
     }
 
     #[test]
-    fn test_numerical_add_complex_to_complex() {
+    fn test_numerical_binary_ops_complex_to_complex() {
         let n1 = Numerical::complex(5.0, 4.0);
         let n2 = Numerical::complex(3.0, 2.0);
-        assert_eq!(n1 + n2, Numerical::complex(8.0, 6.0));
+        assert_eq!(n1 + n2, Numerical::Complex(Complex::new(8.0, 6.0)));
+        assert_eq!(n1 - n2, Numerical::Complex(Complex::new(2.0, 2.0)));
+        assert_eq!(n1 * n2, Numerical::Complex(Complex::new(7.0, 22.0)));
+        assert_eq!(n1 / n2, Numerical::Complex(Complex::new(23.0 / 13.0, 2.0 / 13.0)));
     }
     
-    // #[test]
-    // fn test_eq_int_and_float() {
-    //     let n1 = Numerical::Int(5);
-    //     let n2 = Numerical::Float(5.0);
-    //     assert_eq!(n1, n2);
-    // }
-
-    // #[test]
-    // fn test_eq_complex_and_int() {
-    //     let n1 = Numerical::Complex(Complex::new(5.0, 0.0));
-    //     let n2 = Numerical::Int(5);
-    //     assert_eq!(n1, n2);
-    // }
-
-    
-    // #[test]
-    // fn test_numeric() {
-    //     // assert_eq!(Numerical::Int(1)+Numerical::Int(2), Numerical::Int(2));
-    //     // assert_eq!(Operator::MUL.as_str(), "*");
-    //     // assert_eq!(Operator::NONCOMMUTE.as_str(), "@");
-    //     // assert_eq!(Operator::POWER.as_str(), "^");
-    //     // assert_eq!(Operator::CALL.as_str(), "call");
-    // }
 }
