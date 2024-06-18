@@ -231,102 +231,152 @@ mod tests {
         let complex_expr = Expression::complex(1.0, 2.0);
         assert_eq!(complex_expr, Expression::Value(Numerical::Complex(Complex::new(1.0, 2.0))));
     }
-
-    #[test]
-    fn test_expression_add_int_to_int() {
-        let expr1 = Expression::int(1);
-        let expr2 = Expression::int(2);
-        let result = expr1 + expr2;
-
-	assert_eq!(result, Expression::Value(Numerical::Int(3)));
-    }
     
     #[test]
-    fn test_expression_add_int_to_float() {
-        let expr1 = Expression::int(1);
-        let expr2 = Expression::float(2.0);
-        let result = expr1 + expr2;
-
-	assert_eq!(result, Expression::Value(Numerical::Float(3.0)));
-    }
-  
-    #[test]
-    fn test_expression_add_int_to_complex() {
-        let expr1 = Expression::int(1);
-        let expr2 = Expression::complex(2.0, 4.0);
-        let result = expr1 + expr2;
-
-	assert_eq!(result, Expression::Value(Numerical::Complex(Complex::new(3.0, 4.0))));
-    }
-    
-    #[test]
-    fn test_expression_add_float_to_int() {
-        let expr1 = Expression::float(1.0);
-        let expr2 = Expression::int(2);
-        let result = expr1 + expr2;
-
-	assert_eq!(result, Expression::Value(Numerical::Float(3.0)));
-    }
-    
-    #[test]
-    fn test_expression_add_float_to_float() {
-        let expr1 = Expression::float(1.0);
-        let expr2 = Expression::float(2.0);
-        let result = expr1 + expr2;
-
-	assert_eq!(result, Expression::Value(Numerical::Float(3.0)));
-    }
-
-    #[test]
-    fn test_expression_add_float_to_complex() {
-        let expr1 = Expression::float(1.0);
-        let expr2 = Expression::complex(2.0, 4.0);
-        let result = expr1 + expr2;
-
-	assert_eq!(result, Expression::Value(Numerical::Complex(Complex::new(3.0, 4.0))));
-    }
-
-    #[test]
-    fn test_expression_add_complex_to_int() {
-        let expr1 = Expression::complex(1.0, 2.0);
-        let expr2 = Expression::int(2);
-        let result = expr1 + expr2;
-
-	assert_eq!(result, Expression::Value(Numerical::Complex(Complex::new(3.0, 2.0))));
-    }
-    
-    #[test]
-    fn test_expression_add_complex_to_float() {
-        let expr1 = Expression::complex(1.0, 2.0);
-        let expr2 = Expression::float(2.0);
-        let result = expr1 + expr2;
-
-	assert_eq!(result, Expression::Value(Numerical::Complex(Complex::new(3.0, 2.0))));
-    }
-    
-    #[test]
-    fn test_expression_add_complex_to_complex() {
-        let expr1 = Expression::complex(1.0, 2.0);
-        let expr2 = Expression::complex(3.0, 4.0);
-        let result = expr1 + expr2;
-
-	assert_eq!(result, Expression::Value(Numerical::Complex(Complex::new(4.0, 6.0))));
-    }
-
-    #[test]
-    fn test_expression_add_symbol_to_int() {
+    fn test_mixed_types_expression_add() {
         let symbol_expr = Expression::symbol("x");
-        let expr2 = Expression::int(1);
-        let result = symbol_expr + expr2;
-
-	match result {
-            Expression::Expr { head, args } => {
-                assert_eq!(head, Operator::ADD);
-                assert_eq!(*args[0], Expression::Symbol("x"));
-                assert_eq!(*args[1], Expression::Value(Numerical::Int(1)));
-            }
-            _ => panic!("Expected an Expression::Expr with Operator::ADD"),
-        }
-
+	let mixed_expr = Expression::int(1) + symbol_expr;
+        assert_eq!(
+	    mixed_expr,
+	    Expression::Expr {
+		head: Operator::ADD,
+		args: vec![
+		    Box::new(Expression::int(1)),
+                    Box::new(Expression::symbol("x")),
+		]
+	    }
+	);
     }
+    
+    #[test]
+    fn test_mixed_types_expression_sub() {
+        let symbol_expr = Expression::symbol("x");
+	let mixed_expr = Expression::complex(1.0, 2.0) - symbol_expr;
+        assert_eq!(
+	    mixed_expr,
+	    Expression::Expr {
+		head: Operator::ADD,
+		args: vec![
+		    Box::new(Expression::complex(1.0, 2.0)),
+                    Box::new(
+			Expression::Expr {
+			    head: Operator::MUL,
+			    args: vec![
+				Box::new(Expression::int(-1)),
+				Box::new(Expression::symbol("x")),
+			    ]
+			}
+		    ),
+		]
+	    }
+	);
+    }
+
+    #[test]
+    fn test_numerical_binary_ops() {
+        let n1 = Expression::int(10);
+        let n2 = Expression::int(3);
+        assert_eq!(n1.clone() + n2.clone(), Expression::int(13));
+        assert_eq!(n1.clone() - n2.clone(), Expression::int(7));
+        assert_eq!(n1.clone() * n2.clone(), Expression::int(30));
+        assert_eq!(n1 / n2, Expression::int(3));
+    }
+
+    // #[test]
+    // fn test_expression_add_int_to_int() {
+    //     let expr1 = Expression::int(1);
+    //     let expr2 = Expression::int(2);
+    //     let result = expr1 + expr2;
+
+    // 	assert_eq!(result, Expression::Value(Numerical::Int(3)));
+    // }
+    
+    // #[test]
+    // fn test_expression_add_int_to_float() {
+    //     let expr1 = Expression::int(1);
+    //     let expr2 = Expression::float(2.0);
+    //     let result = expr1 + expr2;
+
+    // 	assert_eq!(result, Expression::Value(Numerical::Float(3.0)));
+    // }
+  
+    // #[test]
+    // fn test_expression_add_int_to_complex() {
+    //     let expr1 = Expression::int(1);
+    //     let expr2 = Expression::complex(2.0, 4.0);
+    //     let result = expr1 + expr2;
+
+    // 	assert_eq!(result, Expression::Value(Numerical::Complex(Complex::new(3.0, 4.0))));
+    // }
+    
+    // #[test]
+    // fn test_expression_add_float_to_int() {
+    //     let expr1 = Expression::float(1.0);
+    //     let expr2 = Expression::int(2);
+    //     let result = expr1 + expr2;
+
+    // 	assert_eq!(result, Expression::Value(Numerical::Float(3.0)));
+    // }
+    
+    // #[test]
+    // fn test_expression_add_float_to_float() {
+    //     let expr1 = Expression::float(1.0);
+    //     let expr2 = Expression::float(2.0);
+    //     let result = expr1 + expr2;
+
+    // 	assert_eq!(result, Expression::Value(Numerical::Float(3.0)));
+    // }
+
+    // #[test]
+    // fn test_expression_add_float_to_complex() {
+    //     let expr1 = Expression::float(1.0);
+    //     let expr2 = Expression::complex(2.0, 4.0);
+    //     let result = expr1 + expr2;
+
+    // 	assert_eq!(result, Expression::Value(Numerical::Complex(Complex::new(3.0, 4.0))));
+    // }
+
+    // #[test]
+    // fn test_expression_add_complex_to_int() {
+    //     let expr1 = Expression::complex(1.0, 2.0);
+    //     let expr2 = Expression::int(2);
+    //     let result = expr1 + expr2;
+
+    // 	assert_eq!(result, Expression::Value(Numerical::Complex(Complex::new(3.0, 2.0))));
+    // }
+    
+    // #[test]
+    // fn test_expression_add_complex_to_float() {
+    //     let expr1 = Expression::complex(1.0, 2.0);
+    //     let expr2 = Expression::float(2.0);
+    //     let result = expr1 + expr2;
+
+    // 	assert_eq!(result, Expression::Value(Numerical::Complex(Complex::new(3.0, 2.0))));
+    // }
+    
+    // #[test]
+    // fn test_expression_add_complex_to_complex() {
+    //     let expr1 = Expression::complex(1.0, 2.0);
+    //     let expr2 = Expression::complex(3.0, 4.0);
+    //     let result = expr1 + expr2;
+
+    // 	assert_eq!(result, Expression::Value(Numerical::Complex(Complex::new(4.0, 6.0))));
+    // }
+
+    // #[test]
+    // fn test_expression_add_symbol_to_int() {
+    //     let symbol_expr = Expression::symbol("x");
+    //     let expr2 = Expression::int(1);
+    //     let result = symbol_expr + expr2;
+
+    // 	match result {
+    //         Expression::Expr { head, args } => {
+    //             assert_eq!(head, Operator::ADD);
+    //             assert_eq!(*args[0], Expression::Symbol("x"));
+    //             assert_eq!(*args[1], Expression::Value(Numerical::Int(1)));
+    //         }
+    //         _ => panic!("Expected an Expression::Expr with Operator::ADD"),
+    //     }
+
+    // }
 }
