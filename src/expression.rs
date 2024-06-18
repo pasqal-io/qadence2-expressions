@@ -43,7 +43,7 @@ impl Add for Expression {
 
 	    // Both are Expressions with the same Operator::ADD, merge their arguments.
 	    (Expr { head: ADD, args: args_lhs }, Expr { head: ADD, args: args_rhs }) => {
-		let args = args_lhs.into_iter().chain(args_rhs.into_iter()).collect();
+		let args = args_lhs.into_iter().chain(args_rhs).collect();
 		Expr { head: ADD, args }
 	    },
 
@@ -104,7 +104,7 @@ impl Mul for Expression {
 
 	    // Both are Expressions with the same Operator::MUL, merge their arguments.
 	    (Expr { head: MUL, args: args_lhs }, Expr { head: MUL, args: args_rhs }) => {
-		let args = args_lhs.into_iter().chain(args_rhs.into_iter()).collect();
+		let args = args_lhs.into_iter().chain(args_rhs).collect();
 		Expr { head: MUL, args }
 	    },
 
