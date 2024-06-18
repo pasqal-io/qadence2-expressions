@@ -44,6 +44,7 @@ macro_rules! impl_binary_operator_for_numerical {
             
             fn $method(self, other: Self) -> Self {
                 use Numerical::*;
+		// To disambiguate with the enum variant.
                 use num::Complex as complex;
 
                 match (self, other) {
