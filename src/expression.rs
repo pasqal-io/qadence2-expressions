@@ -77,7 +77,7 @@ macro_rules! impl_binary_operator_for_expression {
 
                     // Right side is an Expression with the same operator, prepend the left side.
                     (lhs, Expr { head: op_rhs, args: mut args_rhs }) if op_rhs == operator => {
-                        args_rhs.insert(0, Box::new(lhs));
+                        args_rhs.push(Box::new(lhs));
                         Expr { head: operator, args: args_rhs }
                     },
 
