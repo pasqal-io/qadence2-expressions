@@ -5,7 +5,7 @@ use std::ops::{Add,Div,Mul,Sub};
 use num::Complex;
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
     Symbol(&'static str),
     Value(Numerical),
