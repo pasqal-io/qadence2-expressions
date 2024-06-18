@@ -1,8 +1,7 @@
 use crate::operator::Operator;
-use crate::symbols::{Numerical,Symbol};
+use crate::symbols::Numerical;
 
 use std::ops::{Add,Div,Mul,Sub};
-use num::Complex;
 
 
 #[derive(Clone, Debug, PartialEq)]
@@ -207,6 +206,7 @@ impl Div for Expression {
 #[cfg(test)]
 mod tests {
     use super::*; // This imports everything from the parent module
+    use num::Complex;
 
     #[test]
     fn test_symbol_expression() {
