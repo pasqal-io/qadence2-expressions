@@ -31,68 +31,174 @@ impl Expression {
     }
 }
 
-// impl Add for Expression {
-//     type Output = Expression;
+impl Add for Expression {
+    type Output = Expression;
+    
+    fn add(self, rhs: Self) -> Self::Output {
+	use Expression::{Expr, Value};
+	use Operator::ADD;
+    
+	match (self, rhs) {
+	    // Numerical values are operated directly.
+	    (Value(lhs), Value(rhs)) => Value(lhs + rhs),
 
-//     fn add(self, rhs: Self) -> Self::Output {
-//         // If both sides are Numerical, add them directly
-//         match (self, rhs) {
-//             (Expression::Value(lhs), Expression::Value(rhs)) => {
-//                 Expression::Value(lhs + rhs)
-//             }
-//             // For other cases, create an Expression::Expr with Operator::Add
-//             (lhs, rhs) => Expression::Expr {
-//                 head: Operator::ADD,
-//                 args: vec![Box::new(lhs), Box::new(rhs)],
-//             },
-//         }
-//     }
-// }
+	    // Both are Expressions with the same Operator::ADD, merge their arguments.
+	    (Expr { head: ADD, args: args_lhs }, Expr { head: ADD, args: args_rhs }) => {
+		let args = args_lhs.into_iter().chain(args_rhs.into_iter()).collect();
+		Expr { head: ADD, args }
+	    },
 
-// Macro to implement binary operators for the Expression enum
-macro_rules! impl_binary_operator_for_expression {
-    ($trait:ident, $method:ident, $operator:expr) => {
-        impl $trait for Expression {
-            type Output = Self;
+	    // Left side is an Expression with Operator::ADD, append the right side.
+	    (Expr { head: ADD, args: mut args_lhs }, rhs) => {
+		args_lhs.push(Box::new(rhs));
+		Expr { head: ADD, args: args_lhs }
+	    },
 
-            fn $method(self, other: Self) -> Self::Output {
-                use Expression::*;
-                let operator = $operator;
+	    // Right side is an Expression with Operator::ADD, prepend the left side.
+	    (lhs, Expr { head: ADD, args: mut args_rhs }) => {
+		args_rhs.push(Box::new(lhs));
+		Expr { head: ADD, args: args_rhs }
+	    },
 
-                match (self, other) {
-                    // Numerical values are operated directly.
-                    (Value(lhs), Value(rhs)) => Value(lhs.$method(rhs)),
-
-                    // Both are Expressions with the same operator, merge their arguments.
-                    (Expr { head: op_lhs, args: args_lhs }, Expr { head: op_rhs, args: args_rhs }) if op_lhs == operator && op_rhs == operator => {
-                        let args = args_lhs.into_iter().chain(args_rhs.into_iter()).collect();
-                        Expr { head: operator, args }
-                    },
-
-                    // Left side is an Expression with the same operator, append the right side.
-                    (Expr { head: op_lhs, args: mut args_lhs }, rhs) if op_lhs == operator => {
-                        args_lhs.push(Box::new(rhs));
-                        Expr { head: operator, args: args_lhs }
-                    },
-
-                    // Right side is an Expression with the same operator, prepend the left side.
-                    (lhs, Expr { head: op_rhs, args: mut args_rhs }) if op_rhs == operator => {
-                        args_rhs.push(Box::new(lhs));
-                        Expr { head: operator, args: args_rhs }
-                    },
-
-                    // Otherwise, create a new Expression::Expr with the given operator.
-                    (lhs, rhs) => Expr { head: operator, args: vec![Box::new(lhs), Box::new(rhs)] },
-                }
-            }
-        }
-    };
+	    // Otherwise, create a new Expression::Expr with Operator::ADD.
+	    (lhs, rhs) => Expr { head: ADD, args: vec![Box::new(lhs), Box::new(rhs)] },
+	}
+    }
 }
 
+impl Sub for Expression {
+    type Output = Expression;
+    
+    fn sub(self, rhs: Self) -> Self::Output {
+	use Expression::{Expr, Value};
+	use Operator::{ADD, MUL};
+
+	match (self, rhs) {
+            // Numerical values are operated directly.
+            (Value(lhs), Value(rhs)) => Value(lhs - rhs),
+
+            // Transform x - y into Expr(Add, [x, Expr(Mul, [-1, y])])
+            (lhs, rhs) => Expr {
+                head: ADD,
+                args: vec![
+                    Box::new(lhs),
+                    Box::new(Expr {
+                        head: MUL,
+                        args: vec![Box::new(Expression::int(-1)), Box::new(rhs)],
+                    }),
+                ],
+            },
+        }
+    }
+}
+
+impl Mul for Expression {
+    type Output = Expression;
+    
+    fn mul(self, rhs: Self) -> Self::Output {
+	use Expression::{Expr, Value};
+	use Operator::MUL;
+
+	match (self, rhs) {
+            // Numerical values are operated directly.
+            (Value(lhs), Value(rhs)) => Value(lhs * rhs),
+
+	    // Both are Expressions with the same Operator::MUL, merge their arguments.
+	    (Expr { head: MUL, args: args_lhs }, Expr { head: MUL, args: args_rhs }) => {
+		let args = args_lhs.into_iter().chain(args_rhs.into_iter()).collect();
+		Expr { head: MUL, args }
+	    },
+
+	    // Left side is an Expression with Operator::MUL, append the right side.
+	    (Expr { head: MUL, args: mut args_lhs }, rhs) => {
+		args_lhs.push(Box::new(rhs));
+		Expr { head: MUL, args: args_lhs }
+	    },
+
+	    // Right side is an Expression with Operator::MUL, prepend the left side.
+	    (lhs, Expr { head: MUL, args: mut args_rhs }) => {
+		args_rhs.push(Box::new(lhs));
+		Expr { head: MUL, args: args_rhs }
+	    },
+
+	    // Otherwise, create a new Expression::Expr with Operator::MUL.
+	    (lhs, rhs) => Expr { head: MUL, args: vec![Box::new(lhs), Box::new(rhs)] },
+	}
+    }
+}
+
+
+
+impl Div for Expression {
+    type Output = Expression;
+    
+    fn div(self, rhs: Self) -> Self::Output {
+	use Expression::{Expr, Value};
+	use Operator::{MUL, POWER};
+
+	match (self, rhs) {
+            // Numerical values are operated directly.
+            (Value(lhs), Value(rhs)) => Value(lhs / rhs),
+
+            // Transform x / y into Expr(MUL, [x, Expr(POWER, [y, -1])])
+            (lhs, rhs) => Expr {
+                head: MUL,
+                args: vec![
+                    Box::new(lhs),
+                    Box::new(Expr {
+                        head: POWER,
+                        args: vec![Box::new(rhs), Box::new(Expression::int(-1))],
+                    }),
+                ],
+            },
+        }
+    }
+}
+
+// Macro to implement binary operators for the Expression enum
+// macro_rules! impl_binary_operator_for_expression {
+//     ($trait:ident, $method:ident, $operator:expr) => {
+//         impl $trait for Expression {
+//             type Output = Self;
+
+//             fn $method(self, other: Self) -> Self::Output {
+//                 use Expression::*;
+//                 let operator = $operator;
+
+//                 match (self, other) {
+//                     // Numerical values are operated directly.
+//                     (Value(lhs), Value(rhs)) => Value(lhs.$method(rhs)),
+
+//                     // Both are Expressions with the same Operator::ADD, merge their arguments.
+//                     (Expr { head: Operator::ADD, args: args_lhs }, Expr { head: Operator::ADD, args: args_rhs }) => {
+//                         let args = args_lhs.into_iter().chain(args_rhs.into_iter()).collect();
+//                         Expr { head: Operator::ADD, args }
+//                     },
+
+//                     // Left side is an Expression with Operator::ADD, append the right side.
+//                     (Expr { head: Operator::ADD, args: mut args_lhs }, rhs) => {
+//                         args_lhs.push(Box::new(rhs));
+//                         Expr { head: Operator::ADD, args: args_lhs }
+//                     },
+
+//                     // Right side is an Expression with Operator::ADD, prepend the left side.
+//                     (lhs, Expr { head: Operator::ADD, args: mut args_rhs }) => {
+//                         args_rhs.push(Box::new(lhs));
+//                         Expr { head: Operator::ADD, args: args_rhs }
+//                     },
+
+//                     // Otherwise, create a new Expression::Expr with the given operator.
+//                     (lhs, rhs) => Expr { head: operator, args: vec![Box::new(lhs), Box::new(rhs)] },
+//                 }
+//             }
+//         }
+//     };
+// }
+
 // Applying the macro to implement Add, Sub, Mul, and Div for Expression
-impl_binary_operator_for_expression!(Add, add, Operator::ADD);
+// impl_binary_operator_for_expression!(Add, add, Operator::ADD);
 // impl_binary_operator_for_expression!(Sub, sub, Operator::SUB);
-impl_binary_operator_for_expression!(Mul, mul, Operator::MUL);
+// impl_binary_operator_for_expression!(Mul, mul, Operator::MUL);
 // impl_binary_operator_for_expression!(Div, div, Operator::DIV);
 
 
