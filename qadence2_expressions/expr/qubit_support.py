@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 
 class Support:
     """A class to handle the qubit support providing easy initialization for
@@ -23,7 +25,7 @@ class Support:
 
     def __init__(
         self,
-        *indices: int,
+        *indices: Any,
         target: tuple[int, ...] | None = None,
         control: tuple[int, ...] | None = None,
     ) -> None:
