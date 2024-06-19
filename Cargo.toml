@@ -19,6 +19,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 num = "0.4.3"
+num-traits = "0.2.19"
 pyo3 = "0.21.2"
 strum = "0.26.2"
 strum_macros = "0.26.3"
