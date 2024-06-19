@@ -74,30 +74,28 @@ impl Neg for Expression {
     }
 }
 
-
-
-impl Div for Expression {
+impl Pow<Expression> for Expression {
     type Output = Expression;
-    
-    fn div(self, rhs: Self) -> Self::Output {
+
+    fn pow(self, rhs: Self) -> Self::Output {
 	use Expression::{Expr, Value};
-	use Operator::{MUL, POWER};
+	use Operator::POW;
 
 	match (self, rhs) {
             // Numerical values are operated directly.
-            (Value(lhs), Value(rhs)) => Value(lhs / rhs),
+            (Value(lhs), Value(rhs)) => Value(lhs.pow(rhs)),
 
-            // Transform x / y into Expr(MUL, [x, Expr(POWER, [y, -1])])
-            (lhs, rhs) => Expr {
-                head: MUL,
-                args: vec![
-                    Box::new(lhs),
-                    Box::new(Expr {
-                        head: POWER,
-                        args: vec![Box::new(rhs), Box::new(Expression::int(-1))],
-                    }),
-                ],
+            // If the left side is already a power expression, chain the exponent.
+            (Expr { head: POW, args: mut args_lhs }, rhs) => {
+                args_lhs.push(Box::new(rhs));
+                Expr { head: POW, args: args_lhs }
             },
+
+            // Otherwise, create a new power expression.
+            (lhs, rhs) => Expr {
+                head: POW,
+                args: vbox![lhs, rhs],
+            }
         }
     }
 }
