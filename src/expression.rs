@@ -145,8 +145,61 @@ impl Pow<Expression> for Expression {
 // impl_binary_operator_for_expression!(Sub, sub, Operator::SUB);
 // impl_binary_operator_for_expression!(Mul, mul, Operator::MUL);
 // impl_binary_operator_for_expression!(Div, div, Operator::DIV);
+macro_rules! impl_binary_operator_for_expression {
+   ($trait:ident, $method:ident, $operator:path) => {
+       impl $trait for Expression {
+          type Output = Self;
 
+          fn $method(self, other: Self) -> Self {
+             use Expression::*;
 
+             match (self, other) {
+                (Value(x), Value(y)) => Value(x.$method(y)),
+
+                (Expr {head: $operator, args: args_lhs}, Expr {head: $operator, args: args_rhs}) => {
+                   let args = args_lhs.into_iter().chain(args_rhs.into_iter()).collect();
+                   Expr{head: $operator, args}
+                },
+
+                (Expr {head: $operator, args: mut args_lhs}, rhs) => {
+                   args_lhs.push(Box::new(rhs));
+                   Expr {head: $operator, args: args_lhs}
+                },
+
+                (lhs, Expr {head: $operator, args: mut args_rhs}) => {
+                   args_rhs.push(Box::new(lhs));
+                   Expr {head: $operator, args: args_rhs}
+                },
+
+                (lhs, rhs) => Expr{head: $operator, args: vbox![lhs, rhs]},
+             }
+          }
+       }
+   };
+
+   ($trait:ident, $method:ident, $operator:path, $inv:expr) => {
+      impl $trait for Expression {
+         type Output = Self;
+
+         fn $method(self, other: Self) -> Self {
+            use Expression::*;
+
+            match (self, other) {
+               (Value(x), Value(y)) => Value(x.$method(y)),
+               (lhs, rhs) => Expr {
+                  head: $operator,
+                  args: vbox![lhs, $inv(rhs)]
+               },
+            }
+         }
+      }
+   }
+}
+
+impl_binary_operator_for_expression!(Add, add, Operator::ADD);
+impl_binary_operator_for_expression!(Mul, mul, Operator::MUL);
+impl_binary_operator_for_expression!(Sub, sub, Operator:: ADD, |x: Expression| { x.neg() });
+impl_binary_operator_for_expression!(Div, div, Operator:: MUL, |x: Expression| { x.pow(Expression::float(-1.0)) });
 
 
 #[cfg(test)]
