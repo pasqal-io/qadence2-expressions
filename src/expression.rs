@@ -100,51 +100,6 @@ impl Pow<Expression> for Expression {
     }
 }
 
-// Macro to implement binary operators for the Expression enum
-// macro_rules! impl_binary_operator_for_expression {
-//     ($trait:ident, $method:ident, $operator:expr) => {
-//         impl $trait for Expression {
-//             type Output = Self;
-
-//             fn $method(self, other: Self) -> Self::Output {
-//                 use Expression::*;
-//                 let operator = $operator;
-
-//                 match (self, other) {
-//                     // Numerical values are operated directly.
-//                     (Value(lhs), Value(rhs)) => Value(lhs.$method(rhs)),
-
-//                     // Both are Expressions with the same Operator::ADD, merge their arguments.
-//                     (Expr { head: Operator::ADD, args: args_lhs }, Expr { head: Operator::ADD, args: args_rhs }) => {
-//                         let args = args_lhs.into_iter().chain(args_rhs.into_iter()).collect();
-//                         Expr { head: Operator::ADD, args }
-//                     },
-
-//                     // Left side is an Expression with Operator::ADD, append the right side.
-//                     (Expr { head: Operator::ADD, args: mut args_lhs }, rhs) => {
-//                         args_lhs.push(Box::new(rhs));
-//                         Expr { head: Operator::ADD, args: args_lhs }
-//                     },
-
-//                     // Right side is an Expression with Operator::ADD, prepend the left side.
-//                     (lhs, Expr { head: Operator::ADD, args: mut args_rhs }) => {
-//                         args_rhs.push(Box::new(lhs));
-//                         Expr { head: Operator::ADD, args: args_rhs }
-//                     },
-
-//                     // Otherwise, create a new Expression::Expr with the given operator.
-//                     (lhs, rhs) => Expr { head: operator, args: vec![Box::new(lhs), Box::new(rhs)] },
-//                 }
-//             }
-//         }
-//     };
-// }
-
-// Applying the macro to implement Add, Sub, Mul, and Div for Expression
-// impl_binary_operator_for_expression!(Add, add, Operator::ADD);
-// impl_binary_operator_for_expression!(Sub, sub, Operator::SUB);
-// impl_binary_operator_for_expression!(Mul, mul, Operator::MUL);
-// impl_binary_operator_for_expression!(Div, div, Operator::DIV);
 macro_rules! impl_binary_operator_for_expression {
    ($trait:ident, $method:ident, $operator:path) => {
        impl $trait for Expression {
