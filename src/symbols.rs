@@ -1,5 +1,6 @@
 use num::Complex;
-use std::ops::{Add, Div, Mul, Sub};
+use num_traits::pow::Pow;
+use std::ops::{Add, Div, Mul, Sub, Neg};
 use std::fmt;
 
 
@@ -37,12 +38,46 @@ impl fmt::Display for Numerical {
     }
 }
 
+impl Neg for Numerical {
+    type Output = Numerical;
+    
+    fn neg(self) -> Self::Output {
+	use Numerical::*;
+
+	match self {
+	    Int(i) => Numerical::int(-i),
+	    Float(f) => Numerical::float(-f),
+	    Complex(c) => Numerical::complex(-c.re, -c.im),
+	}
+    }
+}
+
+impl Pow<Numerical> for Numerical {
+    type Output = Numerical;
+
+    fn pow(self, rhs: Numerical) -> Self::Output {
+        use Numerical::*;
+	
+        match (self, rhs) {
+            (Int(base), Int(exp)) => Int((base as f64).powi(exp as i32) as i64),
+            (Float(base), Int(exp)) => Float(base.powi(exp as i32)),
+            (Complex(base), Int(exp)) => Complex(base.powi(exp as i32)),
+            (Float(base), Float(exp)) => Float(base.powf(exp)),
+            (Complex(base), Float(exp)) => Complex(base.powf(exp)),
+            (Int(base), Float(exp)) => Float((base as f64).powf(exp)),
+            (Complex(base), Complex(exp)) => Complex(base.powc(exp)),
+            (Float(base), Complex(exp)) => Complex((num::Complex::new(base, 0.0)).powc(exp)),
+            (Int(base), Complex(exp)) => Complex((num::Complex::new(base as f64, 0.0)).powc(exp)),
+        }
+    }
+}
+
 macro_rules! impl_binary_operator_for_numerical {
     ($trait:ident, $method:ident) => {
         impl $trait for Numerical {
             type Output = Self;
             
-            fn $method(self, other: Self) -> Self {
+            fn $method(self, other: Self) -> Self::Output {
                 use Numerical::*;
 		// To disambiguate with the enum variant.
                 use num::Complex as complex;
