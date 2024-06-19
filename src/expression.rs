@@ -1,7 +1,9 @@
+use num_traits::pow::Pow;
+
 use crate::operator::Operator;
 use crate::symbols::Numerical;
 
-use std::ops::{Add,Div,Mul,Sub};
+use std::ops::{Add, Div, Mul, Sub, Neg};
 
 
 #[derive(Clone, Debug, PartialEq)]
