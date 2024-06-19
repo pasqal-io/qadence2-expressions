@@ -4,7 +4,7 @@ pub enum Operator {
     CALL,
     MUL,
     NONCOMMUTE,
-    POWER,
+    POW,
 }
 
 impl Operator {
@@ -14,7 +14,7 @@ impl Operator {
 	    Operator::CALL => "call",
 	    Operator::MUL => "*",
 	    Operator::NONCOMMUTE => "@",
-	    Operator::POWER => "^",
+	    Operator::POW => "^",
         }
     }
 }
@@ -30,7 +30,7 @@ mod tests {
         assert_eq!(Operator::ADD.as_str(), "+");
         assert_eq!(Operator::MUL.as_str(), "*");
         assert_eq!(Operator::NONCOMMUTE.as_str(), "@");
-        assert_eq!(Operator::POWER.as_str(), "^");
+        assert_eq!(Operator::POW.as_str(), "^");
         assert_eq!(Operator::CALL.as_str(), "call");
     }
 }
