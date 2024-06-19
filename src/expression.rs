@@ -36,98 +36,40 @@ impl Expression {
     }
 }
 
-impl Add for Expression {
+impl Neg for Expression {
     type Output = Expression;
-    
-    fn add(self, rhs: Self) -> Self::Output {
-	use Expression::{Expr, Value};
-	use Operator::ADD;
-    
-	match (self, rhs) {
-	    // Numerical values are operated directly.
-	    (Value(lhs), Value(rhs)) => Value(lhs + rhs),
 
-	    // Both are Expressions with the same Operator::ADD, merge their arguments.
-	    (Expr { head: ADD, args: args_lhs }, Expr { head: ADD, args: args_rhs }) => {
-		let args = args_lhs.into_iter().chain(args_rhs).collect();
-		Expr { head: ADD, args }
-	    },
-
-	    // Left side is an Expression with Operator::ADD, append the right side.
-	    (Expr { head: ADD, args: mut args_lhs }, rhs) => {
-		args_lhs.push(Box::new(rhs));
-		Expr { head: ADD, args: args_lhs }
-	    },
-
-	    // Right side is an Expression with Operator::ADD, prepend the left side.
-	    (lhs, Expr { head: ADD, args: mut args_rhs }) => {
-		args_rhs.push(Box::new(lhs));
-		Expr { head: ADD, args: args_rhs }
-	    },
-
-	    // Otherwise, create a new Expression::Expr with Operator::ADD.
-	    (lhs, rhs) => Expr { head: ADD, args: vec![Box::new(lhs), Box::new(rhs)] },
-	}
-    }
-}
-
-impl Sub for Expression {
-    type Output = Expression;
-    
-    fn sub(self, rhs: Self) -> Self::Output {
-	use Expression::{Expr, Value};
-	use Operator::{ADD, MUL};
-
-	match (self, rhs) {
-            // Numerical values are operated directly.
-            (Value(lhs), Value(rhs)) => Value(lhs - rhs),
-
-            // Transform x - y into Expr(Add, [x, Expr(Mul, [-1, y])])
-            (lhs, rhs) => Expr {
-                head: ADD,
-                args: vec![
-                    Box::new(lhs),
-                    Box::new(Expr {
-                        head: MUL,
-                        args: vec![Box::new(Expression::int(-1)), Box::new(rhs)],
-                    }),
-                ],
-            },
-        }
-    }
-}
-
-impl Mul for Expression {
-    type Output = Expression;
-    
-    fn mul(self, rhs: Self) -> Self::Output {
-	use Expression::{Expr, Value};
+    fn neg(self) -> Self::Output {
+	use Expression::{Expr, Value, Symbol};
 	use Operator::MUL;
 
-	match (self, rhs) {
-            // Numerical values are operated directly.
-            (Value(lhs), Value(rhs)) => Value(lhs * rhs),
-
-	    // Both are Expressions with the same Operator::MUL, merge their arguments.
-	    (Expr { head: MUL, args: args_lhs }, Expr { head: MUL, args: args_rhs }) => {
-		let args = args_lhs.into_iter().chain(args_rhs).collect();
-		Expr { head: MUL, args }
+	match self {
+	    // Negating a symbol directly isn't well-defined, but for the sake of
+	    // completeness, we could wrap it in an Expr with multiplication by -1.
+	    Symbol(s) => Expr {
+		head: MUL,
+		args: vbox![
+		    Expression::int(-1),
+		    Expression::symbol(s),
+		]
 	    },
-
-	    // Left side is an Expression with Operator::MUL, append the right side.
-	    (Expr { head: MUL, args: mut args_lhs }, rhs) => {
-		args_lhs.push(Box::new(rhs));
-		Expr { head: MUL, args: args_lhs }
+	    
+	    // Negate the numerical value.
+	    Value(v) => {
+		Value(-v)
 	    },
-
-	    // Right side is an Expression with Operator::MUL, prepend the left side.
-	    (lhs, Expr { head: MUL, args: mut args_rhs }) => {
-		args_rhs.push(Box::new(lhs));
-		Expr { head: MUL, args: args_rhs }
+	    
+	    // Negate the entire expression by multiplying by -1
+	    Expr { head, args } => Expr {
+		head: MUL,
+		args: vbox![
+		    Expression::int(-1),
+		    Expr {
+			head,
+			args,
+		    }
+		]	
 	    },
-
-	    // Otherwise, create a new Expression::Expr with Operator::MUL.
-	    (lhs, rhs) => Expr { head: MUL, args: vec![Box::new(lhs), Box::new(rhs)] },
 	}
     }
 }
