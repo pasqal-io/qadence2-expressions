@@ -123,6 +123,57 @@ pub struct Symbol (&'static str);
 mod tests {
     // Note this useful idiom: importing names from outer (for mod tests) scope.
     use super::*;
+    
+    // Approximate equality check for Complex numbers
+    fn approx_eq_complex(c1: &num::Complex<f64>, c2: &num::Complex<f64>, epsilon: f64) -> bool {
+	(c1.re - c2.re).abs() < epsilon && (c1.im - c2.im).abs() < epsilon
+    }
+
+    #[test]
+    fn test_negation_int() {
+        let num_int = Numerical::Int(10);
+        assert_eq!(-num_int, Numerical::Int(-10));
+
+        let num_int_neg = Numerical::Int(-10);
+        assert_eq!(-num_int_neg, Numerical::Int(10));
+    }
+
+    #[test]
+    fn test_negation_float() {
+        let num_float = Numerical::Float(5.5);
+        assert_eq!(-num_float, Numerical::Float(-5.5));
+
+        let num_float_neg = Numerical::Float(-5.5);
+        assert_eq!(-num_float_neg, Numerical::Float(5.5));
+    }
+
+    #[test]
+    fn test_negation_complex() {
+        let num_complex = Numerical::Complex(Complex::new(3.0, 4.0));
+        assert_eq!(-num_complex, Numerical::Complex(Complex::new(-3.0, -4.0)));
+
+        let num_complex_neg = Numerical::Complex(Complex::new(-3.0, -4.0));
+        assert_eq!(-num_complex_neg, Numerical::Complex(Complex::new(3.0, 4.0)));
+    }
+
+    #[test]
+    fn test_numerical_pow() {
+        let n1 = Numerical::Int(2);
+        let n2 = Numerical::Int(3);
+        assert_eq!(n1.pow(n2), Numerical::Int(8));
+
+        let n3 = Numerical::Float(2.0);
+        let n4 = Numerical::Float(3.0);
+        assert_eq!(n3.pow(n4), Numerical::Float(8.0));
+
+        let n5 = Numerical::Complex(num::Complex::new(2.0, 0.0));
+        let n6 = Numerical::Complex(num::Complex::new(3.0, 0.0));
+	if let Numerical::Complex(c) = n5.pow(n6) {
+            assert!(approx_eq_complex(&c, &Complex::new(8.0, 0.0), 1e-9));
+        } else {
+            panic!("Expected complex result");
+        }
+    }
 
     #[test]
     fn test_numerical_binary_ops_int_to_int() {
