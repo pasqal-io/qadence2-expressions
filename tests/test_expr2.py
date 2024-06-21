@@ -6,8 +6,8 @@ from qadence2_expressions.expr.expr2 import (
     Expression,
     ExprType,
     Operator,
-    value,
     symbol,
+    value,
 )
 
 
@@ -34,8 +34,9 @@ class TestExpression(unittest.TestCase):
 
     def test_addition_reduction(self) -> None:
         a = symbol("a")
+        b = symbol("b")
 
-        self.assertEqual(a + a, Expression(Operator.PLUS, a, a))
+        self.assertEqual(a + a, 2 * a)
 
     def test_multiplication_value(self) -> None:
         self.assertEqual(0 * value(1), Expression.zero())
@@ -93,9 +94,9 @@ class TestExpression(unittest.TestCase):
         a = symbol("a")
         b = symbol("b")
 
-        self.assertEqual(2 / a, 2 * a ** -1)
+        self.assertEqual(2 / a, 2 * a**-1)
         self.assertEqual(a / value(2), a * 0.5)
-        self.assertEqual(a / b, a * b ** -1)
+        self.assertEqual(a / b, a * b**-1)
         self.assertEqual(a / a, value(1))
 
 

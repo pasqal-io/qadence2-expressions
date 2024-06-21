@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import operator
 from typing import Any, Callable
 
 from .qubit_support import Support
@@ -21,9 +20,10 @@ class ExprType:
 
 
 class Expression:
-    def __init__(self, head: str, *args: Any) -> None:
+    def __init__(self, head: str, *args: Any, **kwargs: Any) -> None:
         self.head = head
         self.args = args
+        self.kwargs = kwargs
 
     def __repr__(self) -> str:
         args = ", ".join(map(str, self.args))
@@ -92,22 +92,21 @@ class Expression:
         if self.head == other.head and self.head == ExprType.VALUE:
             return Expression.value(self.args[0] + other.args[0])
 
-        if self.head == other.head and self.head == Operator.PLUS:
-            # TODO: Add sum reduction
+        elif self.head == other.head and self.head == Operator.PLUS:
             args = (*self.args, *other.args)
-            return Expression(Operator.PLUS, *args)
 
-        if self.head == Operator.PLUS:
-            # TODO: Add sum reduction
+        elif self.head == Operator.PLUS:
             args = (*self.args, other)
-            return Expression(Operator.PLUS, *args)
 
-        if other.head == Operator.PLUS:
-            # TODO: Add sum reduction
+        elif other.head == Operator.PLUS:
             args = (self, *other.args)
-            return Expression(Operator.PLUS, *args)
 
-        return Expression(Operator.PLUS, self, other)
+        else:
+            args = (self, other)
+
+        # TODO: Find a smart way to toogle the arguments reduction.
+        result = Expression(Operator.PLUS, *args)
+        return reduce_addition(result)
 
     def __radd__(self, other: object) -> Expression:
         return self + other
@@ -147,8 +146,9 @@ class Expression:
         else:
             args = [self, other]
 
-        args = reduce_multiplication(args)
-        return args[0] if len(args) == 1 else Expression(Operator.TIMES, *args)
+        # TODO: Find a smart way to toogle the arguments reduction.
+        result = Expression(Operator.TIMES, *args)
+        return reduce_multiplication(result)
 
     def __rmul__(self, other: object) -> Expression:
         if not isinstance(other, complex | float | int):
@@ -214,12 +214,55 @@ class Expression:
         return other * (self**-1)
 
 
-def reduce_multiplication(terms: list[Expression]) -> list[Expression]:
-    numerical_value = Expression.value(1)
-    quantum_ops = []
-    general_terms = {}
+def reduce_addition(expr: Expression) -> Expression:
+    if expr.head != Operator.PLUS:
+        raise SyntaxError("This function only apply to addition expressions.")
 
-    for term in terms:
+    numerical_value = Expression.zero()
+    general_terms: dict[Expression, complex | float | int] = {}
+
+    for term in expr.args:
+        match term.head:
+            # Numerical types are comibined in a single term
+            case ExprType.VALUE:
+                numerical_value += term.args[0]
+
+            # Multiplicative terms with numerical constants have theier coefficents combined.
+            case Operator.TIMES:
+                if term.args[0].is_value():
+                    elem = Expression(Operator.TIMES, *term.args[1:])
+                    general_terms[elem] = general_terms.get(elem, 0) + term.args[0]
+
+                else:
+                    general_terms[term] = general_terms.get(term, 0) + 1
+
+            case _:
+                general_terms[term] = general_terms.get(term, 0) + 1
+
+    expr_term = [term * coef for term, coef in general_terms.items()]
+
+    if not expr_term:
+        return numerical_value
+
+    if numerical_value == Expression.zero():
+        return (
+            expr_term[0]
+            if len(expr_term) < 2
+            else Expression(Operator.PLUS, *expr_term)
+        )
+
+    return Expression(Operator.PLUS, numerical_value, *expr_term)
+
+
+def reduce_multiplication(expr: Expression) -> Expression:
+    if expr.head != Operator.TIMES:
+        raise SyntaxError("This function only apply to multiplication expressions.")
+
+    numerical_value = Expression.one()
+    quantum_ops = []
+    general_terms: dict[Expression, complex | float | int] = {}
+
+    for term in expr.args:
         match term.head:
             # Numerical types are comibined in a single term
             case ExprType.VALUE:
@@ -244,16 +287,26 @@ def reduce_multiplication(terms: list[Expression]) -> list[Expression]:
     expr_terms: list[Expression] = [
         b**p for b, p in general_terms.items() if p != Expression.zero()
     ]
+
     if quantum_ops:
+        # TODO: Implement `reduce_noncommute` for quantum operations.
         expr_terms.append(Expression(Operator.NONCOMMUTE, *quantum_ops))
 
     if not expr_terms:
-        return [numerical_value]
+        return numerical_value
 
-    if numerical_value == 1:
-        return expr_terms
+    if numerical_value == Expression.one():
+        return (
+            expr_terms[0]
+            if len(expr_terms) < 2
+            else Expression(Operator.TIMES, *expr_terms)
+        )
 
-    return [numerical_value, *expr_terms]
+    return Expression(Operator.TIMES, numerical_value, *expr_terms)
+
+
+# def reduce_noncommutative_multiplication(expr: Expression) -> Expression:
+#     pass
 
 
 # =====
