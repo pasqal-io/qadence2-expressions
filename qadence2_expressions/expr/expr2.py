@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import operator
 from typing import Any, Callable
 
 from .qubit_support import Support
@@ -46,6 +47,18 @@ class Expression:
     def value(cls, val: complex | float | int) -> Expression:
         return Expression(ExprType.VALUE, val)
 
+    def is_value(self) -> bool:
+        return self.head == ExprType.VALUE
+
+    def is_symbol(self) -> bool:
+        return self.head == ExprType.SYMBOL
+
+    def is_call(self) -> bool:
+        return self.head == ExprType.CALL
+
+    def is_quantumop(self) -> bool:
+        return self.head == ExprType.QUANTUM
+
     def __eq__(self, value: object) -> bool:
         if not isinstance(value, Expression):
             return NotImplemented
@@ -66,7 +79,7 @@ class Expression:
 
         # Promote numerical types to expressions
         if isinstance(other, complex | float | int):
-            return self + Expression.value(other)
+            return self.__add__(Expression.value(other))
 
         # Zero is the identity of addition.
         if other == Expression.zero():
@@ -75,7 +88,7 @@ class Expression:
         if self == Expression.zero():
             return other
 
-        # complex | float | int values are added right away.
+        # Numerical values are added right away.
         if self.head == other.head and self.head == ExprType.VALUE:
             return Expression.value(self.args[0] + other.args[0])
 
@@ -105,7 +118,7 @@ class Expression:
 
         # Promote numerical types to expressions
         if isinstance(other, complex | float | int):
-            return self * Expression.value(other)
+            return self.__mul__(Expression.value(other))
 
         # Multiplication by zero.
         if self == Expression.zero() or other == Expression.zero():
@@ -118,28 +131,29 @@ class Expression:
         if self == Expression.one():
             return other
 
-        # complex | float | int values are multiplied right away.
+        # Numerical values are multiplied right away.
         if self.head == other.head and self.head == ExprType.VALUE:
             return Expression.value(self.args[0] * other.args[0])
 
         if self.head == other.head and self.head == Operator.TIMES:
-            # TODO: Add multiplication reduction
-            args = (*self.args, *other.args)
-            return Expression(Operator.TIMES, *args)
+            args = [*self.args, *other.args]
 
-        if self.head == Operator.TIMES:
-            # TODO: Add multiplication reduction
-            args = (*self.args, other)
-            return Expression(Operator.TIMES, *args)
+        elif self.head == Operator.TIMES:
+            args = [*self.args, other]
 
-        if other.head == Operator.TIMES:
-            # TODO: Add multiplication reduction
-            args = (self, *other.args)
-            return Expression(Operator.TIMES, *args)
+        elif other.head == Operator.TIMES:
+            args = [self, *other.args]
 
-        return Expression(Operator.TIMES, self, other)
+        else:
+            args = [self, other]
+
+        args = reduce_multiplication(args)
+        return args[0] if len(args) == 1 else Expression(Operator.TIMES, *args)
 
     def __rmul__(self, other: object) -> Expression:
+        if not isinstance(other, complex | float | int):
+            return NotImplemented
+
         return self * other
 
     def __neg__(self) -> Expression:
@@ -158,9 +172,15 @@ class Expression:
         if not isinstance(other, Expression | complex | float | int):
             return NotImplemented
 
+        # Promote numerical types to expressions.
         if isinstance(other, complex | float | int):
             return self ** Expression.value(other)
 
+        # Identity power: x^1 = x
+        if other == Expression.one():
+            return self
+
+        # Numerical values are operatered right away.
         if (
             isinstance(other, Expression)
             and self.head == other.head
@@ -168,8 +188,9 @@ class Expression:
         ):
             return Expression.value(self.args[0] ** other.args[0])
 
-        if isinstance(other, complex | float | int):
-            return Expression(Operator.POWER, self, Expression.value(other))
+        if self.head == Operator.POWER:
+            base, power = self.args[:2]
+            return Expression(Operator.POWER, base, power * other)
 
         return Expression(Operator.POWER, self, other)
 
@@ -179,9 +200,65 @@ class Expression:
 
         return Expression.value(other) ** self
 
+    def __truediv__(self, other: object) -> Expression:
+        if not isinstance(other, Expression | complex | float | int):
+            return NotImplemented
 
-#
-#
+        # Promote numerical values to expressions.
+        if isinstance(other, complex | float | int):
+            return self / Expression.value(other)
+
+        return self * (other**-1)
+
+    def __rtruediv__(self, other: object) -> Expression:
+        return other * (self**-1)
+
+
+def reduce_multiplication(terms: list[Expression]) -> list[Expression]:
+    numerical_value = Expression.value(1)
+    quantum_ops = []
+    general_terms = {}
+
+    for term in terms:
+        match term.head:
+            # Numerical types are comibined in a single term
+            case ExprType.VALUE:
+                numerical_value *= term.args[0]
+
+            # Single quantum operators are inserted in the order they appear.
+            case ExprType.QUANTUM:
+                quantum_ops.append(term)
+
+            # Sequence of quantum operators are appended to preserve the order.
+            case Operator.NONCOMMUTE:
+                quantum_ops.extend(term.args)
+
+            # Powered terms are added to the general term combining the powers.
+            case Operator.POWER:
+                base, power = term.args[:2]
+                general_terms[base] = general_terms.get(base, 0) + power
+
+            case _:
+                general_terms[term] = general_terms.get(term, 0) + 1
+
+    expr_terms: list[Expression] = [
+        b**p for b, p in general_terms.items() if p != Expression.zero()
+    ]
+    if quantum_ops:
+        expr_terms.append(Expression(Operator.NONCOMMUTE, *quantum_ops))
+
+    if not expr_terms:
+        return [numerical_value]
+
+    if numerical_value == 1:
+        return expr_terms
+
+    return [numerical_value, *expr_terms]
+
+
+# =====
+# UTILS
+# =====
 def symbol(identfier: str) -> Expression:
     return Expression(ExprType.SYMBOL, identfier)
 
