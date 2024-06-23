@@ -219,7 +219,7 @@ def reduce_addition(expr: Expression) -> Expression:
         raise SyntaxError("This function only apply to addition expressions.")
 
     numerical_value = Expression.zero()
-    general_terms: dict[Expression, complex | float | int] = {}
+    general_terms: dict[Expression, Expression] = {}
 
     for term in expr.args:
         match term.head:
@@ -230,16 +230,28 @@ def reduce_addition(expr: Expression) -> Expression:
             # Multiplicative terms with numerical constants have theier coefficents combined.
             case Operator.TIMES:
                 if term.args[0].is_value():
-                    elem = Expression(Operator.TIMES, *term.args[1:])
-                    general_terms[elem] = general_terms.get(elem, 0) + term.args[0]
+                    elem = (
+                        term.args[1]
+                        if len(term.args) == 2
+                        else Expression(Operator.TIMES, *term.args[1:])
+                    )
+                    general_terms[elem] = (
+                        general_terms.get(elem, Expression.zero()) + term.args[0]
+                    )
 
                 else:
-                    general_terms[term] = general_terms.get(term, 0) + 1
+                    general_terms[term] = (
+                        general_terms.get(term, Expression.zero()) + Expression.one()
+                    )
 
             case _:
-                general_terms[term] = general_terms.get(term, 0) + 1
+                general_terms[term] = (
+                    general_terms.get(term, Expression.zero()) + Expression.one()
+                )
 
-    expr_term = [term * coef for term, coef in general_terms.items()]
+    expr_term = [
+        term * coef for term, coef in general_terms.items() if coef != Expression.zero()
+    ]
 
     if not expr_term:
         return numerical_value
@@ -260,7 +272,7 @@ def reduce_multiplication(expr: Expression) -> Expression:
 
     numerical_value = Expression.one()
     quantum_ops = []
-    general_terms: dict[Expression, complex | float | int] = {}
+    general_terms: dict[Expression, Expression] = {}
 
     for term in expr.args:
         match term.head:
@@ -279,10 +291,12 @@ def reduce_multiplication(expr: Expression) -> Expression:
             # Powered terms are added to the general term combining the powers.
             case Operator.POWER:
                 base, power = term.args[:2]
-                general_terms[base] = general_terms.get(base, 0) + power
+                general_terms[base] = general_terms.get(base, Expression.zero()) + power
 
             case _:
-                general_terms[term] = general_terms.get(term, 0) + 1
+                general_terms[term] = (
+                    general_terms.get(term, Expression.zero()) + Expression.one()
+                )
 
     expr_terms: list[Expression] = [
         b**p for b, p in general_terms.items() if p != Expression.zero()
@@ -290,7 +304,10 @@ def reduce_multiplication(expr: Expression) -> Expression:
 
     if quantum_ops:
         # TODO: Implement `reduce_noncommute` for quantum operations.
-        expr_terms.append(Expression(Operator.KRONECKERPROD, *quantum_ops))
+        if len(quantum_ops) == 1:
+            expr_terms.append(quantum_ops[0])
+        else:
+            expr_terms.append(Expression(Operator.KRONECKERPROD, *quantum_ops))
 
     if not expr_terms:
         return numerical_value

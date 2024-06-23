@@ -32,12 +32,6 @@ class TestExpression(unittest.TestCase):
         self.assertEqual(Expression.zero() + a, a)
         self.assertEqual(1 + a, Expression(Operator.PLUS, value(1), a))
 
-    def test_addition_reduction(self) -> None:
-        a = symbol("a")
-        b = symbol("b")
-
-        self.assertEqual(a + a, 2 * a)
-
     def test_multiplication_value(self) -> None:
         self.assertEqual(0 * value(1), Expression.zero())
         self.assertEqual(1 * value(2), value(2))
@@ -48,6 +42,13 @@ class TestExpression(unittest.TestCase):
         self.assertEqual(0 * a, Expression.zero())
         self.assertEqual(1 * a, a)
         self.assertEqual(-2 * a, Expression(Operator.TIMES, value(-2), a))
+
+    def test_multiplication_reduction(self) -> None:
+        a = symbol("a")
+        b = symbol("b")
+
+        self.assertEqual(a * a, a**2)
+        self.assertEqual(a * b * a, a**2 * b)
 
     def test_negation(self) -> None:
         a = symbol("a")
@@ -98,6 +99,13 @@ class TestExpression(unittest.TestCase):
         self.assertEqual(a / value(2), a * 0.5)
         self.assertEqual(a / b, a * b**-1)
         self.assertEqual(a / a, value(1))
+
+    def test_commutativity(self) -> None:
+        a = symbol("a")
+        b = symbol("b")
+
+        self.assertEqual(a * b + b * a, 2 * a * b)
+        self.assertEqual(a * b - b * a, value(0))
 
 
 if __name__ == "__main__":
