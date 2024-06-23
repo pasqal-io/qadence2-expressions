@@ -9,7 +9,7 @@ class Operator:
     PLUS = "Plus"
     TIMES = "Times"
     POWER = "Power"
-    NONCOMMUTE = "NonCommute"
+    KRONECKERPROD = "KroneckerProduct"
 
 
 class ExprType:
@@ -273,7 +273,7 @@ def reduce_multiplication(expr: Expression) -> Expression:
                 quantum_ops.append(term)
 
             # Sequence of quantum operators are appended to preserve the order.
-            case Operator.NONCOMMUTE:
+            case Operator.KRONECKERPROD:
                 quantum_ops.extend(term.args)
 
             # Powered terms are added to the general term combining the powers.
@@ -290,7 +290,7 @@ def reduce_multiplication(expr: Expression) -> Expression:
 
     if quantum_ops:
         # TODO: Implement `reduce_noncommute` for quantum operations.
-        expr_terms.append(Expression(Operator.NONCOMMUTE, *quantum_ops))
+        expr_terms.append(Expression(Operator.KRONECKERPROD, *quantum_ops))
 
     if not expr_terms:
         return numerical_value
