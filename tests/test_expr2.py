@@ -4,22 +4,23 @@ import unittest
 
 from qadence2_expressions.expr.expr2 import (
     Expression,
-    ExprType,
-    Operator,
+    hermitian_operator,
     symbol,
     value,
 )
 
 
 class TestExpression(unittest.TestCase):
+    # == Tests with regular symbols and values. ==
+
     def test_value(self) -> None:
-        self.assertEqual(value(3), Expression(ExprType.VALUE, 3))
-        self.assertEqual(value(-2), Expression(ExprType.VALUE, -2))
-        self.assertEqual(value(1j), Expression(ExprType.VALUE, 1j))
+        self.assertEqual(value(3), Expression.value(3))
+        self.assertEqual(value(-2), Expression.value(-2))
+        self.assertEqual(value(1j), Expression.value(1j))
 
     def test_symbol(self) -> None:
         a = symbol("a")
-        self.assertEqual(a, Expression(ExprType.SYMBOL, "a"))
+        self.assertEqual(a, Expression.symbol("a"))
 
     def test_addition_value(self) -> None:
         self.assertEqual(Expression.zero() + 1, value(1))
@@ -30,7 +31,7 @@ class TestExpression(unittest.TestCase):
 
         self.assertEqual(0 + a, a)
         self.assertEqual(Expression.zero() + a, a)
-        self.assertEqual(1 + a, Expression(Operator.PLUS, value(1), a))
+        self.assertEqual(1 + a, Expression.add(value(1), a))
 
     def test_multiplication_value(self) -> None:
         self.assertEqual(0 * value(1), Expression.zero())
@@ -41,7 +42,7 @@ class TestExpression(unittest.TestCase):
 
         self.assertEqual(0 * a, Expression.zero())
         self.assertEqual(1 * a, a)
-        self.assertEqual(-2 * a, Expression(Operator.TIMES, value(-2), a))
+        self.assertEqual(-2 * a, Expression.mul(value(-2), a))
 
     def test_multiplication_reduction(self) -> None:
         a = symbol("a")
@@ -53,7 +54,7 @@ class TestExpression(unittest.TestCase):
     def test_negation(self) -> None:
         a = symbol("a")
 
-        self.assertEqual(-a, Expression(Operator.TIMES, value(-1), a))
+        self.assertEqual(-a, Expression.mul(value(-1), a))
         self.assertEqual(-value(2), value(-2))
 
     def test_subtraction_value(self) -> None:
@@ -65,12 +66,10 @@ class TestExpression(unittest.TestCase):
 
         self.assertEqual(0 - a, -a)
         self.assertEqual(a - 0, a)
-        self.assertEqual(a - 2, Expression(Operator.PLUS, a, value(-2)))
+        self.assertEqual(a - 2, Expression.add(a, value(-2)))
         self.assertEqual(
             3 - a,
-            Expression(
-                Operator.PLUS, value(3), Expression(Operator.TIMES, value(-1), a)
-            ),
+            Expression.add(value(3), Expression.mul(value(-1), a)),
         )
 
     def test_power_value(self) -> None:
@@ -83,9 +82,9 @@ class TestExpression(unittest.TestCase):
         a = symbol("a")
         b = symbol("b")
 
-        self.assertEqual(a**2, Expression(Operator.POWER, a, value(2)))
-        self.assertEqual(1j**a, Expression(Operator.POWER, value(1j), a))
-        self.assertEqual(a**b, Expression(Operator.POWER, a, b))
+        self.assertEqual(a**2, Expression.pow(a, value(2)))
+        self.assertEqual(1j**a, Expression.pow(value(1j), a))
+        self.assertEqual(a**b, Expression.pow(a, b))
 
     def test_division_value(self) -> None:
         self.assertEqual(3 / value(2), value(1.5))
@@ -106,6 +105,36 @@ class TestExpression(unittest.TestCase):
 
         self.assertEqual(a * b + b * a, 2 * a * b)
         self.assertEqual(a * b - b * a, value(0))
+
+    # == Tests with quantum operator and parametric quantum operators. ==
+
+    def test_addition_hermitian_operator(self) -> None:
+        X = hermitian_operator("X")
+
+        self.assertEqual(X() + X(), Expression.mul(value(2), X()))
+        self.assertEqual(X(1) + X(2), Expression.add(X(1), X(2)))
+
+    def test_multiplication_hermitian_operator(self) -> None:
+        X = hermitian_operator("X")
+        Y = hermitian_operator("Y")
+
+        # Non-commutative
+        self.assertEqual(X() * Y(), Expression.kron(X(), Y()))
+        self.assertEqual(Y() * X(), Expression.kron(Y(), X()))
+
+        # Unitary
+        self.assertEqual(X(1) * X(1), value(1))
+
+        # Operators must be ordered by support.
+        self.assertEqual(X(1) * X(2), Expression.kron(X(1), X(2)))
+        self.assertEqual(X(2) * X(1), Expression.kron(X(1), X(2)))
+
+        # However, possition must be preserved when there is overlaps.
+        self.assertEqual(X(2) * X(1, 2), Expression.kron(X(2), X(1, 2)))
+
+        # Hermitian property.
+        self.assertEqual(X(1) * Y(2) * X(1), Y(2))
+        self.assertEqual((X(1) * Y(2)) * (X(1) * Y(2)), value(1))
 
 
 if __name__ == "__main__":
