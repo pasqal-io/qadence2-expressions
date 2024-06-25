@@ -24,6 +24,10 @@ class Expression:
         self.args = args
         self.kwargs = kwargs
 
+    # Useful methods
+    def get(self, key: str, default: Any | None = None) -> Any:
+        return self.kwargs.get(key, default)
+
     def __repr__(self) -> str:
         args = ", ".join(map(str, self.args))
         return f"{self.head}({args})"
@@ -56,8 +60,10 @@ class Expression:
         return cls(Expression.Token.CALL, func_name, *args)
 
     @classmethod
-    def quantum_op(cls, name: str, support: Support, **properties: Any) -> Expression:
-        return cls(Expression.Token.QUANTUM_OP, name, support, **properties)
+    def quantum_op(
+        cls, expr: Expression, support: Support, **properties: Any
+    ) -> Expression:
+        return cls(Expression.Token.QUANTUM_OP, expr, support, **properties)
 
     @classmethod
     def add(cls, *args: Any) -> Expression:
@@ -78,10 +84,10 @@ class Expression:
     # Boolean predicates.
     def is_zero(self) -> bool:
         return self == Expression.zero()
-    
+
     def is_one(self) -> bool:
         return self == Expression.one()
-    
+
     def is_value(self) -> bool:
         return self.head == Expression.Token.VALUE
 
@@ -226,10 +232,10 @@ class Expression:
     def __matmul__(self, other: object) -> Expression:
         if not isinstance(other, Expression):
             return NotImplemented
-        
+
         if self.is_one():
             return other
-        
+
         if other.is_one():
             return self
 
@@ -246,7 +252,7 @@ class Expression:
             return self.__kron_join__(other)
 
         raise SyntaxError(
-            "This operations is only defined for quantum operators and Kronecker product."
+            "This operations is only defined for quantum operators, Kronecker products and identity."
         )
 
     def __neg__(self) -> Expression:
@@ -269,17 +275,26 @@ class Expression:
         if isinstance(other, complex | float | int):
             return self ** Expression.value(other)
 
+        # x^0 = 1
+        if other.is_zero():
+            return Expression.one()
+
         # Identity power: x^1 = x
-        if other == Expression.one():
+        if other.is_one():
             return self
 
         # Numerical values are operatered right away.
-        if isinstance(other, Expression) and self.is_value() and other.is_value():
+        if self.is_value() and other.is_value():
             return Expression.value(self.args[0] ** other.args[0])
 
         if self.is_power():
             base, power = self.args[:2]
             return Expression.pow(base, power * other)
+
+        if self.is_quantum_operator():
+            expr, support = self.args
+            power = Expression.pow(expr, other)
+            return Expression(Expression.Token.QUANTUM_OP, power, support)
 
         return Expression.pow(self, other)
 
@@ -312,12 +327,25 @@ class Expression:
                 "This operation is defined for both terms as QuantumOperators."
             )
 
-        # Implement the identity for hermitian operators acting on same subspace.
-        if self.kwargs.get("is_hermitian") and self == other:
+        # Returns the identity for hermitian operators acting on same subspace.
+        if self.get("is_hermitian") and self == other:
             return Expression.one()
 
+        self_expr: Expression = self.args[0]
         self_support: Support = self.args[1]
+        other_expr: Expression = other.args[0]
         other_support: Support = other.args[1]
+
+        if self_support == other_support:
+            result = self_expr * other_expr
+            if result.is_value():
+                return result
+            if result.is_multiplication():
+                args = [Expression.quantum_op(term, self_support) for term in result.args]
+                return Expression.kron(*args)
+            return Expression.quantum_op(result, self_support)
+
+        # TODO: Implement non-hermitian multiplication
 
         # Return the Kronecker Product ordered by support
         if self_support < other_support or self_support.overlap_with(other_support):
@@ -453,7 +481,6 @@ def reduce_addition(expr: Expression) -> Expression:
 
     if not expr_term:
         return numerical_value
-
     if numerical_value == Expression.zero():
         return expr_term[0] if len(expr_term) < 2 else Expression.add(*expr_term)
 
@@ -529,7 +556,8 @@ def hermitian_operator(name: str) -> Callable:
         target: tuple[int, ...] | None = None,
         control: tuple[int, ...] | None = None,
     ) -> Expression:
+        op_name = Expression.symbol(name)
         support = Support(*indices, target=target, control=control)
-        return Expression.quantum_op(name, support, is_hermitian=True)
+        return Expression.quantum_op(op_name, support, is_hermitian=True)
 
     return core
