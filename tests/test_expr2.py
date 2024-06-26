@@ -82,6 +82,8 @@ class TestExpression(unittest.TestCase):
         a = symbol("a")
         b = symbol("b")
 
+        self.assertEqual(a**0, value(1))
+        self.assertEqual(a**1, a)
         self.assertEqual(a**2, Expression.pow(a, value(2)))
         self.assertEqual(1j**a, Expression.pow(value(1j), a))
         self.assertEqual(a**b, Expression.pow(a, b))
