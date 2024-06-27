@@ -10,554 +10,354 @@ class Expression:
         # Identifiers:
         VALUE = "Value"
         SYMBOL = "Symbol"
-        CALL = "Call"
+        FN = "Function"
         QUANTUM_OP = "QuantumOperator"
 
         # Operations:
         ADD = "Add"
         MUL = "Multiply"
-        POW = "Power"
         KRON = "KroneckerProduct"
+        POW = "Power"
 
-    def __init__(self, head: str, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, head: str, *args: Any, **attributes: Any) -> None:
         self.head = head
         self.args = args
-        self.kwargs = kwargs
+        self.attrs = attributes
 
-    # Useful methods
-    def get(self, key: str, default: Any | None = None) -> Any:
-        return self.kwargs.get(key, default)
+    # Constructors
+    @classmethod
+    def value(cls, x: complex | float | int) -> Expression:
+        """Promote a numerical value (comples, float, int) to an expression."""
+        return cls(cls.Token.VALUE, x)
 
+    @classmethod
+    def zero(cls) -> Expression:
+        return cls.value(0)
+
+    @classmethod
+    def one(cls) -> Expression:
+        """
+        The value(1) is used to represent both the concrete number 1 and the
+        identity operator.
+        """
+        return cls.value(1)
+
+    @classmethod
+    def symbol(cls, identifier: str) -> Expression:
+        """Create a symbol from the identifier"""
+        return cls(cls.Token.SYMBOL, identifier)
+
+    @classmethod
+    def function(cls, name: str, *args: Any) -> Expression:
+        """
+        Symbolic representation of a function. The `name` indicates the function
+        identifier, the remaining arguments are used as the function arguments.
+
+            Expression.function("sin", 1.57) => sin(1.57)
+        """
+        return cls(cls.Token.FN, name, *args)
+
+    @classmethod
+    def quantum_operator(
+        cls, expr: Expression, support: Support, **properties
+    ) -> Expression:
+        """Promote an expression to a quantum operator acting on the indicated  support.
+        The properties indicate behaviours for evaluation like:
+            - `is_hermitian` [bool]
+            - `is_dagger` [bool]
+        """
+        return cls(cls.Token.QUANTUM_OP, expr, support, **properties)
+
+    @classmethod
+    def add(cls, *args: Any) -> Expression:
+        """
+        Define an addition expression indication the sum of its arguments.
+
+            Expression.add(a, b, c) == a + b + c
+        """
+        return cls(cls.Token.ADD, *args)
+
+    @classmethod
+    def mul(cls, *args: Any) -> Expression:
+        """
+        Define an multiplication expression indication the product of its arguments.
+
+            Expression.mul(a, b, c) == a * b * c
+        """
+
+        return cls(cls.Token.MUL, *args)
+
+    @classmethod
+    def kron(cls, *args: Any) -> Expression:
+        """
+        Define an Krockener product expression indication the non-commutative
+        (order preserving) multiplication of its arguments.
+        """
+
+        return cls(cls.Token.KRON, *args)
+
+    @classmethod
+    def pow(cls, base: Expression, power: Expression) -> Expression:
+        """
+        Define a power expression.
+
+            Expression.power(a, b) == a**b
+        """
+
+        return cls(cls.Token.POW, base, power)
+
+    # Predicates
+    @property
+    def is_value(self) -> bool:
+        return self.head == Expression.Token.VALUE
+
+    @property
+    def is_zero(self) -> bool:
+        return self.head == Expression.Token.VALUE and self.args[0] == 0
+
+    @property
+    def is_one(self) -> bool:
+        return self.head == Expression.Token.VALUE and self.args[0] == 1
+
+    @property
+    def is_symbol(self) -> bool:
+        return self.head == Expression.Token.SYMBOL
+
+    @property
+    def is_function(self) -> bool:
+        return self.head == Expression.Token.FN
+
+    @property
+    def is_quantum_operator(self) -> bool:
+        return self.head == Expression.Token.QUANTUM_OP
+
+    @property
+    def is_addition(self) -> bool:
+        return self.head == Expression.Token.ADD
+
+    @property
+    def is_multiplication(self) -> bool:
+        return self.head == Expression.Token.MUL
+
+    @property
+    def is_kronecker_product(self) -> bool:
+        return self.head == Expression.Token.KRON
+
+    @property
+    def is_power(self) -> bool:
+        return self.head == Expression.Token.POW
+
+    # Helper functions.
+    def get_attr(self, attribute: str, default: Any | None = None) -> Any:
+        """
+        Return the value of the indicated expression `attribute` if present or
+        the `default` otherwise. Default value is `None`.
+        """
+        return self.attrs.get(attribute, default)
+
+    def get_subspace(self) -> Support | None:
+        if self.is_value or self.is_symbol:
+            return None
+
+        if self.is_quantum_operator:
+            return self.args[1]
+
+        subspaces = []
+        for arg in self.args:
+            sp = arg.get_subspace()
+            if sp:
+                subspaces.append(sp)
+
+        if subspaces:
+            total_subspace = subspaces[0]
+            for subspace in subspaces[1:]:
+                total_subspace = total_subspace.join(subspace)
+            return total_subspace
+
+        return None
+
+    # Python magic methods
     def __repr__(self) -> str:
-        args = ", ".join(map(str, self.args))
+        args = ", ".join(map(repr, self.args))
         return f"{self.head}({args})"
 
     def __hash__(self) -> int:
-        if self.is_addition() or self.is_multiplication():
+        if self.is_addition or self.is_multiplication:
             return hash((self.head, frozenset(self.args)))
 
         return hash((self.head, self.args))
 
-    # Alternative constructors.
-    @classmethod
-    def zero(cls) -> Expression:
-        return cls(Expression.Token.VALUE, 0)
-
-    @classmethod
-    def one(cls) -> Expression:
-        return cls(Expression.Token.VALUE, 1)
-
-    @classmethod
-    def value(cls, val: complex | float | int) -> Expression:
-        return cls(Expression.Token.VALUE, val)
-
-    @classmethod
-    def symbol(cls, name: str) -> Expression:
-        return cls(Expression.Token.SYMBOL, name)
-
-    @classmethod
-    def call(cls, func_name: str, *args: Any) -> Expression:
-        return cls(Expression.Token.CALL, func_name, *args)
-
-    @classmethod
-    def quantum_op(
-        cls, expr: Expression, support: Support, **properties: Any
-    ) -> Expression:
-        return cls(Expression.Token.QUANTUM_OP, expr, support, **properties)
-
-    @classmethod
-    def add(cls, *args: Any) -> Expression:
-        return cls(Expression.Token.ADD, *args)
-
-    @classmethod
-    def mul(cls, *args: Any) -> Expression:
-        return cls(Expression.Token.MUL, *args)
-
-    @classmethod
-    def pow(cls, base: Expression, power: Expression) -> Expression:
-        return cls(Expression.Token.POW, base, power)
-
-    @classmethod
-    def kron(cls, *args: Any) -> Expression:
-        return cls(Expression.Token.KRON, *args)
-
-    # Boolean predicates.
-    def is_zero(self) -> bool:
-        return self == Expression.zero()
-
-    def is_one(self) -> bool:
-        return self == Expression.one()
-
-    def is_value(self) -> bool:
-        return self.head == Expression.Token.VALUE
-
-    def is_symbol(self) -> bool:
-        return self.head == Expression.Token.SYMBOL
-
-    def is_call(self) -> bool:
-        return self.head == Expression.Token.CALL
-
-    def is_quantum_operator(self) -> bool:
-        return self.head == Expression.Token.QUANTUM_OP
-
-    def is_addition(self) -> bool:
-        return self.head == Expression.Token.ADD
-
-    def is_multiplication(self) -> bool:
-        return self.head == Expression.Token.MUL
-
-    def is_power(self) -> bool:
-        return self.head == Expression.Token.POW
-
-    def is_kronecker_product(self) -> bool:
-        return self.head == Expression.Token.KRON
-
-    # Python magic methods.
-    def __eq__(self, value: object) -> bool:
-        if not isinstance(value, Expression):
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Expression):
             return NotImplemented
 
-        # Compare expressions of the same type
-        if self.head == value.head:
-            return (
-                set(self.args) == set(value.args)
-                if self.is_addition() or self.is_multiplication()
-                else self.args == value.args
-            )
-
-        return False
+        return (
+            self.head == other.head
+            and self.args == other.args
+            and self.attrs == other.attrs
+        )
 
     def __add__(self, other: object) -> Expression:
         if not isinstance(other, Expression | complex | float | int):
             return NotImplemented
 
-        # Promote numerical types to expressions
+        # Promote numerial values to Expression.
         if isinstance(other, complex | float | int):
-            return self.__add__(Expression.value(other))
+            return self + Expression.value(other)
 
-        # Zero is the identity of addition.
-        if self.is_zero():
+        # Addition identity: a + 0 = 0 + a = a
+        if self.is_zero:
             return other
 
-        if other.is_zero():
+        if other.is_zero:
             return self
 
-        # Numerical values are added right away.
-        if self.is_value() and other.is_value():
+        # Numerical values are added right away
+        if self.is_value and other.is_value:
             return Expression.value(self.args[0] + other.args[0])
 
-        # Combine arguments when LHS and RHS are both addition expressions.
-        elif self.is_addition() and other.is_addition():
+        if self.is_addition and other.is_addition:
             args = (*self.args, *other.args)
-
-        # Append the RHS term to LHS when the LHS is an addition expression.
-        elif self.is_addition():
+        elif self.is_addition:
             args = (*self.args, other)
-
-        # Prepend the LHS to the RHS when RHS is an addition expression.
-        elif other.is_addition():
+        elif other.is_addition:
             args = (self, *other.args)
-
-        # General case.
         else:
             args = (self, other)
 
-        # TODO: Find a smart way to toogle the arguments reduction.
-        result = Expression.add(*args)
-        return reduce_addition(result)
+        # args = reduce_addition_args(args)
+        return Expression.add(*args)
 
     def __radd__(self, other: object) -> Expression:
-        return self + other
+        # Promote numerical types to expression.
+        if isinstance(other, complex | float | int):
+            return Expression.value(other) + self
+
+        return NotImplemented
 
     def __mul__(self, other: object) -> Expression:
-        """
-        Gives high precedence to Kronecker multiplication over regular
-        multiplications for symbols. Multiplication between values has higher
-        precedence.
-        """
-
         if not isinstance(other, Expression | complex | float | int):
             return NotImplemented
 
-        # Promote numerical types to expressions
+        # Promote numerical values to Expression.
         if isinstance(other, complex | float | int):
-            return self.__mul__(Expression.value(other))
+            return self * Expression.value(other)
 
-        # Multiplication by zero.
-        if self.is_zero() or other.is_zero():
+        # Null multiplication.
+        if self.is_zero or other.is_zero:
             return Expression.zero()
 
-        # One is indentity for multimplication.
-        if self.is_one():
+        # Multiplication identity: a * 1 = 1 * a = a.
+        if self.is_one:
             return other
-
-        if other.is_one():
+        if other.is_one:
             return self
 
         # Numerical values are multiplied right away.
-        if self.is_value() and other.is_value():
+        if self.is_value and other.is_value:
             return Expression.value(self.args[0] * other.args[0])
 
-        if (self.is_quantum_operator() or self.is_quantum_operator()) and (
-            other.is_quantum_operator() or other.is_quantum_operator()
-        ):
-            return self @ other
-
-        # Combine arguments when LHS and RHS are both multiplication expressions.
-        if self.is_multiplication() and other.is_multiplication():
-            args = [*self.args, *other.args]
-
-        # Append the RHS term to LHS when the LHS is an multiplication expression.
-        elif self.is_multiplication():
-            args = [*self.args, other]
-
-        # Prepend the LHS term to RHS when the RHS is an multiplication expression.
-        elif other.is_multiplication():
-            args = [self, *other.args]
-
-        # General case.
+        if self.is_multiplication and other.is_multiplication:
+            args = (*self.args, *other.args)
+        elif self.is_multiplication:
+            args = (*self.args, other)
+        elif other.is_multiplication:
+            args = (self, *other.args)
         else:
-            args = [self, other]
+            args = (self, other)
 
-        # TODO: Find a smart way to toogle the arguments reduction.
-        result = Expression.mul(*args)
-        return reduce_multiplication(result)
+        # args = reduce_multiplication_args(args)
+        return Expression.mul(*args)
 
     def __rmul__(self, other: object) -> Expression:
-        if not isinstance(other, complex | float | int):
-            return NotImplemented
+        # Promote numerical types to expression.
+        if isinstance(other, complex | float | int):
+            return Expression.value(other) * self
 
-        return self * other
-
-    def __matmul__(self, other: object) -> Expression:
-        if not isinstance(other, Expression):
-            return NotImplemented
-
-        if self.is_one():
-            return other
-
-        if other.is_one():
-            return self
-
-        if self.is_quantum_operator() and other.is_quantum_operator():
-            return self.__kron__(other)
-
-        if self.is_kronecker_product() and other.is_quantum_operator():
-            return self.__kronr__(other)
-
-        if self.is_quantum_operator() and other.is_kronecker_product():
-            return self.__kronl__(other)
-
-        if self.is_kronecker_product() and other.is_kronecker_product():
-            return self.__kron_join__(other)
-
-        raise SyntaxError(
-            "This operations is only defined for quantum operators, Kronecker products and identity."
-        )
-
-    def __neg__(self) -> Expression:
-        return -1 * self
-
-    def __sub__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | complex | float | int):
-            return NotImplemented
-
-        return self + (-other)
-
-    def __rsub__(self, other: object) -> Expression:
-        return (-self) + other
+        return NotImplemented
 
     def __pow__(self, other: object) -> Expression:
         if not isinstance(other, Expression | complex | float | int):
             return NotImplemented
 
-        # Promote numerical types to expressions.
         if isinstance(other, complex | float | int):
             return self ** Expression.value(other)
 
-        # x^0 = 1
-        if other.is_zero():
+        # Null power.
+        if other.is_zero:
             return Expression.one()
 
-        # Identity power: x^1 = x
-        if other.is_one():
+        # Identity power.
+        if other.is_one:
             return self
 
-        # Numerical values are operatered right away.
-        if self.is_value() and other.is_value():
-            return Expression.value(self.args[0] ** other.args[0])
+        # Power of power.
+        if self.is_power:
+            return Expression.pow(self.args[0], self.args[1] * other)
 
-        if self.is_power():
-            base, power = self.args[:2]
-            return Expression.pow(base, power * other)
+        # Apply the power operation to internal expression on quantum operators expression.
+        if self.is_quantum_operator:
+            expr = self.args[0] ** other
+            support = self.args[1]
+            return Expression.quantum_operator(expr, support)
 
-        if self.is_quantum_operator():
-            expr, support = self.args
-            power = Expression.pow(expr, other)
-            return Expression(Expression.Token.QUANTUM_OP, power, support)
+        # Promote the final expression to a quantum operation whenever the expression
+        # contain quantum operators inside.
+        result = Expression.pow(self, other)
+        subspace = result.get_subspace()
+        if subspace:
+            return Expression.quantum_operator(result, subspace)
 
-        return Expression.pow(self, other)
+        return result
 
     def __rpow__(self, other: object) -> Expression:
-        if not isinstance(other, complex | float | int):
-            return NotImplemented
-
-        return Expression.value(other) ** self
-
-    def __truediv__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | complex | float | int):
-            return NotImplemented
-
-        # Promote numerical values to expressions.
+        # Promote numerical types to expression.
         if isinstance(other, complex | float | int):
-            return self / Expression.value(other)
+            return Expression.value(other) ** self
 
-        return self * (other**-1)
-
-    def __rtruediv__(self, other: object) -> Expression:
-        return other * (self**-1)
-
-    # Helper methods.
-    def __kron__(self, other: object) -> Expression:
-        if not isinstance(other, Expression):
-            return NotImplemented
-
-        if not (self.is_quantum_operator() or other.is_quantum_operator()):
-            raise SyntaxError(
-                "This operation is defined for both terms as QuantumOperators."
-            )
-
-        # Returns the identity for hermitian operators acting on same subspace.
-        if self.get("is_hermitian") and self == other:
-            return Expression.one()
-
-        self_expr: Expression = self.args[0]
-        self_support: Support = self.args[1]
-        other_expr: Expression = other.args[0]
-        other_support: Support = other.args[1]
-
-        if self_support == other_support:
-            result = self_expr * other_expr
-            if result.is_value():
-                return result
-            if result.is_multiplication():
-                args = [Expression.quantum_op(term, self_support) for term in result.args]
-                return Expression.kron(*args)
-            return Expression.quantum_op(result, self_support)
-
-        # TODO: Implement non-hermitian multiplication
-
-        # Return the Kronecker Product ordered by support
-        if self_support < other_support or self_support.overlap_with(other_support):
-            return Expression.kron(self, other)
-
-        return Expression.kron(other, self)
-
-    def __kronr__(self, other: object) -> Expression:
-        if not isinstance(other, Expression):
-            return NotImplemented
-
-        if not (self.is_kronecker_product() or other.is_quantum_operator()):
-            raise SyntaxError(
-                "This operation is defned for LHS = KronekerProduct and RHS = QuantumOperator."
-            )
-
-        lhs_args: tuple[Expression, ...] = self.args
-        args = ()
-        for i in range(len(lhs_args) - 1, -1, -1):
-            ii = i + 1
-
-            # Check if the supports overlap.
-            if lhs_args[i].args[1].overlap_with(other.args[1]):
-                res = lhs_args[i].__kron__(other)
-                args = (
-                    (*lhs_args[:i], *lhs_args[ii:])
-                    if res == Expression.one()
-                    else (*lhs_args[:i], res, *lhs_args[ii:])
-                )
-                break
-
-            if i == 0:
-                args = (other, *lhs_args)
-
-        if not args:
-            return Expression.one()
-
-        return args[0] if len(args) == 1 else Expression.kron(*args)
-
-    def __kronl__(self, other: object) -> Expression:
-        if not isinstance(other, Expression):
-            return NotImplemented
-
-        if not (self.is_quantum_operator() or other.is_kronecker_product()):
-            raise SyntaxError(
-                "This operation is defned for LHS = QuantumOperator and RHS = KronekerProduct."
-            )
-
-        rhs_args: tuple[Expression, ...] = other.args
-        args = ()
-        for i, term in enumerate(rhs_args):
-            ii = i + 1
-
-            # Check if the supports overlap.
-            if self.args[1].overlap_with(term.args[1]):
-                res = self.__kron__(term)
-                args = (
-                    (*rhs_args[:i], *rhs_args[ii:])
-                    if res == Expression.one()
-                    else (*rhs_args[:i], res, *rhs_args[ii:])
-                )
-                break
-
-            if i == 0:
-                args = (self, *rhs_args)
-
-        if not args:
-            return Expression.one()
-
-        return args[0] if len(args) == 1 else Expression.kron(*args)
-
-    def __kron_join__(self, other: object) -> Expression:
-        if not isinstance(other, Expression):
-            return NotImplemented
-
-        if not (self.is_kronecker_product() or other.is_kronecker_product()):
-            raise SyntaxError(
-                "This operation is defned for both terms as KronekerProducts."
-            )
-
-        acc = self
-        for term in other.args:
-            if acc.is_one():
-                acc = term
-            elif term.is_one():
-                continue
-            elif acc.is_quantum_operator():
-                acc = acc.__kron__(term)
-            else:
-                acc = acc.__kronr__(term)
-
-        return acc
+        return NotImplemented
 
 
-def reduce_addition(expr: Expression) -> Expression:
-    if not expr.is_addition():
-        raise SyntaxError("This function only apply to addition expressions.")
-
-    numerical_value = Expression.zero()
-    general_terms: dict[Expression, Expression] = {}
-
-    for term in expr.args:
-        match term.head:
-            # Numerical types are comibined in a single term
-            case Expression.Token.VALUE:
-                numerical_value += term.args[0]
-
-            # Multiplicative terms with numerical constants have theier coefficents combined.
-            case Expression.Token.MUL:
-                if term.args[0].is_value():
-                    elem = (
-                        term.args[1]
-                        if len(term.args) == 2
-                        else Expression.mul(*term.args[1:])
-                    )
-                    general_terms[elem] = (
-                        general_terms.get(elem, Expression.zero()) + term.args[0]
-                    )
-
-                else:
-                    general_terms[term] = (
-                        general_terms.get(term, Expression.zero()) + Expression.one()
-                    )
-
-            case _:
-                general_terms[term] = (
-                    general_terms.get(term, Expression.zero()) + Expression.one()
-                )
-
-    expr_term = [
-        term * coef for term, coef in general_terms.items() if coef != Expression.zero()
-    ]
-
-    if not expr_term:
-        return numerical_value
-    if numerical_value == Expression.zero():
-        return expr_term[0] if len(expr_term) < 2 else Expression.add(*expr_term)
-
-    return Expression.add(numerical_value, *expr_term)
+def value(x: complex | float | int) -> Expression:
+    """Promotes a numerical value to an expression."""
+    return Expression.value(x)
 
 
-def reduce_multiplication(expr: Expression) -> Expression:
-    if not expr.is_multiplication():
-        raise SyntaxError("This function only apply to multiplication expressions.")
-
-    numerical_value = Expression.one()
-    quantum_ops = Expression.one()
-    general_terms: dict[Expression, Expression] = {}
-
-    for term in expr.args:
-        match term.head:
-            # Numerical types are comibined in a single term
-            case Expression.Token.VALUE:
-                numerical_value *= term.args[0]
-
-            # Accumulate quantum operators.
-            case Expression.Token.QUANTUM_OP | Expression.Token.KRON:
-                quantum_ops = term if not quantum_ops else quantum_ops @ term
-
-            # Powered terms are added to the general term combining the powers.
-            case Expression.Token.POW:
-                base, power = term.args[:2]
-                general_terms[base] = general_terms.get(base, Expression.zero()) + power
-
-            case _:
-                general_terms[term] = (
-                    general_terms.get(term, Expression.zero()) + Expression.one()
-                )
-
-    expr_terms: list[Expression] = [
-        b**p for b, p in general_terms.items() if p != Expression.zero()
-    ]
-
-    if quantum_ops != Expression.one():
-        expr_terms.append(quantum_ops)
-
-    if not expr_terms:
-        return numerical_value
-
-    if numerical_value == Expression.one():
-        return expr_terms[0] if len(expr_terms) < 2 else Expression.mul(*expr_terms)
-
-    return Expression.mul(numerical_value, *expr_terms)
-
-
-# def reduce_noncommutative_multiplication(expr: Expression) -> Expression:
-#     pass
-
-
-# =====
-# UTILS
-# =====
-def symbol(identfier: str) -> Expression:
-    return Expression.symbol(identfier)
-
-
-def value(val: complex | float | int) -> Expression:
-    return Expression.value(val)
+def symbol(identifier: str) -> Expression:
+    """Defines a new symbol."""
+    if identifier == "e":
+        raise SyntaxError("The name `exp` is protected")
+    return Expression.symbol(identifier)
 
 
 def function(name: str, *args: Any) -> Expression:
-    return Expression.call(name, *args)
+    """Symbolic representation of function where `name` is the name of the function
+    and the remaining arguments as the function arguments."""
+    return Expression.function(name, *args)
 
 
-def hermitian_operator(name: str) -> Callable:
+def unitary_hermitian_operator(name: str) -> Callable:
+    """
+    An unitary Hermitian operator is a function that takes a list of indices (or a
+    target and control tuples) and return an Expression with the following property:
+
+        > A = hermitian_operator("A")
+        > A(i) * A(i)
+        1
+        > A(i) * A(j)  ; for i≠j
+        A(i) * A(j)
+    """
+
     def core(
         *indices: Any,
         target: tuple[int, ...] | None = None,
         control: tuple[int, ...] | None = None,
-    ) -> Expression:
-        op_name = Expression.symbol(name)
-        support = Support(*indices, target=target, control=control)
-        return Expression.quantum_op(op_name, support, is_hermitian=True)
+    ):
+        return Expression.quantum_operator(
+            Expression.symbol(name),
+            Support(*indices, target=target, control=control),
+            is_hermitian=True,
+            is_unitary=True
+        )
 
     return core
