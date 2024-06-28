@@ -2,7 +2,13 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from .qubit_support import Support
+from qadence2_expressions.expr.qubit_support import Support
+
+# TODO:
+#   - [] Implement evaluate_addition
+#   - [] Implement evaluare_multiplication
+#   - [] Implement evaluate_kronecker_product
+#   - [] Implement evaluate_kron_op (for operator-operator)
 
 
 class Expression:
@@ -155,7 +161,7 @@ class Expression:
         """
         return self.attrs.get(attribute, default)
 
-    def get_subspace(self) -> Support | None:
+    def subspace(self) -> Support | None:
         if self.is_value or self.is_symbol:
             return None
 
@@ -164,7 +170,7 @@ class Expression:
 
         subspaces = []
         for arg in self.args:
-            sp = arg.get_subspace()
+            sp = arg.subspace()
             if sp:
                 subspaces.append(sp)
 
@@ -175,6 +181,25 @@ class Expression:
             return total_subspace
 
         return None
+
+    def as_quantum_operator(self) -> Expression:
+        """
+        Promotes and expression to a quantum operator.
+
+        When a function receives a quantum operator as input, the function itself must be turned
+        into a quantum operator in order to preserve commutation properties. For instance,
+
+        >>> exp(2) * exp(3)
+        exp(5)
+        >>> exp(X(1)) * exp(Y(1))
+        exp(X(1)) exp(Y(1))
+        """
+
+        subspace = self.subspace()
+        if subspace:
+            return Expression.quantum_operator(self, subspace)
+
+        return self
 
     # Python magic methods
     def __repr__(self) -> str:
@@ -225,7 +250,7 @@ class Expression:
         else:
             args = (self, other)
 
-        # args = reduce_addition_args(args)
+        # return evaluate_addition(Expression.add(*args))
         return Expression.add(*args)
 
     def __radd__(self, other: object) -> Expression:
@@ -266,7 +291,7 @@ class Expression:
         else:
             args = (self, other)
 
-        # args = reduce_multiplication_args(args)
+        # return evaluate_multiplication(Expression.mul(*args))
         return Expression.mul(*args)
 
     def __rmul__(self, other: object) -> Expression:
@@ -295,20 +320,7 @@ class Expression:
         if self.is_power:
             return Expression.pow(self.args[0], self.args[1] * other)
 
-        # Apply the power operation to internal expression on quantum operators expression.
-        if self.is_quantum_operator:
-            expr = self.args[0] ** other
-            support = self.args[1]
-            return Expression.quantum_operator(expr, support)
-
-        # Promote the final expression to a quantum operation whenever the expression
-        # contain quantum operators inside.
-        result = Expression.pow(self, other)
-        subspace = result.get_subspace()
-        if subspace:
-            return Expression.quantum_operator(result, subspace)
-
-        return result
+        return Expression.pow(self, other).as_quantum_operator()
 
     def __rpow__(self, other: object) -> Expression:
         # Promote numerical types to expression.
@@ -316,6 +328,128 @@ class Expression:
             return Expression.value(other) ** self
 
         return NotImplemented
+
+    def __kron__(self, other: object) -> Expression:
+        if not isinstance(other, Expression):
+            return NotImplemented
+
+        # Identity multiplication.
+        if self.is_one:
+            return other
+
+        if other.is_one:
+            return self
+
+        if self.is_quantum_operator and other.is_quantum_operator:
+            return self.__kron_op__(other)
+
+        if self.is_kronecker_product and other.is_quantum_operator:
+            return self.__insertr__(other)
+
+        if self.is_quantum_operator and other.is_kronecker_product:
+            return other.__insertl__(self)
+
+        if self.is_kronecker_product and other.is_kronecker_product:
+            return other.__kron_join__(self)
+
+        raise SyntaxError(f"__kron__ cannot be used with {self} and {other}")
+
+    def __kron_op__(self, other: object) -> Expression:
+        """Performs the Kronecker product between two quantum operators."""
+        return Expression.kron(self, other)
+
+    def __insertr__(self, term: Expression) -> Expression:
+        """Insert a new quantum operator term into a Kronecker product expression from the right."""
+
+        if not (self.is_kronecker_product or term.is_quantum_operator):
+            raise SyntaxError(
+                "Only defined for Kronecker product and quantum operator."
+            )
+
+        args = self.args
+        for i in range(len(args) - 1, -1, -1):
+            ii = i + 1
+
+            if args[i].subspace() == term.subspace():  # type: ignore
+                result = args[i].__kron_op__(term)
+
+                if result.is_one:
+                    args = (*args[:i], *args[ii:])
+
+                elif result.is_kronecker_product:
+                    args = (*args[:i], *result.args, *args[ii:])
+
+                else:
+                    args = (*args[:i], result, *args[ii:])
+
+                break
+
+            if (
+                args[i].subspace() < term.subspace()  # type: ignore
+                or args[i].subspace().overlap_with(term.subspace())  # type: ignore
+            ):
+                args = (*args[:ii], term, *args[ii:])
+                break
+
+            if i == 0:
+                args = (term, *args)
+
+        if not args:
+            return Expression.one()
+
+        return args[0] if len(args) == 1 else Expression.kron(*args)
+
+    def __insertl__(self, term: Expression) -> Expression:
+        """Insert a new quantum operator term into a Kronecker product expression from the left."""
+
+        if not (self.is_kronecker_product or term.is_quantum_operator):
+            raise SyntaxError(
+                "Only defined for Kronecker product and quantum operator."
+            )
+
+        args = self.args
+        for i, arg in enumerate(args):
+
+            if arg.subspace() == term.subspace():  # type: ignore
+                ii = i + 1
+
+                result = term.__kron_op__(arg)
+
+                if result.is_one:
+                    args = (*args[:i], *args[ii:])
+
+                elif result.is_kronecker_product:
+                    args = (*args[:i], *result.args, *args[ii:])
+
+                else:
+                    args = (*args[:i], result, *args[ii:])
+
+                break
+
+            if (
+                arg.subspace() > term.subspace()  # type: ignore
+                or arg.subspace().overlap_with(term.subspace())  # type: ignore
+            ):
+                args = (*args[:i], term, *args[i:])
+                break
+
+            if i == len(args) - 1:
+                args = (term, *args)
+
+        if not args:
+            return Expression.one()
+
+        return args[0] if len(args) == 1 else Expression.kron(*args)
+
+    def __kron_join__(self, other: Expression) -> Expression:
+        if not (self.is_kronecker_product or other.is_kronecker_product):
+            raise SyntaxError("Operation only defined")
+
+        result = self
+        for term in other.args:
+            result = result.__insertr__(term)
+
+        return result
 
 
 def value(x: complex | float | int) -> Expression:
@@ -357,7 +491,7 @@ def unitary_hermitian_operator(name: str) -> Callable:
             Expression.symbol(name),
             Support(*indices, target=target, control=control),
             is_hermitian=True,
-            is_unitary=True
+            is_unitary=True,
         )
 
     return core
