@@ -250,8 +250,8 @@ class Expression:
         else:
             args = (self, other)
 
-        # return evaluate_addition(Expression.add(*args))
-        return Expression.add(*args)
+        return evaluate_addition(Expression.add(*args))
+        # return Expression.add(*args)
 
     def __radd__(self, other: object) -> Expression:
         # Promote numerical types to expression.
@@ -450,6 +450,29 @@ class Expression:
             result = result.__insertr__(term)
 
         return result
+    
+
+def evaluate_addition(expr: Expression) -> Expression:
+    if not expr.is_addition:
+        return expr
+    
+    numerical_value = Expression.zero()
+    general_terms: dict[Expression, Expression] = dict()
+
+    for term in expr.args:
+        if term.is_value:
+            numerical_value = numerical_value + term
+
+        elif term.is_multiplication and term.args[0].is_value:
+            coef = term.args[0]
+            elem = Expression.mul(*term.args[1:])
+            general_terms[elem] = general_terms.get(elem, Expression.zero()) + coef
+        
+        else:
+            general_terms[term] = general_terms.get(term, Expression.zero()) + Expression.one()
+
+    result = numerical_value + sum(elem * coef for elem, coef in general_terms.items())
+    return result
 
 
 def value(x: complex | float | int) -> Expression:
