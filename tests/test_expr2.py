@@ -14,7 +14,7 @@ from qadence2_expressions.expr.expr2 import (
 class TestExpression(unittest.TestCase):
 
     def test_consturctor(self) -> None:
-        self.assertEqual(Expression.value(1), Expression(Expression.Token.VALUE, 1))
+        self.assertEqual(value(1), Expression(Expression.Token.VALUE, 1))
         self.assertEqual(
             Expression.symbol("x"), Expression(Expression.Token.SYMBOL, "x")
         )
@@ -33,6 +33,26 @@ class TestExpression(unittest.TestCase):
                 is_hermitian=True,
             ),
         )
+
+    def test_power(self) -> None:
+        a = symbol("a")
+
+        self.assertEqual(value(2) ** 3, value(8))
+        self.assertEqual(a ** 0, Expression.one())
+        self.assertEqual(a ** 1, a)
+        self.assertEqual(a ** 2, Expression.pow(a, value(2)))
+        self.assertEqual(2 ** a, Expression.pow(value(2), a))
+
+    def test_addition(self) -> None:
+        a = symbol("a")
+        X = unitary_hermitian_operator("X")
+
+        self.assertEqual(value(2) + 3, value(5))
+        self.assertEqual(a + 0, a)
+        self.assertEqual(0 + a, a)
+        self.assertEqual(a + 2, Expression.add(value(2), a))
+        self.assertEqual(a + a, Expression.mul(value(2), a))
+        self.assertEqual(X() + 2 + a, Expression.add(value(2), a, X()))
 
     def test_subspace_propagation(self) -> None:
         a = symbol("a")
@@ -80,3 +100,4 @@ class TestExpression(unittest.TestCase):
             X(1).__kron__(X(4)).__kron__(X(3)).__kron__(X(2)),
             Expression.kron(X(1), X(2), X(3), X(4))
         )
+

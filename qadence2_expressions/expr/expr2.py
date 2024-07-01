@@ -5,10 +5,10 @@ from typing import Any, Callable
 from qadence2_expressions.expr.qubit_support import Support
 
 # TODO:
-#   - [] Implement evaluate_addition
-#   - [] Implement evaluare_multiplication
-#   - [] Implement evaluate_kronecker_product
-#   - [] Implement evaluate_kron_op (for operator-operator)
+#   - [x] Implement evaluate_addition
+#   - [x] Implement evaluate_multiplication
+#   - [ ] Implement evaluate_kronecker_product
+#   - [ ] Implement evaluate_kron_op (for operator-operator)
 
 
 class Expression:
@@ -215,10 +215,13 @@ class Expression:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Expression):
             return NotImplemented
+        
+        lhs_args = set(self.args) if self.is_addition or self.is_multiplication else self.args
+        rhs_args = set(other.args) if other.is_addition or other.is_multiplication else other.args
 
         return (
             self.head == other.head
-            and self.args == other.args
+            and lhs_args == rhs_args
             and self.attrs == other.attrs
         )
 
@@ -250,8 +253,11 @@ class Expression:
         else:
             args = (self, other)
 
+        # ⚠️ Warning: Ideally, this step should not perform the evaluation of the
+        # the expression. However, we want to provide a friendly intercation to
+        # the users, and the inacessibility of Python's evaluation (without writing
+        # our on REPL) forces to add the evaluation at this point.
         return evaluate_addition(Expression.add(*args))
-        # return Expression.add(*args)
 
     def __radd__(self, other: object) -> Expression:
         # Promote numerical types to expression.
@@ -268,11 +274,11 @@ class Expression:
         if isinstance(other, complex | float | int):
             return self * Expression.value(other)
 
-        # Null multiplication.
+        # Null multiplication shortcut.
         if self.is_zero or other.is_zero:
             return Expression.zero()
 
-        # Multiplication identity: a * 1 = 1 * a = a.
+        # Identity multiplication shortcut.
         if self.is_one:
             return other
         if other.is_one:
@@ -291,8 +297,11 @@ class Expression:
         else:
             args = (self, other)
 
-        # return evaluate_multiplication(Expression.mul(*args))
-        return Expression.mul(*args)
+        # ⚠️ Warning: Ideally, this step should not perform the evaluation of the
+        # the expression. However, we want to provide a friendly intercation to
+        # the users, and the inacessibility of Python's evaluation (without writing
+        # our on REPL) forces to add the evaluation at this point.
+        return evaluate_multiplication(Expression.mul(*args))
 
     def __rmul__(self, other: object) -> Expression:
         # Promote numerical types to expression.
@@ -302,23 +311,31 @@ class Expression:
         return NotImplemented
 
     def __pow__(self, other: object) -> Expression:
+        """Power involving quantum operators always promote expression to quantum operators."""
+        
         if not isinstance(other, Expression | complex | float | int):
             return NotImplemented
 
         if isinstance(other, complex | float | int):
             return self ** Expression.value(other)
+        
+        # Numerical values are computed right away.
+        if self.is_value and other.is_value:
+            return Expression.value(self.args[0] ** other.args[0])
 
-        # Null power.
+        # Null power shortcut.
         if other.is_zero:
             return Expression.one()
 
-        # Identity power.
+        # Identity power shortcut.
         if other.is_one:
             return self
 
-        # Power of power.
+        # Power of power is an simple operation and can be evaluated here.
+        # Whenever a quantum operator is present, the expression is promoted to 
+        # a quantum operator.
         if self.is_power:
-            return Expression.pow(self.args[0], self.args[1] * other)
+            return Expression.pow(self.args[0], self.args[1] * other).as_quantum_operator()
 
         return Expression.pow(self, other).as_quantum_operator()
 
@@ -328,6 +345,15 @@ class Expression:
             return Expression.value(other) ** self
 
         return NotImplemented
+    
+    def __neg__(self) -> Expression:
+        return -1 * self
+    
+    def __sub__(self, other: object) -> Expression:
+        pass
+
+    def __rsub__(self, other: object) -> Expression:
+        pass
 
     def __kron__(self, other: object) -> Expression:
         if not isinstance(other, Expression):
@@ -351,7 +377,11 @@ class Expression:
 
         if self.is_kronecker_product and other.is_kronecker_product:
             return other.__kron_join__(self)
-
+        
+        # ⚠️ Warning: Ideally, this step should not perform the evaluation of the
+        # the expression. However, we want to provide a friendly intercation to
+        # the users, and the inacessibility of Python's evaluation (without writing
+        # our on REPL) forces to add the evaluation at this point.
         raise SyntaxError(f"__kron__ cannot be used with {self} and {other}")
 
     def __kron_op__(self, other: object) -> Expression:
@@ -457,6 +487,7 @@ def evaluate_addition(expr: Expression) -> Expression:
         return expr
     
     numerical_value = Expression.zero()
+    quantum_operators = []
     general_terms: dict[Expression, Expression] = dict()
 
     for term in expr.args:
@@ -471,8 +502,44 @@ def evaluate_addition(expr: Expression) -> Expression:
         else:
             general_terms[term] = general_terms.get(term, Expression.zero()) + Expression.one()
 
-    result = numerical_value + sum(elem * coef for elem, coef in general_terms.items())
-    return result
+    args = tuple(elem * coef for elem, coef in general_terms.items())
+
+    if not numerical_value.is_zero:
+        args = (numerical_value, *args)
+    
+    return args[0] if len(args) == 1 else Expression.add(*args)
+
+
+def evaluate_multiplication(expr: Expression) -> Expression:
+    if not expr.is_multiplication:
+        return expr
+    
+    numerical_value = Expression.one()
+    quantum_operators = Expression.one()
+    general_terms: dict[Expression, Expression] = dict()
+
+    for term in expr.args:
+        if term.is_value:
+            numerical_value = numerical_value * term
+
+        elif term.is_quantum_operator or term.is_kronecker_product:
+            quantum_operators = quantum_operators.__kron__(term)
+
+        elif term.is_power:
+            base, power = term.args[:2]
+            general_terms[base] = general_terms.get(base, Expression.zero()) + power
+
+        else:
+            general_terms[term] = general_terms.get(term, Expression.zero()) + Expression.one()
+
+    args = () if numerical_value.is_one else (numerical_value,)
+
+    args = (*args, *(base ** power for base, power in general_terms.items() if not power.is_zero))
+
+    if not quantum_operators.is_one:
+        args = (*args, quantum_operators)
+
+    return args[0] if len(args) == 1 else Expression.mul(*args)
 
 
 def value(x: complex | float | int) -> Expression:
