@@ -34,15 +34,6 @@ class TestExpression(unittest.TestCase):
             ),
         )
 
-    def test_power(self) -> None:
-        a = symbol("a")
-
-        self.assertEqual(value(2) ** 3, value(8))
-        self.assertEqual(a ** 0, Expression.one())
-        self.assertEqual(a ** 1, a)
-        self.assertEqual(a ** 2, Expression.pow(a, value(2)))
-        self.assertEqual(2 ** a, Expression.pow(value(2), a))
-
     def test_addition(self) -> None:
         a = symbol("a")
         X = unitary_hermitian_operator("X")
@@ -53,6 +44,61 @@ class TestExpression(unittest.TestCase):
         self.assertEqual(a + 2, Expression.add(value(2), a))
         self.assertEqual(a + a, Expression.mul(value(2), a))
         self.assertEqual(X() + 2 + a, Expression.add(value(2), a, X()))
+
+    def test_negation(self) -> None:
+        a = symbol("a")
+        X = unitary_hermitian_operator("X")
+
+        self.assertEqual(-value(2), value(-2))
+        self.assertEqual(-a, Expression.mul(value(-1), a))
+        self.assertEqual(-X(1), Expression.mul(value(-1), X(1)))
+        self.assertEqual(
+            -X(2) * X(1), Expression.mul(value(-1), Expression.kron(X(1), X(2)))
+        )
+
+    def test_subtractions(self) -> None:
+        pass
+
+    def test_multiplication(self) -> None:
+        a = symbol("a")
+        X = unitary_hermitian_operator("X")
+
+        self.assertEqual(3 * value(2), value(6))
+        self.assertEqual(a * 2, Expression.mul(value(2), a))
+        self.assertEqual(X(1) * a * 2, Expression.mul(value(2), a, X(1)))
+        self.assertEqual(
+            X(1) * a * X(2) * 2,
+            Expression.mul(value(2), a, Expression.kron(X(1), X(2))),
+        )
+
+    def test_power(self) -> None:
+        a = symbol("a")
+
+        self.assertEqual(value(2) ** 3, value(8))
+        self.assertEqual(a**0, Expression.one())
+        self.assertEqual(a**1, a)
+        self.assertEqual(a**2, Expression.pow(a, value(2)))
+        self.assertEqual(2**a, Expression.pow(value(2), a))
+
+    def test_division(self) -> None:
+        pass
+
+    def test_kron(self) -> None:
+        X = unitary_hermitian_operator("X")
+        term = Expression.kron(X(1), X(2), X(4))
+
+        # Push term from the right.
+        self.assertEqual(term.__kron__(X(3)), Expression.kron(X(1), X(2), X(3), X(4)))
+
+        # Push term from the left.
+        self.assertEqual(X(3).__kron__(term), Expression.kron(X(1), X(2), X(3), X(4)))
+
+        # Join `kron` expressions.
+        term1 = Expression.kron(X(1), X(4))
+        term2 = Expression.kron(X(2), X(3))
+
+        self.assertEqual(term1.__kron__(term2), Expression.kron(X(1), X(2), X(3), X(4)))
+        self.assertEqual(term2.__kron__(term1), Expression.kron(X(1), X(2), X(3), X(4)))
 
     def test_subspace_propagation(self) -> None:
         a = symbol("a")
@@ -76,28 +122,3 @@ class TestExpression(unittest.TestCase):
         term2 = Expression.mul(b, X(2))
         expr = Expression.add(term1, term2)
         self.assertEqual(expr.subspace(), Support(1, 2))
-
-
-    def test_kron_insert(self) -> None:
-        X = unitary_hermitian_operator("X")
-        term = Expression.kron(X(1), X(2), X(4))
-
-        self.assertEqual(term.__insertr__(X(3)), Expression.kron(X(1), X(2), X(3), X(4)))
-        self.assertEqual(term.__insertl__(X(3)), Expression.kron(X(1), X(2), X(3), X(4)))
-   
-    def test_kron_join(self) -> None:
-        X = unitary_hermitian_operator("X")
-        term1 = Expression.kron(X(1), X(4))
-        term2 = Expression.kron(X(2), X(3))
-        
-        self.assertEqual(term1.__kron_join__(term2), Expression.kron(X(1), X(2), X(3), X(4)))
-        self.assertEqual(term2.__kron_join__(term1), Expression.kron(X(1), X(2), X(3), X(4)))
-  
-    def test_kron(self) -> None:
-        X = unitary_hermitian_operator("X")
-
-        self.assertEqual(
-            X(1).__kron__(X(4)).__kron__(X(3)).__kron__(X(2)),
-            Expression.kron(X(1), X(2), X(3), X(4))
-        )
-

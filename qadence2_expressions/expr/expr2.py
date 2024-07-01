@@ -358,136 +358,39 @@ class Expression:
     def __kron__(self, other: object) -> Expression:
         if not isinstance(other, Expression):
             return NotImplemented
+        
+        if not (
+            (self.is_zero or self.is_one or self.is_quantum_operator or self.is_kronecker_product)
+            or (
+                other.is_zero or other.is_one
+                or other.is_quantum_operator or other.is_kronecker_product
+            )
+        ):
+            raise SyntaxError(f"__kron__ cannot be used with {self} and {other}")
+        
+        # Null multiplication shortcut.
+        if self.is_zero or other.is_zero:
+            return Expression.zero()
 
-        # Identity multiplication.
+        # Identity multiplication shortcut.
         if self.is_one:
             return other
 
         if other.is_one:
             return self
-
-        if self.is_quantum_operator and other.is_quantum_operator:
-            return self.__kron_op__(other)
-
-        if self.is_kronecker_product and other.is_quantum_operator:
-            return self.__insertr__(other)
-
-        if self.is_quantum_operator and other.is_kronecker_product:
-            return other.__insertl__(self)
-
-        if self.is_kronecker_product and other.is_kronecker_product:
-            return other.__kron_join__(self)
         
         # ⚠️ Warning: Ideally, this step should not perform the evaluation of the
         # the expression. However, we want to provide a friendly intercation to
         # the users, and the inacessibility of Python's evaluation (without writing
         # our on REPL) forces to add the evaluation at this point.
-        raise SyntaxError(f"__kron__ cannot be used with {self} and {other}")
-
-    def __kron_op__(self, other: object) -> Expression:
-        """Performs the Kronecker product between two quantum operators."""
-        return Expression.kron(self, other)
-
-    def __insertr__(self, term: Expression) -> Expression:
-        """Insert a new quantum operator term into a Kronecker product expression from the right."""
-
-        if not (self.is_kronecker_product or term.is_quantum_operator):
-            raise SyntaxError(
-                "Only defined for Kronecker product and quantum operator."
-            )
-
-        args = self.args
-        for i in range(len(args) - 1, -1, -1):
-            ii = i + 1
-
-            if args[i].subspace() == term.subspace():  # type: ignore
-                result = args[i].__kron_op__(term)
-
-                if result.is_one:
-                    args = (*args[:i], *args[ii:])
-
-                elif result.is_kronecker_product:
-                    args = (*args[:i], *result.args, *args[ii:])
-
-                else:
-                    args = (*args[:i], result, *args[ii:])
-
-                break
-
-            if (
-                args[i].subspace() < term.subspace()  # type: ignore
-                or args[i].subspace().overlap_with(term.subspace())  # type: ignore
-            ):
-                args = (*args[:ii], term, *args[ii:])
-                break
-
-            if i == 0:
-                args = (term, *args)
-
-        if not args:
-            return Expression.one()
-
-        return args[0] if len(args) == 1 else Expression.kron(*args)
-
-    def __insertl__(self, term: Expression) -> Expression:
-        """Insert a new quantum operator term into a Kronecker product expression from the left."""
-
-        if not (self.is_kronecker_product or term.is_quantum_operator):
-            raise SyntaxError(
-                "Only defined for Kronecker product and quantum operator."
-            )
-
-        args = self.args
-        for i, arg in enumerate(args):
-
-            if arg.subspace() == term.subspace():  # type: ignore
-                ii = i + 1
-
-                result = term.__kron_op__(arg)
-
-                if result.is_one:
-                    args = (*args[:i], *args[ii:])
-
-                elif result.is_kronecker_product:
-                    args = (*args[:i], *result.args, *args[ii:])
-
-                else:
-                    args = (*args[:i], result, *args[ii:])
-
-                break
-
-            if (
-                arg.subspace() > term.subspace()  # type: ignore
-                or arg.subspace().overlap_with(term.subspace())  # type: ignore
-            ):
-                args = (*args[:i], term, *args[i:])
-                break
-
-            if i == len(args) - 1:
-                args = (term, *args)
-
-        if not args:
-            return Expression.one()
-
-        return args[0] if len(args) == 1 else Expression.kron(*args)
-
-    def __kron_join__(self, other: Expression) -> Expression:
-        if not (self.is_kronecker_product or other.is_kronecker_product):
-            raise SyntaxError("Operation only defined")
-
-        result = self
-        for term in other.args:
-            result = result.__insertr__(term)
-
-        return result
-    
+        return evaluate_kron(Expression.kron(self, other))
+ 
 
 def evaluate_addition(expr: Expression) -> Expression:
     if not expr.is_addition:
         return expr
     
     numerical_value = Expression.zero()
-    quantum_operators = []
     general_terms: dict[Expression, Expression] = dict()
 
     for term in expr.args:
@@ -532,6 +435,9 @@ def evaluate_multiplication(expr: Expression) -> Expression:
         else:
             general_terms[term] = general_terms.get(term, Expression.zero()) + Expression.one()
 
+    if numerical_value.is_zero or quantum_operators.is_zero:
+        return Expression.zero()
+    
     args = () if numerical_value.is_one else (numerical_value,)
 
     args = (*args, *(base ** power for base, power in general_terms.items() if not power.is_zero))
@@ -542,15 +448,152 @@ def evaluate_multiplication(expr: Expression) -> Expression:
     return args[0] if len(args) == 1 else Expression.mul(*args)
 
 
+def evaluate_kron(expr: Expression) -> Expression:
+    lhs = expr.args[0]
+    for rhs in expr.args[1:]:
+        if lhs.is_quantum_operator and rhs.is_quantum_operator:
+            lhs = evaluate_kronop(lhs, rhs)
+        
+        elif lhs.is_quantum_operator and rhs.is_kronecker_product:
+            lhs = evaluate_kronleft(lhs, rhs)
+        
+        elif lhs.is_kronecker_product and rhs.is_quantum_operator:
+            lhs = evaluate_kronright(lhs, rhs)
+        
+        elif lhs.is_kronecker_product and rhs.is_kronecker_product:
+            lhs = evaluate_kronjoin(lhs, rhs)
+    
+        else:
+            raise NotImplementedError
+        
+    return lhs
+
+
+def evaluate_kronleft(lhs: Expression, rhs: Expression) -> Expression:
+    """
+    Evaluate the Kronecker product between a LHS=quantum operators and a RHS=Kronecker product.
+    """
+    if not (lhs.is_quantum_operator or rhs.is_kronecker_product):
+        raise SyntaxError("Only defined for a quantum operator and a Kronecker product.")
+
+    args = rhs.args
+    for i, rhs_arg in enumerate(args):
+
+        if rhs_arg.subspace() == lhs.subspace():  # type: ignore
+            ii = i + 1
+
+            result = evaluate_kronop(lhs, rhs_arg)
+
+            if result.is_one:
+                args = (*args[:i], *args[ii:])
+
+            elif result.is_kronecker_product:
+                args = (*args[:i], *result.args, *args[ii:])
+
+            else:
+                args = (*args[:i], result, *args[ii:])
+
+            break
+
+        if (
+            rhs_arg.subspace() > lhs.subspace()  # type: ignore
+            or rhs_arg.subspace().overlap_with(lhs.subspace())  # type: ignore
+        ):
+            args = (*args[:i], lhs, *args[i:])
+            break
+
+        if i == len(args) - 1:
+            args = (lhs, *args)
+
+    if not args:
+        return Expression.one()
+
+    return args[0] if len(args) == 1 else Expression.kron(*args)
+
+
+def evaluate_kronright(lhs: Expression, rhs: Expression) -> Expression:
+    """
+    Evaluate the Kronecker product between a LHS=quantum operators and a RHS=Kronecker product.
+    """
+    if not (lhs.is_kronecker_product or rhs.is_quantum_operator):
+        raise SyntaxError("Only defined for a Kronecker product and a quantum operator.")
+
+    args = lhs.args
+    for i in range(len(args) - 1, -1, -1):
+        ii = i + 1
+
+        if args[i].subspace() == rhs.subspace():  # type: ignore
+            result = evaluate_kronop(args[i], rhs)
+
+            if result.is_one:
+                args = (*args[:i], *args[ii:])
+
+            elif result.is_kronecker_product:
+                args = (*args[:i], *result.args, *args[ii:])
+
+            else:
+                args = (*args[:i], result, *args[ii:])
+
+            break
+
+        if (
+            args[i].subspace() < rhs.subspace()  # type: ignore
+            or args[i].subspace().overlap_with(rhs.subspace())  # type: ignore
+        ):
+            args = (*args[:ii], rhs, *args[ii:])
+            break
+
+        if i == 0:
+            args = (rhs, *args)
+
+    if not args:
+        return Expression.one()
+
+    return args[0] if len(args) == 1 else Expression.kron(*args)
+
+
+def evaluate_kronjoin(lhs: Expression, rhs: Expression) -> Expression:
+    """
+    Evaluate the Kronecker product between a LHS=quantum operators and a RHS=Kronecker product.
+    """
+    if not (lhs.is_kronecker_product or rhs.is_kronecker_product):
+        raise SyntaxError("Only defined for LHS and RHS both Kronecker product.")
+
+    result = lhs
+    for term in rhs.args:
+        result = evaluate_kron(Expression.kron(result, term))
+
+    return result
+
+
+def evaluate_kronop(lhs: Expression, rhs: Expression) -> Expression:
+    """Evaluate the Kronecker product between two quantum operators."""
+    if not (lhs.is_quantum_operator or rhs.is_quantum_operator):
+        raise SyntaxError("Operation only valid for LHS and RHS both quantum operators.")
+    
+    # Order the operators by subspace.
+    if (
+        lhs.subspace() < rhs.subspace()  # type: ignore
+        or lhs.subspace().overlap_with(rhs.subspace())  # type: ignore
+    ):
+        return Expression.kron(lhs, rhs)
+    
+    return Expression.kron(rhs, lhs)
+
+
 def value(x: complex | float | int) -> Expression:
     """Promotes a numerical value to an expression."""
     return Expression.value(x)
 
 
+def exp(x: Expression | complex | float | int) -> Expression:
+    return Expression.symbol("e") ** x
+
+
 def symbol(identifier: str) -> Expression:
     """Defines a new symbol."""
     if identifier == "e":
-        raise SyntaxError("The name `exp` is protected")
+        raise SyntaxError("The name `e` is protected")
     return Expression.symbol(identifier)
 
 
