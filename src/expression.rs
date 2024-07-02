@@ -5,6 +5,7 @@ use crate::symbols::Numerical;
 
 use std::ops::{Add, Div, Mul, Sub, Neg};
 
+#[macro_export]
 macro_rules! vbox {
    () => { vec![] };
    ($($x:expr),+ $(,)?) => { vec![$(Box::new($x)),*] };
