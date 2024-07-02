@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from qadence2_expressions.expr.qubit_support import Support
+from qadence2_expressions.core.support import Support
 
 
 def test_support_single_qubit_initialization() -> None:

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from ..expr import Expr, Numeric, Numerical, Operator
+from ..core import Expr, Numeric, Numerical, Operator
 from . import functions as fun
 
 

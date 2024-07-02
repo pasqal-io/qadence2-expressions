@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..expr import Expr, Operator, QSymbol
+from ..core import Expr, Operator, QSymbol
 
 
 def collect_operators(expr: object) -> dict:

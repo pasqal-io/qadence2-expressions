@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from qadence2_expressions import QSymbol, Symbol, collect_operators
-from qadence2_expressions.expr import Expr, Operator
+from qadence2_expressions.core import Expr, Operator
 
 
 def test_collect_single_operator() -> None:

@@ -10,7 +10,7 @@ from typing import get_args
 # TODO: Remove default backend for functions.
 import numpy as backend
 
-from ..expr import Expr, Numeric, Numerical, Operator
+from ..core import Expr, Numeric, Numerical, Operator
 
 
 def sin(x: Numeric | Numerical) -> Numeric | Numerical:

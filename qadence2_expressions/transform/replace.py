@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from ..expr import Expr, Numeric, Numerical, Operator
+from ..core import Expr, Numeric, Numerical, Operator
 from .evaluate import evaluate
 
 
