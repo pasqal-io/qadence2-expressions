@@ -5,14 +5,13 @@ import unittest
 from qadence2_expressions.expr.expr2 import (
     Expression,
     Support,
-    value,
     symbol,
     unitary_hermitian_operator,
+    value,
 )
 
 
 class TestExpression(unittest.TestCase):
-
     def test_consturctor(self) -> None:
         self.assertEqual(value(1), Expression(Expression.Token.VALUE, 1))
         self.assertEqual(
@@ -57,7 +56,14 @@ class TestExpression(unittest.TestCase):
         )
 
     def test_subtractions(self) -> None:
-        pass
+        a = symbol("a")
+        X = unitary_hermitian_operator("X")
+
+        self.assertEqual(value(2) - value(3), value(-1))
+        self.assertEqual(a - 2, Expression.add(value(-2), a))
+        self.assertEqual(2 - a, Expression.add(value(2), Expression.mul(value(-1), a)))
+        self.assertEqual(a - a, value(0))
+        self.assertEqual(X(1) - X(1), value(0))
 
     def test_multiplication(self) -> None:
         a = symbol("a")
@@ -81,7 +87,12 @@ class TestExpression(unittest.TestCase):
         self.assertEqual(2**a, Expression.pow(value(2), a))
 
     def test_division(self) -> None:
-        pass
+        a = symbol("a")
+
+        self.assertEqual(3 / value(2), value(1.5))
+        self.assertEqual(1 / a, Expression.pow(a, value(-1)))
+        self.assertEqual(a / a, value(1))
+        self.assertEqual(a / 2, Expression.mul(value(0.5), a))
 
     def test_kron(self) -> None:
         X = unitary_hermitian_operator("X")
@@ -99,6 +110,31 @@ class TestExpression(unittest.TestCase):
 
         self.assertEqual(term1.__kron__(term2), Expression.kron(X(1), X(2), X(3), X(4)))
         self.assertEqual(term2.__kron__(term1), Expression.kron(X(1), X(2), X(3), X(4)))
+
+    def test_commutativity(self) -> None:
+        a = symbol("a")
+        b = symbol("b")
+        X = unitary_hermitian_operator("X")
+        Y = unitary_hermitian_operator("Y")
+
+        self.assertEqual(a * b - b * a, value(0))
+        self.assertEqual(
+            X(1) * Y(1) - Y(1) * X(1),
+            Expression.add(
+                Expression.kron(X(1), Y(1)),
+                Expression.mul(value(-1), Expression.kron(Y(1), X(1))),
+            ),
+        )
+        self.assertEqual(X(1) * Y(2) - Y(2) * X(1), value(0))
+
+    def test_operators_multiplication(self) -> None:
+        X = unitary_hermitian_operator("X")
+        Y = unitary_hermitian_operator("Y")
+
+        self.assertEqual(X() * X(), value(1))
+        self.assertEqual(X(1) * X(1), value(1))
+        self.assertEqual(X(1) * Y(2) * X(1), Y(2))
+        self.assertEqual((X(1) * Y(2)) * (X(1) * Y(2)), value(1))
 
     def test_subspace_propagation(self) -> None:
         a = symbol("a")

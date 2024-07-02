@@ -4,12 +4,6 @@ from typing import Any, Callable
 
 from qadence2_expressions.expr.qubit_support import Support
 
-# TODO:
-#   - [x] Implement evaluate_addition
-#   - [x] Implement evaluate_multiplication
-#   - [ ] Implement evaluate_kronecker_product
-#   - [ ] Implement evaluate_kron_op (for operator-operator)
-
 
 class Expression:
     class Token:
@@ -65,14 +59,14 @@ class Expression:
 
     @classmethod
     def quantum_operator(
-        cls, expr: Expression, support: Support, **properties
+        cls, expr: Expression, support: Support, **attributes: Any
     ) -> Expression:
         """Promote an expression to a quantum operator acting on the indicated  support.
         The properties indicate behaviours for evaluation like:
             - `is_hermitian` [bool]
             - `is_dagger` [bool]
         """
-        return cls(cls.Token.QUANTUM_OP, expr, support, **properties)
+        return cls(cls.Token.QUANTUM_OP, expr, support, **attributes)
 
     @classmethod
     def add(cls, *args: Any) -> Expression:
@@ -154,7 +148,7 @@ class Expression:
         return self.head == Expression.Token.POW
 
     # Helper functions.
-    def get_attr(self, attribute: str, default: Any | None = None) -> Any:
+    def get(self, attribute: str, default: Any | None = None) -> Any:
         """
         Return the value of the indicated expression `attribute` if present or
         the `default` otherwise. Default value is `None`.
@@ -166,7 +160,7 @@ class Expression:
             return None
 
         if self.is_quantum_operator:
-            return self.args[1]
+            return self.args[1]  # type: ignore
 
         subspaces = []
         for arg in self.args:
@@ -178,7 +172,7 @@ class Expression:
             total_subspace = subspaces[0]
             for subspace in subspaces[1:]:
                 total_subspace = total_subspace.join(subspace)
-            return total_subspace
+            return total_subspace  # type: ignore
 
         return None
 
@@ -215,9 +209,15 @@ class Expression:
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Expression):
             return NotImplemented
-        
-        lhs_args = set(self.args) if self.is_addition or self.is_multiplication else self.args
-        rhs_args = set(other.args) if other.is_addition or other.is_multiplication else other.args
+
+        lhs_args = (
+            set(self.args) if self.is_addition or self.is_multiplication else self.args
+        )
+        rhs_args = (
+            set(other.args)
+            if other.is_addition or other.is_multiplication
+            else other.args
+        )
 
         return (
             self.head == other.head
@@ -312,13 +312,13 @@ class Expression:
 
     def __pow__(self, other: object) -> Expression:
         """Power involving quantum operators always promote expression to quantum operators."""
-        
+
         if not isinstance(other, Expression | complex | float | int):
             return NotImplemented
 
         if isinstance(other, complex | float | int):
             return self ** Expression.value(other)
-        
+
         # Numerical values are computed right away.
         if self.is_value and other.is_value:
             return Expression.value(self.args[0] ** other.args[0])
@@ -332,10 +332,12 @@ class Expression:
             return self
 
         # Power of power is an simple operation and can be evaluated here.
-        # Whenever a quantum operator is present, the expression is promoted to 
+        # Whenever a quantum operator is present, the expression is promoted to
         # a quantum operator.
         if self.is_power:
-            return Expression.pow(self.args[0], self.args[1] * other).as_quantum_operator()
+            return Expression.pow(
+                self.args[0], self.args[1] * other
+            ).as_quantum_operator()
 
         return Expression.pow(self, other).as_quantum_operator()
 
@@ -345,29 +347,54 @@ class Expression:
             return Expression.value(other) ** self
 
         return NotImplemented
-    
+
     def __neg__(self) -> Expression:
         return -1 * self
-    
+
     def __sub__(self, other: object) -> Expression:
-        pass
+        if not isinstance(other, Expression | complex | float | int):
+            return NotImplemented
+
+        return self + (-other)
 
     def __rsub__(self, other: object) -> Expression:
-        pass
+        if not isinstance(other, Expression | complex | float | int):
+            return NotImplemented
+
+        return (-self) + other
+
+    def __truediv__(self, other: object) -> Expression:
+        if not isinstance(other, Expression | complex | float | int):
+            return NotImplemented
+
+        return self * (other**-1)
+
+    def __rtruediv__(self, other: object) -> Expression:
+        if not isinstance(other, complex | float | int):
+            return NotImplemented
+
+        return other * (self**-1)
 
     def __kron__(self, other: object) -> Expression:
         if not isinstance(other, Expression):
             return NotImplemented
-        
+
         if not (
-            (self.is_zero or self.is_one or self.is_quantum_operator or self.is_kronecker_product)
+            (
+                self.is_zero
+                or self.is_one
+                or self.is_quantum_operator
+                or self.is_kronecker_product
+            )
             or (
-                other.is_zero or other.is_one
-                or other.is_quantum_operator or other.is_kronecker_product
+                other.is_zero
+                or other.is_one
+                or other.is_quantum_operator
+                or other.is_kronecker_product
             )
         ):
             raise SyntaxError(f"__kron__ cannot be used with {self} and {other}")
-        
+
         # Null multiplication shortcut.
         if self.is_zero or other.is_zero:
             return Expression.zero()
@@ -378,18 +405,18 @@ class Expression:
 
         if other.is_one:
             return self
-        
+
         # ⚠️ Warning: Ideally, this step should not perform the evaluation of the
         # the expression. However, we want to provide a friendly intercation to
         # the users, and the inacessibility of Python's evaluation (without writing
         # our on REPL) forces to add the evaluation at this point.
         return evaluate_kron(Expression.kron(self, other))
- 
+
 
 def evaluate_addition(expr: Expression) -> Expression:
     if not expr.is_addition:
         return expr
-    
+
     numerical_value = Expression.zero()
     general_terms: dict[Expression, Expression] = dict()
 
@@ -399,24 +426,28 @@ def evaluate_addition(expr: Expression) -> Expression:
 
         elif term.is_multiplication and term.args[0].is_value:
             coef = term.args[0]
-            elem = Expression.mul(*term.args[1:])
+            elem = (
+                term.args[1] if len(term.args) == 2 else Expression.mul(*term.args[1:])
+            )
             general_terms[elem] = general_terms.get(elem, Expression.zero()) + coef
-        
+
         else:
-            general_terms[term] = general_terms.get(term, Expression.zero()) + Expression.one()
+            general_terms[term] = (
+                general_terms.get(term, Expression.zero()) + Expression.one()
+            )
 
     args = tuple(elem * coef for elem, coef in general_terms.items())
 
     if not numerical_value.is_zero:
         args = (numerical_value, *args)
-    
+
     return args[0] if len(args) == 1 else Expression.add(*args)
 
 
 def evaluate_multiplication(expr: Expression) -> Expression:
     if not expr.is_multiplication:
         return expr
-    
+
     numerical_value = Expression.one()
     quantum_operators = Expression.one()
     general_terms: dict[Expression, Expression] = dict()
@@ -433,17 +464,22 @@ def evaluate_multiplication(expr: Expression) -> Expression:
             general_terms[base] = general_terms.get(base, Expression.zero()) + power
 
         else:
-            general_terms[term] = general_terms.get(term, Expression.zero()) + Expression.one()
+            general_terms[term] = (
+                general_terms.get(term, Expression.zero()) + Expression.one()
+            )
 
     if numerical_value.is_zero or quantum_operators.is_zero:
         return Expression.zero()
-    
-    args = () if numerical_value.is_one else (numerical_value,)
 
-    args = (*args, *(base ** power for base, power in general_terms.items() if not power.is_zero))
+    args = tuple(
+        base**power for base, power in general_terms.items() if not power.is_zero
+    )
 
     if not quantum_operators.is_one:
         args = (*args, quantum_operators)
+
+    if not numerical_value.is_one or len(args) == 0:
+        args = (numerical_value, *args)
 
     return args[0] if len(args) == 1 else Expression.mul(*args)
 
@@ -453,20 +489,20 @@ def evaluate_kron(expr: Expression) -> Expression:
     for rhs in expr.args[1:]:
         if lhs.is_quantum_operator and rhs.is_quantum_operator:
             lhs = evaluate_kronop(lhs, rhs)
-        
+
         elif lhs.is_quantum_operator and rhs.is_kronecker_product:
             lhs = evaluate_kronleft(lhs, rhs)
-        
+
         elif lhs.is_kronecker_product and rhs.is_quantum_operator:
             lhs = evaluate_kronright(lhs, rhs)
-        
+
         elif lhs.is_kronecker_product and rhs.is_kronecker_product:
             lhs = evaluate_kronjoin(lhs, rhs)
-    
+
         else:
             raise NotImplementedError
-        
-    return lhs
+
+    return lhs  # type: ignore
 
 
 def evaluate_kronleft(lhs: Expression, rhs: Expression) -> Expression:
@@ -474,11 +510,12 @@ def evaluate_kronleft(lhs: Expression, rhs: Expression) -> Expression:
     Evaluate the Kronecker product between a LHS=quantum operators and a RHS=Kronecker product.
     """
     if not (lhs.is_quantum_operator or rhs.is_kronecker_product):
-        raise SyntaxError("Only defined for a quantum operator and a Kronecker product.")
+        raise SyntaxError(
+            "Only defined for a quantum operator and a Kronecker product."
+        )
 
     args = rhs.args
     for i, rhs_arg in enumerate(args):
-
         if rhs_arg.subspace() == lhs.subspace():  # type: ignore
             ii = i + 1
 
@@ -508,7 +545,7 @@ def evaluate_kronleft(lhs: Expression, rhs: Expression) -> Expression:
     if not args:
         return Expression.one()
 
-    return args[0] if len(args) == 1 else Expression.kron(*args)
+    return args[0] if len(args) == 1 else Expression.kron(*args)  # type: ignore
 
 
 def evaluate_kronright(lhs: Expression, rhs: Expression) -> Expression:
@@ -516,7 +553,9 @@ def evaluate_kronright(lhs: Expression, rhs: Expression) -> Expression:
     Evaluate the Kronecker product between a LHS=quantum operators and a RHS=Kronecker product.
     """
     if not (lhs.is_kronecker_product or rhs.is_quantum_operator):
-        raise SyntaxError("Only defined for a Kronecker product and a quantum operator.")
+        raise SyntaxError(
+            "Only defined for a Kronecker product and a quantum operator."
+        )
 
     args = lhs.args
     for i in range(len(args) - 1, -1, -1):
@@ -536,10 +575,11 @@ def evaluate_kronright(lhs: Expression, rhs: Expression) -> Expression:
 
             break
 
-        if (
-            args[i].subspace() < rhs.subspace()  # type: ignore
-            or args[i].subspace().overlap_with(rhs.subspace())  # type: ignore
-        ):
+        if args[i].subspace() < rhs.subspace() or args[  # type: ignore
+            i
+        ].subspace().overlap_with(
+            rhs.subspace()
+        ):  # type: ignore
             args = (*args[:ii], rhs, *args[ii:])
             break
 
@@ -549,7 +589,7 @@ def evaluate_kronright(lhs: Expression, rhs: Expression) -> Expression:
     if not args:
         return Expression.one()
 
-    return args[0] if len(args) == 1 else Expression.kron(*args)
+    return args[0] if len(args) == 1 else Expression.kron(*args)  # type: ignore
 
 
 def evaluate_kronjoin(lhs: Expression, rhs: Expression) -> Expression:
@@ -569,15 +609,20 @@ def evaluate_kronjoin(lhs: Expression, rhs: Expression) -> Expression:
 def evaluate_kronop(lhs: Expression, rhs: Expression) -> Expression:
     """Evaluate the Kronecker product between two quantum operators."""
     if not (lhs.is_quantum_operator or rhs.is_quantum_operator):
-        raise SyntaxError("Operation only valid for LHS and RHS both quantum operators.")
-    
+        raise SyntaxError(
+            "Operation only valid for LHS and RHS both quantum operators."
+        )
+
+    # Multiplication of unitary Hermitian operators acting on the the same subspace.
+    if lhs == rhs and lhs.get("is_hermitian") and lhs.get("is_unitary"):
+        return Expression.one()
+
     # Order the operators by subspace.
-    if (
-        lhs.subspace() < rhs.subspace()  # type: ignore
-        or lhs.subspace().overlap_with(rhs.subspace())  # type: ignore
+    if lhs.subspace() < rhs.subspace() or lhs.subspace().overlap_with(  # type: ignore
+        rhs.subspace()  # type: ignore
     ):
         return Expression.kron(lhs, rhs)
-    
+
     return Expression.kron(rhs, lhs)
 
 
@@ -619,7 +664,7 @@ def unitary_hermitian_operator(name: str) -> Callable:
         *indices: Any,
         target: tuple[int, ...] | None = None,
         control: tuple[int, ...] | None = None,
-    ):
+    ) -> Expression:
         return Expression.quantum_operator(
             Expression.symbol(name),
             Support(*indices, target=target, control=control),
