@@ -20,7 +20,7 @@ impl Expression {
     }
 
     pub fn float(value: f64) -> Self {
-        Expression::Value(Numerical::float(value))
+        Expression::Value(Numerical::Float(value))
     }
 
     pub fn complex(real: f64, imag: f64) -> Self {

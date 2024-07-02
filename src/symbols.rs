@@ -12,11 +12,6 @@ pub enum Numerical {
 }
 
 impl Numerical {
-    /// Convenience method to create a Numerical::Float
-    pub fn float(value: f64) -> Self {
-        Numerical::Float(value)
-    }
-
     /// Convenience method to create a Numerical::Complex
     pub fn complex(re: f64, im: f64) -> Self {
         Numerical::Complex(Complex::new(re, im))
@@ -39,7 +34,7 @@ impl Neg for Numerical {
 	use Numerical::*;
 
 	match self {
-	    Float(f) => Numerical::float(-f),
+	    Float(f) => Numerical::Float(-f),
 	    Complex(c) => Numerical::complex(-c.re, -c.im),
 	}
     }
@@ -140,8 +135,8 @@ mod tests {
 
     #[test]
     fn test_numerical_binary_ops_float_to_float() {
-        let n1 = Numerical::float(5.0);
-        let n2 = Numerical::float(10.0);
+        let n1 = Numerical::Float(5.0);
+        let n2 = Numerical::Float(10.0);
         assert_eq!(n1 + n2, Numerical::Float(15.0));
         assert_eq!(n1 - n2, Numerical::Float(-5.0));
         assert_eq!(n1 * n2, Numerical::Float(50.0));
@@ -150,7 +145,7 @@ mod tests {
     
     #[test]
     fn test_numerical_binary_ops_float_to_complex() {
-        let n1 = Numerical::float(5.0);
+        let n1 = Numerical::Float(5.0);
         let n2 = Numerical::complex(3.0, 4.0);
         assert_eq!(n1 + n2, Numerical::Complex(Complex::new(8.0, 4.0)));
         assert_eq!(n1 - n2, Numerical::Complex(Complex::new(2.0, -4.0)));
@@ -161,7 +156,7 @@ mod tests {
     #[test]
     fn test_numerical_binary_ops_complex_to_float() {
         let n1 = Numerical::complex(5.0, 4.0);
-        let n2 = Numerical::float(3.0);
+        let n2 = Numerical::Float(3.0);
         assert_eq!(n1 + n2, Numerical::Complex(Complex::new(8.0, 4.0)));
         assert_eq!(n1 - n2, Numerical::Complex(Complex::new(2.0, 4.0)));
         assert_eq!(n1 * n2, Numerical::Complex(Complex::new(15.0, 12.0)));
