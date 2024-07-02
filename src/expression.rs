@@ -180,8 +180,8 @@ mod tests {
     
     #[test]
     fn test_float_expression() {
-        let float_expr = Expression::float(3.14);
-        assert_eq!(float_expr, Expression::Value(Numerical::Float(3.14)));
+        let float_expr = Expression::float(std::f64::consts::FRAC_1_PI);
+        assert_eq!(float_expr, Expression::Value(Numerical::Float(std::f64::consts::FRAC_1_PI)));
     }
 
     #[test]
