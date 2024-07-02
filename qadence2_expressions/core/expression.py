@@ -55,7 +55,7 @@ class Expression:
 
             Expression.function("sin", 1.57) => sin(1.57)
         """
-        return cls(cls.Token.FN, name, *args)
+        return cls(cls.Token.FN, cls.symbol(name), *args)
 
     @classmethod
     def quantum_operator(
@@ -614,8 +614,13 @@ def evaluate_kronop(lhs: Expression, rhs: Expression) -> Expression:
         )
 
     # Multiplication of unitary Hermitian operators acting on the the same subspace.
-    if lhs == rhs and lhs.get("is_hermitian") and lhs.get("is_unitary"):
+    if lhs == rhs and (lhs.get("is_hermitian") and lhs.get("is_unitary")):
         return Expression.one()
+    
+    # General multiplications of operators acting on the same subspace.
+    if lhs.subspace() == rhs.subspace():
+        if lhs.get("is_projector") and rhs.get("is_projector"):
+            return Expression.one() if lhs.args[0] == rhs.args[0] else Expression.zero() 
 
     # Order the operators by subspace.
     if lhs.subspace() < rhs.subspace() or lhs.subspace().overlap_with(  # type: ignore

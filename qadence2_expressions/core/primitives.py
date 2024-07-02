@@ -55,17 +55,42 @@ def unitary_hermitian_operator(name: str) -> Callable:
     return core
 
 
-def projector(name: str, base: str) -> Callable:
+def projector(base: str, index: str) -> Callable:
     def core(
         *indices: Any,
         target: tuple[int, ...] | None = None,
         control: tuple[int, ...] | None = None,
     ) -> Expression:
         return Expression.quantum_operator(
-            Expression.symbol(name),
+            Expression.symbol(f"{base}{{{index}}}"),
             Support(*indices, target=target, control=control),
             base=base,
             is_projector=True,
+            is_hermitian=True,
         )
 
     return core
+
+
+def parametric_operator(name: str, join: Callable) -> Callable:
+    def wrapper(*args) -> Callable:
+        def core(support: Support) -> Expression:
+            return Expression.quantum_operator(
+                Expression.function(name, *args),
+                support,
+                join=join
+            )
+        return core
+    return wrapper
+
+
+# Pauli operators
+X = unitary_hermitian_operator("X")
+Y = unitary_hermitian_operator("Y")
+Z = unitary_hermitian_operator("Z")
+
+# Default projectors
+Z0 = projector("Z", "0")
+Z1 = projector("Z", "1")
+Xp = projector("X", "+")
+Xm = projector("X", "-")
