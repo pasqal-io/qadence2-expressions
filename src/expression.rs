@@ -52,8 +52,8 @@ impl Neg for Expression {
 		args: vbox![
 		    Expression::int(-1),
 		    Expression::symbol(s),
-		]
-	    },
+		],
+            },
 	    
 	    // Negate the numerical value.
 	    Value(v) => {
@@ -162,6 +162,8 @@ impl_binary_operator_for_expression!(Div, div, Operator:: MUL, |x: Expression| {
 mod tests {
     use super::*; // This imports everything from the parent module
     use num::Complex;
+    use Expression::Expr;
+    use Operator::{ADD, MUL};
 
     #[test]
     fn test_symbol_expression() {
@@ -170,9 +172,32 @@ mod tests {
     }
 
     #[test]
+    fn test_neg_expression() {
+        let expr = Expression::symbol("y");
+        let neg_expr = -expr;
+        assert_eq!(
+            neg_expr,
+            Expr {
+                head: MUL,
+                args: vec![
+                    Box::new(Expression::int(-1)),
+                    Box::new(Expression::symbol("y")),
+                ]
+            }
+        );
+    }
+    
+    #[test]
     fn test_int_expression() {
         let int_expr = Expression::int(42);
         assert_eq!(int_expr, Expression::Value(Numerical::Int(42)));
+    }
+
+    #[test]
+    fn test_neg_int_expr() {
+        let value = Expression::int(10);
+        let neg_value = -value;
+        assert_eq!(neg_value, Expression::int(-10));
     }
 
     #[test]
@@ -182,9 +207,23 @@ mod tests {
     }
 
     #[test]
+    fn test_neg_float_expr() {
+        let value = Expression::float(10.);
+        let neg_value = -value;
+        assert_eq!(neg_value, Expression::float(-10.));
+    }
+
+    #[test]
     fn test_complex_expression() {
         let complex_expr = Expression::complex(1.0, 2.0);
         assert_eq!(complex_expr, Expression::Value(Numerical::Complex(Complex::new(1.0, 2.0))));
+    }
+
+    #[test]
+    fn test_neg_complex_expr() {
+        let value = Expression::complex(1., 2.);
+        let neg_value = -value;
+        assert_eq!(neg_value, Expression::complex(-1., -2.));
     }
     
     #[test]
@@ -193,8 +232,8 @@ mod tests {
 	let mixed_expr = Expression::int(1) + symbol_expr;
         assert_eq!(
 	    mixed_expr,
-	    Expression::Expr {
-		head: Operator::ADD,
+	    Expr {
+		head: ADD,
 		args: vec![
 		    Box::new(Expression::int(1)),
                     Box::new(Expression::symbol("x")),
@@ -209,13 +248,13 @@ mod tests {
 	let mixed_expr = Expression::complex(1.0, 2.0) - symbol_expr;
         assert_eq!(
 	    mixed_expr,
-	    Expression::Expr {
-		head: Operator::ADD,
+	    Expr {
+		head: ADD,
 		args: vec![
 		    Box::new(Expression::complex(1.0, 2.0)),
                     Box::new(
 			Expression::Expr {
-			    head: Operator::MUL,
+			    head: MUL,
 			    args: vec![
 				Box::new(Expression::int(-1)),
 				Box::new(Expression::symbol("x")),
