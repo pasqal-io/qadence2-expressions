@@ -4,6 +4,7 @@ use std::ops::{Add, Div, Mul, Sub, Neg};
 use std::fmt;
 
 
+
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Numerical {
     Int(i64),
@@ -117,7 +118,6 @@ impl_binary_operator_for_numerical!(Div, div);
 
 #[derive(Debug, PartialEq)]
 pub struct Symbol (&'static str);
-
 
 #[cfg(test)]
 mod tests {
@@ -264,5 +264,6 @@ mod tests {
         assert_eq!(n1 * n2, Numerical::Complex(Complex::new(7.0, 22.0)));
         assert_eq!(n1 / n2, Numerical::Complex(Complex::new(23.0 / 13.0, 2.0 / 13.0)));
     }
+
     
 }
