@@ -7,17 +7,11 @@ use std::fmt;
 
 #[derive(Copy, Clone, Debug, PartialEq)]
 pub enum Numerical {
-    Int(i64),
     Float(f64),
     Complex(Complex<f64>),
 }
 
 impl Numerical {
-    /// Convenience method to create a Numerical::Int
-    pub fn int(value: i64) -> Self {
-        Numerical::Int(value)
-    }
-
     /// Convenience method to create a Numerical::Float
     pub fn float(value: f64) -> Self {
         Numerical::Float(value)
@@ -32,7 +26,6 @@ impl Numerical {
 impl fmt::Display for Numerical {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            Numerical::Int(value) => write!(f, "{}", value),
             Numerical::Float(value) => write!(f, "{}", value),
             Numerical::Complex(value) => write!(f, "{} + {}i", value.re, value.im),
         }
@@ -46,7 +39,6 @@ impl Neg for Numerical {
 	use Numerical::*;
 
 	match self {
-	    Int(i) => Numerical::int(-i),
 	    Float(f) => Numerical::float(-f),
 	    Complex(c) => Numerical::complex(-c.re, -c.im),
 	}
@@ -60,15 +52,10 @@ impl Pow<Numerical> for Numerical {
         use Numerical::*;
 	
         match (self, rhs) {
-            (Int(base), Int(exp)) => Int((base as f64).powi(exp as i32) as i64),
-            (Float(base), Int(exp)) => Float(base.powi(exp as i32)),
-            (Complex(base), Int(exp)) => Complex(base.powi(exp as i32)),
             (Float(base), Float(exp)) => Float(base.powf(exp)),
             (Complex(base), Float(exp)) => Complex(base.powf(exp)),
-            (Int(base), Float(exp)) => Float((base as f64).powf(exp)),
             (Complex(base), Complex(exp)) => Complex(base.powc(exp)),
             (Float(base), Complex(exp)) => Complex((num::Complex::new(base, 0.0)).powc(exp)),
-            (Int(base), Complex(exp)) => Complex((num::Complex::new(base as f64, 0.0)).powc(exp)),
         }
     }
 }
@@ -91,19 +78,8 @@ macro_rules! impl_binary_operator_for_numerical {
                     (Complex(a), Float(b)) => Complex(a.$method(complex::from(b))),
                     (Float(a), Complex(b)) => Complex(complex::from(a).$method(b)),
 
-		    // Complex with Int
-                    (Complex(a), Int(b)) => Complex(a.$method(complex::from(b as f64))),
-		    (Int(a), Complex(b)) => Complex(complex::from(a as f64).$method(b)),
-                    
                     // Float and Float
                     (Float(a), Float(b)) => Float(a.$method(b)),
-                    
-                    // Float with Int
-                    (Float(a), Int(b)) => Float(a.$method(b as f64)),
-                    (Int(a), Float(b)) => Float((a as f64).$method(b)),
-                    
-                    // Int and Int
-                    (Int(a), Int(b)) => Int(a.$method(b)),
                 }
             }
         }
@@ -130,15 +106,6 @@ mod tests {
     }
 
     #[test]
-    fn test_negation_int() {
-        let num_int = Numerical::Int(10);
-        assert_eq!(-num_int, Numerical::Int(-10));
-
-        let num_int_neg = Numerical::Int(-10);
-        assert_eq!(-num_int_neg, Numerical::Int(10));
-    }
-
-    #[test]
     fn test_negation_float() {
         let num_float = Numerical::Float(5.5);
         assert_eq!(-num_float, Numerical::Float(-5.5));
@@ -158,10 +125,6 @@ mod tests {
 
     #[test]
     fn test_numerical_pow() {
-        let n1 = Numerical::Int(2);
-        let n2 = Numerical::Int(3);
-        assert_eq!(n1.pow(n2), Numerical::Int(8));
-
         let n3 = Numerical::Float(2.0);
         let n4 = Numerical::Float(3.0);
         assert_eq!(n3.pow(n4), Numerical::Float(8.0));
@@ -173,46 +136,6 @@ mod tests {
         } else {
             panic!("Expected complex result");
         }
-    }
-
-    #[test]
-    fn test_numerical_binary_ops_int_to_int() {
-        let n1 = Numerical::Int(5);
-        let n2 = Numerical::Int(10);
-        assert_eq!(n1 + n2, Numerical::Int(15));
-        assert_eq!(n1 - n2, Numerical::Int(-5));
-        assert_eq!(n1 * n2, Numerical::Int(50));
-        assert_eq!(n1 / n2, Numerical::Int(0)); // integer division
-    }
-
-    #[test]
-    fn test_numerical_binary_ops_int_to_float() {
-	let n1 = Numerical::Int(5);
-        let n2 = Numerical::Float(10.5);
-        assert_eq!(n1 + n2, Numerical::Float(15.5));
-        assert_eq!(n1 - n2, Numerical::Float(-5.5));
-        assert_eq!(n1 * n2, Numerical::Float(52.5));
-        assert_eq!(n1 / n2, Numerical::Float(5.0 / 10.5));
-    }
-    
-    #[test]
-    fn test_numerical_binary_ops_int_to_complex() {
-        let n1 = Numerical::int(5);
-        let n2 = Numerical::complex(10.0, 5.0);
-        assert_eq!(n1 + n2, Numerical::Complex(Complex::new(15.0, 5.0)));
-        assert_eq!(n1 - n2, Numerical::Complex(Complex::new(-5.0, -5.0)));
-        assert_eq!(n1 * n2, Numerical::Complex(Complex::new(50.0, 25.0)));
-        assert_eq!(n1 / n2, Numerical::Complex(Complex::new(0.4, -0.2)));
-    }
-
-    #[test]
-    fn test_numerical_add_float_to_int() {
-        let n1 = Numerical::float(5.0);
-        let n2 = Numerical::int(10);
-        assert_eq!(n1 + n2, Numerical::Float(15.0));
-        assert_eq!(n1 - n2, Numerical::Float(-5.0));
-        assert_eq!(n1 * n2, Numerical::Float(50.0));
-        assert_eq!(n1 / n2, Numerical::Float(0.5));
     }
 
     #[test]
@@ -236,16 +159,6 @@ mod tests {
     }
     
     #[test]
-    fn test_numerical_binary_ops_complex_to_int() {
-        let n1 = Numerical::complex(5.0, 4.0);
-        let n2 = Numerical::int(3);
-        assert_eq!(n1 + n2, Numerical::Complex(Complex::new(8.0, 4.0)));
-        assert_eq!(n1 - n2, Numerical::Complex(Complex::new(2.0, 4.0)));
-        assert_eq!(n1 * n2, Numerical::Complex(Complex::new(15.0, 12.0)));
-        assert_eq!(n1 / n2, Numerical::Complex(Complex::new(5.0 / 3.0, 4.0 / 3.0)));
-    }
-    
-    #[test]
     fn test_numerical_binary_ops_complex_to_float() {
         let n1 = Numerical::complex(5.0, 4.0);
         let n2 = Numerical::float(3.0);
@@ -264,6 +177,4 @@ mod tests {
         assert_eq!(n1 * n2, Numerical::Complex(Complex::new(7.0, 22.0)));
         assert_eq!(n1 / n2, Numerical::Complex(Complex::new(23.0 / 13.0, 2.0 / 13.0)));
     }
-
-    
 }
