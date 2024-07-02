@@ -5,17 +5,12 @@ use crate::symbols::Numerical;
 
 use std::ops::{Add, Div, Mul, Sub, Neg};
 
-#[macro_export]
-macro_rules! vbox {
-   () => { vec![] };
-   ($($x:expr),+ $(,)?) => { vec![$(Box::new($x)),*] };
-}
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expression {
     Symbol(&'static str),
     Value(Numerical),
-    Expr { head: Operator, args: Vec<Box<Expression>> },
+    Expr { head: Operator, args: Vec<Expression> },
 }
 
 // Implement helper functions to create different types of Expressions.
@@ -45,7 +40,7 @@ impl Neg for Expression {
 	    // completeness, we could wrap it in an Expr with multiplication by -1.
 	    Symbol(s) => Expr {
 		head: MUL,
-		args: vbox![
+		args: vec![
 		    Expression::float(-1.),
 		    Expression::symbol(s),
 		],
@@ -59,7 +54,7 @@ impl Neg for Expression {
 	    // Negate the entire expression by multiplying by -1
 	    Expr { head, args } => Expr {
 		head: MUL,
-		args: vbox![
+		args: vec![
 		    Expression::float(-1.),
 		    Expr {
 			head,
@@ -84,14 +79,14 @@ impl Pow<Expression> for Expression {
 
             // If the left side is already a power expression, chain the exponent.
             (Expr { head: POW, args: mut args_lhs }, rhs) => {
-                args_lhs.push(Box::new(rhs));
+                args_lhs.push(rhs);
                 Expr { head: POW, args: args_lhs }
             },
 
             // Otherwise, create a new power expression.
             (lhs, rhs) => Expr {
                 head: POW,
-                args: vbox![lhs, rhs],
+                args: vec![lhs, rhs],
             }
         }
     }
@@ -114,16 +109,16 @@ macro_rules! impl_binary_operator_for_expression {
                 },
 
                 (Expr {head: $operator, args: mut args_lhs}, rhs) => {
-                   args_lhs.push(Box::new(rhs));
+                   args_lhs.push(rhs);
                    Expr {head: $operator, args: args_lhs}
                 },
 
                 (lhs, Expr {head: $operator, args: mut args_rhs}) => {
-                   args_rhs.push(Box::new(lhs));
+                   args_rhs.push(lhs);
                    Expr {head: $operator, args: args_rhs}
                 },
 
-                (lhs, rhs) => Expr{head: $operator, args: vbox![lhs, rhs]},
+                (lhs, rhs) => Expr{head: $operator, args: vec![lhs, rhs]},
              }
           }
        }
@@ -140,7 +135,7 @@ macro_rules! impl_binary_operator_for_expression {
                (Value(x), Value(y)) => Value(x.$method(y)),
                (lhs, rhs) => Expr {
                   head: $operator,
-                  args: vbox![lhs, $inv(rhs)]
+                  args: vec![lhs, $inv(rhs)]
                },
             }
          }
@@ -176,8 +171,8 @@ mod tests {
             Expr {
                 head: MUL,
                 args: vec![
-                    Box::new(Expression::int(-1)),
-                    Box::new(Expression::symbol("y")),
+                    Expression::float(-1.),
+                    Expression::symbol("y"),
                 ]
             }
         );
@@ -218,8 +213,8 @@ mod tests {
 	    Expr {
 		head: ADD,
 		args: vec![
-		    Box::new(Expression::float(1.)),
-                    Box::new(Expression::symbol("x")),
+		    Expression::float(1.),
+                    Expression::symbol("x"),
 		]
 	    }
 	);
@@ -234,64 +229,76 @@ mod tests {
 	    Expr {
 		head: ADD,
 		args: vec![
-		    Box::new(Expression::complex(1.0, 2.0)),
-                    Box::new(
-			Expression::Expr {
-			    head: MUL,
-			    args: vec![
-				Box::new(Expression::float(-1.)),
-				Box::new(Expression::symbol("x")),
-			    ]
-			}
-		    ),
+		    Expression::complex(1.0, 2.0),
+		    Expression::Expr {
+			head: MUL,
+			args: vec![
+			    Expression::float(-1.),
+			    Expression::symbol("x"),
+			]
+		    }
 		]
 	    }
 	);
     }
 
     #[test]
-    fn test_numerical_binary_ops() {
-        let n1 = Expression::int(10);
-        let n2 = Expression::int(3);
-        assert_eq!(n1.clone() + n2.clone(), Expression::int(13));
-        assert_eq!(n1.clone() - n2.clone(), Expression::int(7));
-        assert_eq!(n1.clone() * n2.clone(), Expression::int(30));
-        assert_eq!(n1 / n2, Expression::int(3));
-    }
-
-    #[test]
-    fn test_expression_add_float_to_float() {
+    fn test_expression_binary_ops_float_to_float() {
         let expr1 = Expression::float(1.0);
         let expr2 = Expression::float(2.0);
-        let result = expr1 + expr2;
+        let n1 = expr1.clone() + expr2.clone();
+        let n2 = expr1.clone() - expr2.clone();
+        let n3 = expr1.clone() * expr2.clone();
+        let n4 = expr1.clone() / expr2.clone();
 
-	assert_eq!(result, Expression::Value(Numerical::Float(3.0)));
+	assert_eq!(n1, Expression::Value(Numerical::Float(3.0)));
+	assert_eq!(n2, Expression::Value(Numerical::Float(-1.0)));
+	assert_eq!(n3, Expression::Value(Numerical::Float(2.0)));
+	assert_eq!(n4, Expression::Value(Numerical::Float(0.5)));
     }
 
     #[test]
-    fn test_expression_add_float_to_complex() {
+    fn test_expression_binary_ops_float_to_complex() {
         let expr1 = Expression::float(1.0);
         let expr2 = Expression::complex(2.0, 4.0);
-        let result = expr1 + expr2;
+        let n1 = expr1.clone() + expr2.clone();
+        let n2 = expr1.clone() - expr2.clone();
+        let n3 = expr1.clone() * expr2.clone();
+        let n4 = expr1.clone() / expr2.clone();
 
-	assert_eq!(result, Expression::Value(Numerical::Complex(Complex::new(3.0, 4.0))));
+	assert_eq!(n1, Expression::Value(Numerical::Complex(Complex::new(3.0, 4.0))));
+	assert_eq!(n2, Expression::Value(Numerical::Complex(Complex::new(-1.0, -4.0))));
+	assert_eq!(n3, Expression::Value(Numerical::Complex(Complex::new(2.0, 4.0))));
+	assert_eq!(n4, Expression::Value(Numerical::Complex(Complex::new(0.1, -0.2))));
     }
 
-
-    fn test_expression_add_complex_to_float() {
+    #[test]
+    fn test_expression_binary_ops_complex_to_float() {
         let expr1 = Expression::complex(1.0, 2.0);
         let expr2 = Expression::float(2.0);
-        let result = expr1 + expr2;
-
-	assert_eq!(result, Expression::Value(Numerical::Complex(Complex::new(3.0, 2.0))));
+        let n1 = expr1.clone() + expr2.clone();
+        let n2 = expr1.clone() - expr2.clone();
+        let n3 = expr1.clone() * expr2.clone();
+        let n4 = expr1.clone() / expr2.clone();
+	
+	assert_eq!(n1, Expression::Value(Numerical::Complex(Complex::new(3.0, 2.0))));
+	assert_eq!(n2, Expression::Value(Numerical::Complex(Complex::new(-1.0, 2.0))));
+	assert_eq!(n3, Expression::Value(Numerical::Complex(Complex::new(2.0, 4.0))));
+	assert_eq!(n4, Expression::Value(Numerical::Complex(Complex::new(0.5, 1.0))));
     }
     
     #[test]
     fn test_expression_add_complex_to_complex() {
         let expr1 = Expression::complex(1.0, 2.0);
         let expr2 = Expression::complex(3.0, 4.0);
-        let result = expr1 + expr2;
-
-	assert_eq!(result, Expression::Value(Numerical::Complex(Complex::new(4.0, 6.0))));
+        let n1 = expr1.clone() + expr2.clone();
+        let n2 = expr1.clone() - expr2.clone();
+        let n3 = expr1.clone() * expr2.clone();
+        let n4 = expr1.clone() / expr2.clone();
+	
+	assert_eq!(n1, Expression::Value(Numerical::Complex(Complex::new(4.0, 6.0))));
+	assert_eq!(n2, Expression::Value(Numerical::Complex(Complex::new(-2.0, -2.0))));
+	assert_eq!(n3, Expression::Value(Numerical::Complex(Complex::new(-5.0, 10.0))));
+	assert_eq!(n4, Expression::Value(Numerical::Complex(Complex::new(0.44, 0.08))));
     }
 }
