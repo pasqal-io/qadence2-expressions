@@ -37,5 +37,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-build-
 
+      - name: Install dependencies
+        run: cargo fetch
+
+      - name: Run `clippy` linter
+        run: cargo clippy --all-targets -- -D warnings
+
       - name: Run tests
         run: cargo test --all
