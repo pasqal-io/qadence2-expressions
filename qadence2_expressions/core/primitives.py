@@ -6,6 +6,10 @@ from .expression import Expression
 from .support import Support
 
 
+class Environmet:
+    protected: set[str] = {"e"}
+
+
 def value(x: complex | float | int) -> Expression:
     """Promotes a numerical value to an expression."""
     return Expression.value(x)
@@ -15,11 +19,10 @@ def exp(x: Expression | complex | float | int) -> Expression:
     return Expression.symbol("e") ** x
 
 
-def symbol(identifier: str) -> Expression:
-    """Defines a new symbol."""
-    if identifier == "e":
-        raise SyntaxError("The name `e` is protected")
-    return Expression.symbol(identifier)
+def symbol(identifier: str, **attributes: Any) -> Expression:
+    if identifier in Environmet.protected:
+        raise SyntaxError(f"'{identifier}' is protected.")
+    return Expression.symbol(identifier, **attributes)
 
 
 def function(name: str, *args: Any) -> Expression:

@@ -43,9 +43,9 @@ class Expression:
         return cls.value(1)
 
     @classmethod
-    def symbol(cls, identifier: str) -> Expression:
+    def symbol(cls, identifier: str, **attributes: Any) -> Expression:
         """Create a symbol from the identifier"""
-        return cls(cls.Token.SYMBOL, identifier)
+        return cls(cls.Token.SYMBOL, identifier, **attributes)
 
     @classmethod
     def function(cls, name: str, *args: Any) -> Expression:
