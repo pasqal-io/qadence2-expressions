@@ -319,23 +319,3 @@ def comp(expr: Expression, mem: dict, acc: list, count: int = 0):
 
     mem[expr] = Load(label)
     return Load(label), count
-
-
-if __name__ == "__main__":
-    # comp(2 * (a + b)**c - 3, {}, acc)
-    test = [
-        Assign("%0", Call("add", Load("a"), Load("b"))),
-        Assign("%1", Call("pow", Load("%0"), Load("c"))),
-        Assign("%2", Call("mul", 2, Load("%1"))),
-        Assign("%3", Call("add", -3, Load("%2"))),
-    ]
-
-    # comp(a * cos(phi / 2) + b * sin(phi / 2), {}, acc)
-    test2 = [
-        Assign("%0", Call("mul", 0.5, Load("phi"))),
-        Assign("%1", Call("cos", Load("%0"))),
-        Assign("%2", Call("mul", Load("a"), Load("%1"))),
-        Assign("%3", Call("sin", Load("%0"))),
-        Assign("%4", Call("mul", Load("b"), Load("%3"))),
-        Assign("%5", Call("add", Load("%2"), Load("%4"))),
-    ]
