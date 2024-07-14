@@ -14,6 +14,8 @@ from .primitives import (
     Z1,
     Xp,
     Xm,
+    sin,
+    cos,
 )
 
 __all__ = [
@@ -29,4 +31,6 @@ __all__ = [
     "Z1",
     "Xp",
     "Xm",
+    "sin",
+    "cos"
 ]

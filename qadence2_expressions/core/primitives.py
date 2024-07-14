@@ -97,3 +97,11 @@ Z0 = projector("Z", "0")
 Z1 = projector("Z", "1")
 Xp = projector("X", "+")
 Xm = projector("X", "-")
+
+
+def sin(x):
+    return function("sin", x)
+
+
+def cos(x):
+    return function("cos", x)

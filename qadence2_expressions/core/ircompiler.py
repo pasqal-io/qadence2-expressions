@@ -31,7 +31,7 @@ class Assign:
         self.value = value
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.variable}, {self.value})"
+        return f"{self.__class__.__name__}({repr(self.variable)}, {self.value})"
 
 
 class Load:
@@ -41,7 +41,7 @@ class Load:
         self.variable = variable_name
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.variable})"
+        return f"{self.__class__.__name__}({repr(self.variable)})"
 
 
 class Call:
@@ -54,8 +54,8 @@ class Call:
         self.args = args
 
     def __repr__(self) -> str:
-        args = ', '.join(map(repr, self.args))
-        return f"{self.__class__.__name__}({args})"
+        args = ", ".join(map(repr, self.args))
+        return f"{self.__class__.__name__}({repr(self.call)}, {args})"
 
 
 class Support:
@@ -89,11 +89,11 @@ class Support:
             return NotImplemented
 
         return self.target == other.target and self.control == other.control
-    
+
     def __repr__(self) -> str:
         if not self.target:
             return "[*]"
-        
+
         subspace = " ".join(map(str, self.target))
         if self.control:
             subspace += ";" + " ".join(map(str, self.control))
@@ -117,7 +117,7 @@ class QuInstruct:
         self.args = args
 
     def __repr__(self) -> str:
-        args = ', '.join(map(repr, self.args))
+        args = ", ".join(map(repr, self.args))
         return f"{self.__class__.__name__}({self.name}, {self.support},{args})"
 
 
@@ -191,18 +191,40 @@ class Model:
         self.inputs = inputs
         self.instructions = instructions
         self.directives = directives or dict()
-        self.data_settings = data_settings or dict()
+        self.settings = data_settings or dict()
 
     def __repr__(self) -> str:
-        items = ", ".join(f"{k}={v}" for k, v in self.__dict__.items())
-        return f"{self.__class__.__name__}({items})"
+        indent = "  "
+        acc = f"{self.__class__.__name__}("
+
+        for field, value in self.__dict__.items():
+            if isinstance(value, AllocQubits):
+                acc += f"\n{indent}{field}={value.__class__.__name__}("
+                items = ",\n".join(
+                    f"{indent * 2}{k}={v}" for k, v in value.__dict__.items()
+                )
+                acc += (f"\n{items},\n{indent}" if items else "") + "),"
+
+            elif isinstance(value, dict):
+                acc += f"\n{indent}{field}={{"
+                items = ",\n".join(
+                    f"{indent * 2}{repr(k)}: {v}" for k, v in value.items()
+                )
+                acc += (f"\n{items},\n{indent}" if items else "") + "},"
+
+            elif isinstance(value, list):
+                acc += f"\n{indent}{field}=["
+                items = ",\n".join(f"{indent * 2}{item}" for item in self.instructions)
+                acc += (f"\n{items},\n{indent}" if items else "") + "],"
+
+        return acc + "\n)"
 
 
-def ircompile(expr: Expression) -> Model:
+def irc(expr: Expression) -> Model:
     return Model(
         register=set_register(expr),
         inputs=extract_inputs(expr),
-        instructions=[],
+        instructions=extract_instructions(expr),
     )
 
 
@@ -227,3 +249,93 @@ def _extract_inputs_core(expr: Expression, inputs: dict[str, Alloc]) -> None:
     if expr.is_addition or expr.is_multiplication:
         for arg in expr.args:
             _extract_inputs_core(arg, inputs)
+
+
+def extract_instructions(expr: Expression) -> list:
+    acc = []
+    _extract_instructions_core(expr, acc)
+    return acc
+
+
+def _extract_instructions_core(expr: Expression, acc: list) -> None:
+    pass
+
+
+def comp(expr: Expression, mem: dict, acc: list, count: int = 0):
+    if expr in mem:
+        return mem[expr], count
+
+    if expr.is_value:
+        return expr.args[0], count
+
+    if expr.is_symbol:
+        return Load(expr.args[0]), count
+
+    if expr.is_power:
+        base, count = comp(expr.args[0], mem, acc, count)
+        power, count = comp(expr.args[1], mem, acc, count)
+
+        label = f"%{count}"
+        acc.append(Assign(label, Call("pow", base, power)))
+        count += 1
+
+    elif expr.is_multiplication:
+        lhs, count = comp(expr.args[0], mem, acc, count)
+        rhs, count = comp(expr.args[1], mem, acc, count)
+
+        label = f"%{count}"
+        acc.append(Assign(label, Call("mul", lhs, rhs)))
+        count += 1
+        for arg in expr.args[2:]:
+            lhs = Load(label)
+            rhs, count = comp(arg, mem, acc, count)
+            label = f"%{count}"
+            acc.append(Assign(label, Call("mul", lhs, rhs)))
+            count += 1
+
+    elif expr.is_addition:
+        lhs, count = comp(expr.args[0], mem, acc, count)
+        rhs, count = comp(expr.args[1], mem, acc, count)
+
+        label = f"%{count}"
+        acc.append(Assign(label, Call("add", lhs, rhs)))
+        count += 1
+        for arg in expr.args[2:]:
+            lhs = Load(label)
+            rhs, count = comp(arg, mem, acc, count)
+            label = f"%{count}"
+            acc.append(Assign(label, Call("add", lhs, rhs)))
+            count += 1
+
+    elif expr.is_function:
+        fn_name = expr.args[0].args[0]
+        args = []
+        for arg in expr.args[1:]:
+            term, count = comp(arg, mem, acc, count)
+            args.append(term)
+            label = f"%{count}"
+            acc.append(Assign(label, Call(fn_name, *args)))
+            count += 1
+
+    mem[expr] = Load(label)
+    return Load(label), count
+
+
+if __name__ == "__main__":
+    # comp(2 * (a + b)**c - 3, {}, acc)
+    test = [
+        Assign("%0", Call("add", Load("a"), Load("b"))),
+        Assign("%1", Call("pow", Load("%0"), Load("c"))),
+        Assign("%2", Call("mul", 2, Load("%1"))),
+        Assign("%3", Call("add", -3, Load("%2"))),
+    ]
+
+    # comp(a * cos(phi / 2) + b * sin(phi / 2), {}, acc)
+    test2 = [
+        Assign("%0", Call("mul", 0.5, Load("phi"))),
+        Assign("%1", Call("cos", Load("%0"))),
+        Assign("%2", Call("mul", Load("a"), Load("%1"))),
+        Assign("%3", Call("sin", Load("%0"))),
+        Assign("%4", Call("mul", Load("b"), Load("%3"))),
+        Assign("%5", Call("add", Load("%2"), Load("%4"))),
+    ]
