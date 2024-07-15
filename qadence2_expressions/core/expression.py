@@ -6,7 +6,7 @@ from .support import Support
 
 
 class Expression:
-    class Token:
+    class Tag:
         # Identifiers:
         VALUE = "Value"
         SYMBOL = "Symbol"
@@ -28,7 +28,9 @@ class Expression:
     @classmethod
     def value(cls, x: complex | float | int) -> Expression:
         """Promote a numerical value (comples, float, int) to an expression."""
-        return cls(cls.Token.VALUE, x)
+        if isinstance(x, int):
+            return cls(cls.Tag.VALUE, float(x))
+        return cls(cls.Tag.VALUE, x)
 
     @classmethod
     def zero(cls) -> Expression:
@@ -45,7 +47,7 @@ class Expression:
     @classmethod
     def symbol(cls, identifier: str, **attributes: Any) -> Expression:
         """Create a symbol from the identifier"""
-        return cls(cls.Token.SYMBOL, identifier, **attributes)
+        return cls(cls.Tag.SYMBOL, identifier, **attributes)
 
     @classmethod
     def function(cls, name: str, *args: Any) -> Expression:
@@ -55,7 +57,7 @@ class Expression:
 
             Expression.function("sin", 1.57) => sin(1.57)
         """
-        return cls(cls.Token.FN, cls.symbol(name), *args)
+        return cls(cls.Tag.FN, cls.symbol(name), *args)
 
     @classmethod
     def quantum_operator(
@@ -66,7 +68,7 @@ class Expression:
             - `is_hermitian` [bool]
             - `is_dagger` [bool]
         """
-        return cls(cls.Token.QUANTUM_OP, expr, support, **attributes)
+        return cls(cls.Tag.QUANTUM_OP, expr, support, **attributes)
 
     @classmethod
     def add(cls, *args: Any) -> Expression:
@@ -75,7 +77,7 @@ class Expression:
 
             Expression.add(a, b, c) == a + b + c
         """
-        return cls(cls.Token.ADD, *args)
+        return cls(cls.Tag.ADD, *args)
 
     @classmethod
     def mul(cls, *args: Any) -> Expression:
@@ -85,7 +87,7 @@ class Expression:
             Expression.mul(a, b, c) == a * b * c
         """
 
-        return cls(cls.Token.MUL, *args)
+        return cls(cls.Tag.MUL, *args)
 
     @classmethod
     def kron(cls, *args: Any) -> Expression:
@@ -94,7 +96,7 @@ class Expression:
         (order preserving) multiplication of its arguments.
         """
 
-        return cls(cls.Token.KRON, *args)
+        return cls(cls.Tag.KRON, *args)
 
     @classmethod
     def pow(cls, base: Expression, power: Expression) -> Expression:
@@ -104,48 +106,48 @@ class Expression:
             Expression.power(a, b) == a**b
         """
 
-        return cls(cls.Token.POW, base, power)
+        return cls(cls.Tag.POW, base, power)
 
     # Predicates
     @property
     def is_value(self) -> bool:
-        return self.head == Expression.Token.VALUE
+        return self.head == Expression.Tag.VALUE
 
     @property
     def is_zero(self) -> bool:
-        return self.head == Expression.Token.VALUE and self.args[0] == 0
+        return self.head == Expression.Tag.VALUE and self.args[0] == 0
 
     @property
     def is_one(self) -> bool:
-        return self.head == Expression.Token.VALUE and self.args[0] == 1
+        return self.head == Expression.Tag.VALUE and self.args[0] == 1
 
     @property
     def is_symbol(self) -> bool:
-        return self.head == Expression.Token.SYMBOL
+        return self.head == Expression.Tag.SYMBOL
 
     @property
     def is_function(self) -> bool:
-        return self.head == Expression.Token.FN
+        return self.head == Expression.Tag.FN
 
     @property
     def is_quantum_operator(self) -> bool:
-        return self.head == Expression.Token.QUANTUM_OP
+        return self.head == Expression.Tag.QUANTUM_OP
 
     @property
     def is_addition(self) -> bool:
-        return self.head == Expression.Token.ADD
+        return self.head == Expression.Tag.ADD
 
     @property
     def is_multiplication(self) -> bool:
-        return self.head == Expression.Token.MUL
+        return self.head == Expression.Tag.MUL
 
     @property
     def is_kronecker_product(self) -> bool:
-        return self.head == Expression.Token.KRON
+        return self.head == Expression.Tag.KRON
 
     @property
     def is_power(self) -> bool:
-        return self.head == Expression.Token.POW
+        return self.head == Expression.Tag.POW
 
     # Helper functions.
     def get(self, attribute: str, default: Any | None = None) -> Any:
