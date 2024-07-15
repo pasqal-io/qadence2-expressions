@@ -245,12 +245,21 @@ def extract_inputs(expr: Expression) -> dict[str, Alloc]:
 
 def _extract_inputs_core(expr: Expression, inputs: dict[str, Alloc]) -> None:
     if expr.is_symbol:
-        inputs[expr.args[0]] = Alloc(
+        inputs[expr[0]] = Alloc(
             expr.get("size", 1), expr.get("is_trainable", False)
         )
 
-    if expr.is_addition or expr.is_multiplication:
+    elif expr.is_addition or expr.is_multiplication or expr.is_kronecker_product:
         for arg in expr.args:
+            _extract_inputs_core(arg, inputs)
+
+    elif expr.is_function:
+        for arg in expr[1:]:
+            _extract_inputs_core(arg, inputs)
+    
+    elif expr.is_quantum_operator and expr[0].is_function:
+        fn = expr[0]
+        for arg in fn[1:]:
             _extract_inputs_core(arg, inputs)
 
 
@@ -299,27 +308,27 @@ def _extract_classical_instructions(
         return mem[expr], count
 
     if expr.is_value:
-        return expr.args[0], count
+        return expr[0], count
 
     if expr.is_symbol:
-        return Load(expr.args[0]), count
+        return Load(expr[0]), count
 
     if expr.is_power:
-        base, count = _extract_classical_instructions(expr.args[0], mem, acc, count)
-        power, count = _extract_classical_instructions(expr.args[1], mem, acc, count)
+        base, count = _extract_classical_instructions(expr[0], mem, acc, count)
+        power, count = _extract_classical_instructions(expr[1], mem, acc, count)
 
         label = f"%{count}"
         acc.append(Assign(label, Call("pow", base, power)))
         count += 1
 
     elif expr.is_multiplication:
-        lhs, count = _extract_classical_instructions(expr.args[0], mem, acc, count)
-        rhs, count = _extract_classical_instructions(expr.args[1], mem, acc, count)
+        lhs, count = _extract_classical_instructions(expr[0], mem, acc, count)
+        rhs, count = _extract_classical_instructions(expr[1], mem, acc, count)
 
         label = f"%{count}"
         acc.append(Assign(label, Call("mul", lhs, rhs)))
         count += 1
-        for arg in expr.args[2:]:
+        for arg in expr[2:]:
             lhs = Load(label)
             rhs, count = _extract_classical_instructions(arg, mem, acc, count)
             label = f"%{count}"
@@ -327,13 +336,13 @@ def _extract_classical_instructions(
             count += 1
 
     elif expr.is_addition:
-        lhs, count = _extract_classical_instructions(expr.args[0], mem, acc, count)
-        rhs, count = _extract_classical_instructions(expr.args[1], mem, acc, count)
+        lhs, count = _extract_classical_instructions(expr[0], mem, acc, count)
+        rhs, count = _extract_classical_instructions(expr[1], mem, acc, count)
 
         label = f"%{count}"
         acc.append(Assign(label, Call("add", lhs, rhs)))
         count += 1
-        for arg in expr.args[2:]:
+        for arg in expr[2:]:
             lhs = Load(label)
             rhs, count = _extract_classical_instructions(arg, mem, acc, count)
             label = f"%{count}"
