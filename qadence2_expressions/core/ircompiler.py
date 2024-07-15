@@ -92,13 +92,13 @@ class Support:
 
     def __repr__(self) -> str:
         if not self.target:
-            return "[*]"
+            return f"{self.__class__.__name__}.target_all()"
 
-        subspace = " ".join(map(str, self.target))
+        subspace = f"target={self.target}"
         if self.control:
-            subspace += ";" + " ".join(map(str, self.control))
+            subspace += f", control={self.control}"
 
-        return f"[{subspace}]"
+        return f"{self.__class__.__name__}({subspace})"
 
 
 class QuInstruct:
@@ -106,7 +106,7 @@ class QuInstruct:
     An abstract representation of a QPU instruction.
 
     Inputs:
-        name: The instruction name compatible with the standard instruction set.
+        name: The instruction name _extract_classical_instructionsatible with the standard instruction set.
         support: The index of qubits to which the instruction is applied to.
         args: Arguments of the instruction such as angle, duration, amplitude etc.
     """
@@ -117,8 +117,11 @@ class QuInstruct:
         self.args = args
 
     def __repr__(self) -> str:
+        params = f"{repr(self.name)}, {self.support}"
         args = ", ".join(map(repr, self.args))
-        return f"{self.__class__.__name__}({self.name}, {self.support},{args})"
+        if args:
+            params += ", " + args
+        return f"{self.__class__.__name__}({params})"
 
 
 class AllocQubits:
@@ -253,15 +256,45 @@ def _extract_inputs_core(expr: Expression, inputs: dict[str, Alloc]) -> None:
 
 def extract_instructions(expr: Expression) -> list:
     acc = []
-    _extract_instructions_core(expr, acc)
+
+    if expr.is_quantum_operator or expr.is_kronecker_product:
+        _extract_quantum_instructions(expr, {}, acc)
+
+    else:
+        _extract_classical_instructions(expr, {}, acc)
+
     return acc
 
 
-def _extract_instructions_core(expr: Expression, acc: list) -> None:
-    pass
+def _extract_quantum_instructions(
+    expr: Expression, mem: dict, acc: list, count: int = 0
+):
+    if expr.is_quantum_operator and expr[0].is_symbol:
+        sym = expr[0]
+        operator_name = sym[0].lower()
+        support = Support(target=expr[1].target, control=expr[1].control)
+        acc.append(QuInstruct(operator_name, support))
+
+    elif expr.is_quantum_operator and expr[0].is_function:
+        fn = expr[0]
+        operator_name = fn[0][0].lower()
+        support = Support(target=expr[1].target, control=expr[1].control)
+        args = []
+        for arg in fn[1:]:
+            term, count = _extract_classical_instructions(arg, mem, acc, count)
+            args.append(term)
+        acc.append(QuInstruct(operator_name, support, *args))
+
+    elif expr.is_kronecker_product:
+        for term in expr.args:
+            _, count = _extract_quantum_instructions(term, mem, acc, count)
+
+    return None, count
 
 
-def comp(expr: Expression, mem: dict, acc: list, count: int = 0):
+def _extract_classical_instructions(
+    expr: Expression, mem: dict, acc: list, count: int = 0
+):
     if expr in mem:
         return mem[expr], count
 
@@ -272,50 +305,50 @@ def comp(expr: Expression, mem: dict, acc: list, count: int = 0):
         return Load(expr.args[0]), count
 
     if expr.is_power:
-        base, count = comp(expr.args[0], mem, acc, count)
-        power, count = comp(expr.args[1], mem, acc, count)
+        base, count = _extract_classical_instructions(expr.args[0], mem, acc, count)
+        power, count = _extract_classical_instructions(expr.args[1], mem, acc, count)
 
         label = f"%{count}"
         acc.append(Assign(label, Call("pow", base, power)))
         count += 1
 
     elif expr.is_multiplication:
-        lhs, count = comp(expr.args[0], mem, acc, count)
-        rhs, count = comp(expr.args[1], mem, acc, count)
+        lhs, count = _extract_classical_instructions(expr.args[0], mem, acc, count)
+        rhs, count = _extract_classical_instructions(expr.args[1], mem, acc, count)
 
         label = f"%{count}"
         acc.append(Assign(label, Call("mul", lhs, rhs)))
         count += 1
         for arg in expr.args[2:]:
             lhs = Load(label)
-            rhs, count = comp(arg, mem, acc, count)
+            rhs, count = _extract_classical_instructions(arg, mem, acc, count)
             label = f"%{count}"
             acc.append(Assign(label, Call("mul", lhs, rhs)))
             count += 1
 
     elif expr.is_addition:
-        lhs, count = comp(expr.args[0], mem, acc, count)
-        rhs, count = comp(expr.args[1], mem, acc, count)
+        lhs, count = _extract_classical_instructions(expr.args[0], mem, acc, count)
+        rhs, count = _extract_classical_instructions(expr.args[1], mem, acc, count)
 
         label = f"%{count}"
         acc.append(Assign(label, Call("add", lhs, rhs)))
         count += 1
         for arg in expr.args[2:]:
             lhs = Load(label)
-            rhs, count = comp(arg, mem, acc, count)
+            rhs, count = _extract_classical_instructions(arg, mem, acc, count)
             label = f"%{count}"
             acc.append(Assign(label, Call("add", lhs, rhs)))
             count += 1
 
     elif expr.is_function:
-        fn_name = expr.args[0].args[0]
+        fn_name = expr[0][0]
         args = []
-        for arg in expr.args[1:]:
-            term, count = comp(arg, mem, acc, count)
+        for arg in expr[1:]:
+            term, count = _extract_classical_instructions(arg, mem, acc, count)
             args.append(term)
-            label = f"%{count}"
-            acc.append(Assign(label, Call(fn_name, *args)))
-            count += 1
+        label = f"%{count}"
+        acc.append(Assign(label, Call(fn_name, *args)))
+        count += 1
 
     mem[expr] = Load(label)
     return Load(label), count

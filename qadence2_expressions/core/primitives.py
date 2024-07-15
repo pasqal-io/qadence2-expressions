@@ -77,10 +77,14 @@ def projector(base: str, index: str) -> Callable:
 
 def parametric_operator(name: str, join: Callable) -> Callable:
     def wrapper(*args) -> Callable:
-        def core(support: Support) -> Expression:
+        def core(
+            *indices: Any,
+            target: tuple[int, ...] | None = None,
+            control: tuple[int, ...] | None = None,
+        ) -> Expression:
             return Expression.quantum_operator(
                 Expression.function(name, *args),
-                support,
+                Support(*indices, target=target, control=control),
                 join=join
             )
         return core
@@ -97,6 +101,11 @@ Z0 = projector("Z", "0")
 Z1 = projector("Z", "1")
 Xp = projector("X", "+")
 Xm = projector("X", "-")
+
+# Rotations
+RX = parametric_operator("RX", lambda x: x)
+RY = parametric_operator("RY", lambda x: x)
+RZ = parametric_operator("RZ", lambda x: x)
 
 
 def sin(x):

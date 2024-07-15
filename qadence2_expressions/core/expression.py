@@ -196,6 +196,9 @@ class Expression:
         return self
 
     # Python magic methods
+    def __getitem__(self, index: int | slice) -> Any:
+        return self.args[index]
+    
     def __repr__(self) -> str:
         args = ", ".join(map(repr, self.args))
         return f"{self.head}({args})"

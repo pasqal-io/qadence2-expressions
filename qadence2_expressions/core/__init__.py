@@ -14,11 +14,17 @@ from .primitives import (
     Z1,
     Xp,
     Xm,
+    RX,
+    RY,
+    RZ,
     sin,
     cos,
 )
 
+from .ircompiler import irc
+
 __all__ = [
+    "irc",
     "value",
     "symbol",
     "exp",
@@ -31,6 +37,9 @@ __all__ = [
     "Z1",
     "Xp",
     "Xm",
+    "RX",
+    "RY",
+    "RZ",
     "sin",
     "cos"
 ]
