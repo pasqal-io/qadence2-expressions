@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any
+from functools import cached_property
 
 
 class Support:
@@ -38,49 +39,35 @@ class Support:
             raise SyntaxError("A controlled operation needs both, control and target.")
 
         if indices:
-            self.target: tuple[int, ...] = tuple(sorted(indices))
-            self.control: tuple[int, ...] = ()
+            target = tuple(sorted(indices))
+            control = ()
         else:
             if target and control and set(target) & set(control):
                 raise SyntaxError("Target and control indices cannot overlap.")
 
-            self.target = tuple(sorted(target)) if target else ()
-            self.control = tuple(sorted(control)) if control else ()
+            target = tuple(sorted(target)) if target else ()
+            control = tuple(sorted(control)) if control else ()
 
-        self._subspace: set[int] = set(self.target) | set(self.control)
-        self._ordered_subspace: tuple[int, ...] = (*self.target, *self.control)
-
-    def __repr__(self) -> str:
-        targets = "*" if not self.target else " ".join(map(str, self.target))
-        controls = " ".join(map(str, self.control))
-        return f"[{targets}]" if not controls else f"[{targets} ; {controls}]"
-
-    def __hash__(self) -> int:
-        return hash(self._ordered_subspace)
+        self._subspace: tuple[int, ...] = (*target, *control)
+        self._control_start = len(target)
 
     @classmethod
     def target_all(cls) -> Support:
         return cls()
 
-    @property
+    @cached_property
     def subspace(self) -> set[int]:
         """Return a set containing all the indices covered by the support."""
 
-        return self._subspace
+        return set(self._subspace)
 
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Support):
-            return NotImplemented
+    @property
+    def target(self) -> tuple[int, ...]:
+        return self._subspace[: self._control_start]
 
-        return self._ordered_subspace == other._ordered_subspace
-
-    def __lt__(self, other: object) -> bool:
-        """Implement partial order to qubit supports."""
-
-        if not isinstance(other, Support):
-            return NotImplemented
-
-        return self._ordered_subspace < other._ordered_subspace
+    @property
+    def control(self) -> tuple[int, ...]:
+        return self._subspace[self._control_start:]
 
     def overlap_with(self, other: Support) -> bool:
         """Returns true if both support cover common indices."""
@@ -89,7 +76,7 @@ class Support:
         if not (self.target and other.target):
             return True
 
-        return bool(self._subspace & other._subspace)
+        return bool(self.subspace & other.subspace)
 
     def join(self, other: Support) -> Support:
         """Merge two support's indices according the following rules.
@@ -116,3 +103,25 @@ class Support:
             return Support(target=tuple(target | control))
 
         return Support(target=tuple(target), control=tuple(control))
+
+    def __repr__(self) -> str:
+        targets = "*" if not self.target else " ".join(map(str, self.target))
+        controls = " ".join(map(str, self.control))
+        return f"[{targets}]" if not controls else f"[{targets} ; {controls}]"
+
+    def __hash__(self) -> int:
+        return hash(self._subspace)
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Support):
+            return NotImplemented
+
+        return self._subspace == other._subspace
+
+    def __lt__(self, other: object) -> bool:
+        """Implement partial order to qubit supports."""
+
+        if not isinstance(other, Support):
+            return NotImplemented
+
+        return self._subspace < other._subspace
