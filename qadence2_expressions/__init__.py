@@ -1,16 +1,23 @@
 from __future__ import annotations
 
 from .constructors import (
+    array_parameter,
+    array_variable,
     function,
+    parameter,
     parametric_operator,
     projector,
     symbol,
+    time_parameter,
+    time_variable,
     unitary_hermitian_operator,
     value,
+    variable,
 )
 from .environment import (
     set_grid_scale,
     set_grid_type,
+    set_number_qubits,
     set_qubits_positions,
 )
 from .functions import (
@@ -21,26 +28,33 @@ from .functions import (
 )
 from .ircompiler import irc
 from .operators import (
+    FreeEvolution,
+    NativeDriven,
     NOT,
     RX,
     RY,
     RZ,
-    Z0,
-    Z1,
     X,
     Xm,
     Xp,
     Y,
     Z,
+    Z0,
+    Z1,
 )
 
 __all__ = [
+    "array_parameter",
+    "array_variable",
     "cos",
     "exp",
+    "FreeEvolution",
     "function",
     "irc",
     "log",
+    "NativeDriven",
     "NOT",
+    "parameter",
     "parametric_operator",
     "projector",
     "RX",
@@ -48,11 +62,15 @@ __all__ = [
     "RZ",
     "set_grid_scale",
     "set_grid_type",
+    "set_number_qubits",
     "set_qubits_positions",
     "sin",
     "symbol",
+    "time_parameter",
+    "time_variable",
     "unitary_hermitian_operator",
     "value",
+    "variable",
     "X",
     "Xm",
     "Xp",

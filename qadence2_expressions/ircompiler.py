@@ -13,8 +13,13 @@ from qadence_ir import (
     Support,
 )
 
+from .environment import (
+    get_grid_scale,
+    get_grid_type,
+    get_number_qubits,
+    get_qubits_positions,
+)
 from .expression import Expression
-from .environment import get_grid_scale, get_grid_type, get_qubits_positions
 
 
 def irc(expr: Expression) -> Model:
@@ -26,15 +31,16 @@ def irc(expr: Expression) -> Model:
 
 
 def qubits_allocation(expr: Expression) -> AllocQubits:
+    num_qubits_in_expr = expr.max_index + 1
     pos = get_qubits_positions() or []
-    num_qubits = expr.max_index + 1
+    num_qubits_available = get_number_qubits()
 
-    if pos and num_qubits > len(pos):
+    if pos and num_qubits_in_expr > num_qubits_available:
         raise ValueError(
             "The expression requires more qubits than are allocated in the register."
         )
 
-    num_qubits = max(num_qubits, len(pos))
+    num_qubits = max(num_qubits_in_expr, num_qubits_available)
 
     grid_type = get_grid_type()
     grid_scale = get_grid_scale()
@@ -89,7 +95,7 @@ def _extract_quantum_instructions(
 
     elif expr.is_quantum_operator and expr[0].is_function:
         fn = expr[0]
-        operator_name = fn[0][0].lower()
+        operator_name = expr.get("instruction_name") or fn[0][0].lower()
         support = Support(target=expr[1].target, control=expr[1].control)
         args = []
         for arg in fn[1:]:

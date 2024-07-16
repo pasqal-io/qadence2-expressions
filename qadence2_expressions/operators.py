@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Callable
 
-from .expression import Expression
 from .constructors import (
     function,
     parametric_operator,
@@ -10,6 +9,14 @@ from .constructors import (
     unitary_hermitian_operator,
     value,
 )
+from .expression import Expression
+
+
+def _promote(x: Expression | complex | float | int) -> Expression:
+    if isinstance(x, complex | float | int):
+        return value(x)
+    return x
+
 
 # Pauli operators
 X = unitary_hermitian_operator("X")
@@ -28,21 +35,15 @@ Xm = projector("X", "-")
 
 # Rotations
 def RX(angle: Expression | float) -> Callable:
-    if isinstance(angle, float):
-        angle = value(angle)
-    return parametric_operator("RX", angle, join=_join_rotation)
+    return parametric_operator("RX", _promote(angle), join=_join_rotation)
 
 
 def RY(angle: Expression | float) -> Callable:
-    if isinstance(angle, float):
-        angle = value(angle)
-    return parametric_operator("RY", angle, join=_join_rotation)
+    return parametric_operator("RY", _promote(angle), join=_join_rotation)
 
 
 def RZ(angle: Expression | float) -> Callable:
-    if isinstance(angle, float):
-        angle = value(angle)
-    return parametric_operator("RZ", angle, join=_join_rotation)
+    return parametric_operator("RZ", _promote(angle), join=_join_rotation)
 
 
 def _join_rotation(lhs: Expression, rhs: Expression) -> Expression:
@@ -50,3 +51,26 @@ def _join_rotation(lhs: Expression, rhs: Expression) -> Expression:
     if total_angle.is_zero:
         return value(1)
     return function(lhs[0], total_angle)
+
+
+# Analog operations
+def NativeDriven(
+    duration: Expression | float,
+    amplitude: Expression | float,
+    detuning: Expression | float,
+    phase: Expression | float,
+) -> Callable:
+    return parametric_operator(
+        "NativeDriven",
+        _promote(duration),
+        _promote(amplitude),
+        _promote(detuning),
+        _promote(phase),
+        instruction_name="dyn_pulse",
+    )
+
+
+def FreeEvolution(duration: Expression | float) -> Callable:
+    return parametric_operator(
+        "FreeEvolution", _promote(duration), instruction_name="dyn_wait"
+    )

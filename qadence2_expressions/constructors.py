@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
+from .environment import Environment
 from .expression import Expression
 from .support import Support
-from .environment import Environment
 
 
 def value(x: complex | float | int) -> Expression:
@@ -16,6 +16,30 @@ def symbol(identifier: str, **attributes: Any) -> Expression:
     if identifier in Environment.protected:
         raise SyntaxError(f"'{identifier}' is protected.")
     return Expression.symbol(identifier, **attributes)
+
+
+def parameter(name: str) -> Expression:
+    return symbol(name)
+
+
+def variable(name: str) -> Expression:
+    return symbol(name, trainable=True)
+
+
+def time_parameter(name: str) -> Expression:
+    return symbol(name, time_parameter=True)
+
+
+def time_variable(name: str) -> Expression:
+    return symbol(name, trainable=True, time_parameter=True)
+
+
+def array_parameter(name: str, size: int) -> Expression:
+    return symbol(name, size=size)
+
+
+def array_variable(name: str, size: int) -> Expression:
+    return symbol(name, trainable=True, size=size)
 
 
 def function(name: str, *args: Any) -> Expression:
@@ -69,7 +93,7 @@ def projector(base: str, index: str) -> Callable:
 
 
 def parametric_operator(
-    name: str, *args: Any, join: Callable | None = None
+    name: str, *args: Any, join: Callable | None = None, **attributes: Any
 ) -> Callable:
     def core(
         *indices: Any,
@@ -80,6 +104,7 @@ def parametric_operator(
             function(name, *args),
             Support(*indices, target=target, control=control),
             join=join,
+            **attributes,
         )
 
     return core

@@ -649,7 +649,12 @@ def evaluate_kronop(lhs: Expression, rhs: Expression) -> Expression:
         if lhs.get("is_projector") and rhs.get("is_projector"):
             return lhs if lhs[0] == rhs[0] else Expression.zero()
 
-        if lhs[0].is_function and rhs[0].is_function and lhs[0][0] == rhs[0][0]:
+        if (
+            lhs[0].is_function
+            and rhs[0].is_function
+            and lhs[0][0] == rhs[0][0]
+            and lhs.get("join")
+        ):
             res = lhs.get("join")(lhs[0], rhs[0])
             return (  # type: ignore
                 res
