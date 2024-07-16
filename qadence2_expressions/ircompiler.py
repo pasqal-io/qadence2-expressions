@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from qadence_ir import (
+from qadence2_ir import (
     Alloc,
     AllocQubits,
     Assign,
@@ -56,7 +56,10 @@ def extract_inputs(expr: Expression) -> dict[str, Alloc]:
 
 def _extract_inputs_core(expr: Expression, inputs: dict[str, Alloc]) -> None:
     if expr.is_symbol:
-        inputs[expr[0]] = Alloc(expr.get("size", 1), expr.get("trainable", False))
+        attrs = {k: v for k, v in expr.attrs.items() if k not in ["size", "trainable"]}
+        inputs[expr[0]] = Alloc(
+            expr.get("size", 1), expr.get("trainable", False), **attrs
+        )
 
     elif expr.is_addition or expr.is_multiplication or expr.is_kronecker_product:
         for arg in expr.args:
@@ -91,7 +94,10 @@ def _extract_quantum_instructions(
         sym = expr[0]
         operator_name = sym[0].lower()
         support = Support(target=expr[1].target, control=expr[1].control)
-        acc.append(QuInstruct(operator_name, support))
+        attrs = {
+            k: v for k, v in expr.attrs.items() if k not in ["join", "instruction_name"]
+        }
+        acc.append(QuInstruct(operator_name, support, **attrs))
 
     elif expr.is_quantum_operator and expr[0].is_function:
         fn = expr[0]
@@ -101,7 +107,10 @@ def _extract_quantum_instructions(
         for arg in fn[1:]:
             term, count = _extract_classical_instructions(arg, mem, acc, count)
             args.append(term)
-        acc.append(QuInstruct(operator_name, support, *args))
+        attrs = {
+            k: v for k, v in expr.attrs.items() if k not in ["join", "instruction_name"]
+        }
+        acc.append(QuInstruct(operator_name, support, *args, **attrs))
 
     elif expr.is_kronecker_product:
         for term in expr.args:
