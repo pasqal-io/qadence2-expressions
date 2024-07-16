@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Literal
 
 from .expression import Expression
+from .primitives import get_grid_scale, get_grid_type, get_qubits_positions
 
 
 class Alloc:
@@ -15,9 +16,10 @@ class Alloc:
         trainable: Flag if the parameter can change during a training loop.
     """
 
-    def __init__(self, size: int, trainable: bool) -> None:
+    def __init__(self, size: int, trainable: bool, **attributes: Any) -> None:
         self.size = size
         self.is_trainable = trainable
+        self.attrs = attributes
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.size}, trainable={self.is_trainable})"
@@ -106,15 +108,17 @@ class QuInstruct:
     An abstract representation of a QPU instruction.
 
     Inputs:
-        name: The instruction name _extract_classical_instructionsatible with the standard instruction set.
+        name: The instruction name _extract_classical_instructionsatible with the
+              standard instruction set.
         support: The index of qubits to which the instruction is applied to.
         args: Arguments of the instruction such as angle, duration, amplitude etc.
     """
 
-    def __init__(self, name: str, support: Support, *args: Any):
+    def __init__(self, name: str, support: Support, *args: Any, **attributes: Any):
         self.name = name
         self.support = support
         self.args = args
+        self.attrs = attributes
 
     def __repr__(self) -> str:
         params = f"{repr(self.name)}, {self.support}"
@@ -177,7 +181,7 @@ class Model:
         directives: A dictionary containing QPU related options. For instance,
             it can be used to set the Rydberg level to be used or whether or not
             allow digital-analog operations in the sequence.
-        data_settings: Backend specific configurations where the user can define
+        settings: Backend specific configurations where the user can define
             for instance, the data type like `int64`, or the return type as
             "counting", "vector-state" or "density-matrix".
     """
@@ -225,16 +229,27 @@ class Model:
 
 def irc(expr: Expression) -> Model:
     return Model(
-        register=set_register(expr),
+        register=qubits_allocation(expr),
         inputs=extract_inputs(expr),
         instructions=extract_instructions(expr),
     )
 
 
-def set_register(expr: Expression) -> AllocQubits:
-    qubits = expr.subspace()
-    num_qubits = max(qubits.subspace) + 1 if qubits else 0
-    return AllocQubits(num_qubits, [])
+def qubits_allocation(expr: Expression) -> AllocQubits:
+    pos = get_qubits_positions() or []
+    num_qubits = expr.max_index + 1
+
+    if pos and num_qubits > len(pos):
+        raise ValueError(
+            "The expression requires more qubits than are allocated in the register."
+        )
+
+    num_qubits = max(num_qubits, len(pos))
+
+    grid_type = get_grid_type()
+    grid_scale = get_grid_scale()
+
+    return AllocQubits(num_qubits, pos, grid_type=grid_type, grid_scale=grid_scale)  # type: ignore
 
 
 def extract_inputs(expr: Expression) -> dict[str, Alloc]:
@@ -245,9 +260,7 @@ def extract_inputs(expr: Expression) -> dict[str, Alloc]:
 
 def _extract_inputs_core(expr: Expression, inputs: dict[str, Alloc]) -> None:
     if expr.is_symbol:
-        inputs[expr[0]] = Alloc(
-            expr.get("size", 1), expr.get("is_trainable", False)
-        )
+        inputs[expr[0]] = Alloc(expr.get("size", 1), expr.get("trainable", False))
 
     elif expr.is_addition or expr.is_multiplication or expr.is_kronecker_product:
         for arg in expr.args:
@@ -256,15 +269,15 @@ def _extract_inputs_core(expr: Expression, inputs: dict[str, Alloc]) -> None:
     elif expr.is_function:
         for arg in expr[1:]:
             _extract_inputs_core(arg, inputs)
-    
+
     elif expr.is_quantum_operator and expr[0].is_function:
         fn = expr[0]
         for arg in fn[1:]:
             _extract_inputs_core(arg, inputs)
 
 
-def extract_instructions(expr: Expression) -> list:
-    acc = []
+def extract_instructions(expr: Expression) -> list[QuInstruct | Assign]:
+    acc: list[QuInstruct | Assign] = []
 
     if expr.is_quantum_operator or expr.is_kronecker_product:
         _extract_quantum_instructions(expr, {}, acc)
@@ -277,7 +290,7 @@ def extract_instructions(expr: Expression) -> list:
 
 def _extract_quantum_instructions(
     expr: Expression, mem: dict, acc: list, count: int = 0
-):
+) -> tuple[Any, int]:
     if expr.is_quantum_operator and expr[0].is_symbol:
         sym = expr[0]
         operator_name = sym[0].lower()
@@ -303,7 +316,7 @@ def _extract_quantum_instructions(
 
 def _extract_classical_instructions(
     expr: Expression, mem: dict, acc: list, count: int = 0
-):
+) -> tuple[Any, int]:
     if expr in mem:
         return mem[expr], count
 
