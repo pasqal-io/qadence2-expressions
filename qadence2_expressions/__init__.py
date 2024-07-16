@@ -1,6 +1,27 @@
 from __future__ import annotations
 
-from .core import (
+from .constructors import (
+    function,
+    parametric_operator,
+    projector,
+    symbol,
+    unitary_hermitian_operator,
+    value,
+)
+from .environment import (
+    set_grid_scale,
+    set_grid_type,
+    set_qubits_positions,
+)
+from .functions import (
+    cos,
+    exp,
+    log,
+    sin,
+)
+from .ircompiler import irc
+from .operators import (
+    NOT,
     RX,
     RY,
     RZ,
@@ -11,41 +32,32 @@ from .core import (
     Xp,
     Y,
     Z,
-    NOT,
-    cos,
-    exp,
-    function,
-    irc,
-    set_grid_scale,
-    set_grid_type,
-    set_qubits_positions,
-    sin,
-    symbol,
-    unitary_hermitian_operator,
-    value,
 )
 
 __all__ = [
-    "irc",
-    "value",
-    "symbol",
+    "cos",
     "exp",
     "function",
+    "irc",
+    "log",
+    "NOT",
+    "parametric_operator",
+    "projector",
+    "RX",
+    "RY",
+    "RZ",
+    "set_grid_scale",
+    "set_grid_type",
+    "set_qubits_positions",
+    "sin",
+    "symbol",
     "unitary_hermitian_operator",
+    "value",
     "X",
+    "Xm",
+    "Xp",
     "Y",
     "Z",
     "Z0",
     "Z1",
-    "Xp",
-    "Xm",
-    "RX",
-    "RY",
-    "RZ",
-    "NOT",
-    "sin",
-    "cos",
-    "set_qubits_positions",
-    "set_grid_type",
-    "set_grid_scale",
 ]

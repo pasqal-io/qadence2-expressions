@@ -14,7 +14,7 @@ from qadence_ir import (
 )
 
 from .expression import Expression
-from .primitives import get_grid_scale, get_grid_type, get_qubits_positions
+from .environment import get_grid_scale, get_grid_type, get_qubits_positions
 
 
 def irc(expr: Expression) -> Model:

@@ -1,40 +1,10 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Literal
+from typing import Any, Callable
 
 from .expression import Expression
 from .support import Support
-
-
-class Environment:
-    protected: set[str] = {"E"}
-    qubit_positions: list[tuple[int, int]] | None = None
-    grid_type: Literal["linear", "square", "triangular"] | None = None
-    grid_scale: float = 1.0
-
-
-def set_qubits_positions(pos: list[tuple[int, int]]) -> None:
-    Environment.qubit_positions = pos
-
-
-def get_qubits_positions() -> list[tuple[int, int]] | None:
-    return Environment.qubit_positions
-
-
-def set_grid_type(grid: Literal["linear", "square", "triangular"]) -> None:
-    Environment.grid_type = grid
-
-
-def get_grid_type() -> Literal["linear", "square", "triangular"] | None:
-    return Environment.grid_type
-
-
-def set_grid_scale(s: float) -> None:
-    Environment.grid_scale = s
-
-
-def get_grid_scale() -> float:
-    return Environment.grid_scale
+from .environment import Environment
 
 
 def value(x: complex | float | int) -> Expression:
@@ -113,61 +83,3 @@ def parametric_operator(
         )
 
     return core
-
-
-# Exponential function as power.
-def exp(x: Expression | complex | float | int) -> Expression:
-    return Expression.symbol("E") ** x
-
-
-# Pauli operators
-X = unitary_hermitian_operator("X")
-Y = unitary_hermitian_operator("Y")
-Z = unitary_hermitian_operator("Z")
-
-# Logic operators
-NOT = unitary_hermitian_operator("NOT")
-
-# Default projectors
-Z0 = projector("Z", "0")
-Z1 = projector("Z", "1")
-Xp = projector("X", "+")
-Xm = projector("X", "-")
-
-
-# Rotations
-def RX(angle: Expression | float) -> Callable:
-    if isinstance(angle, float):
-        angle = value(angle)
-    return parametric_operator("RX", angle, join=_join_rotation)
-
-
-def RY(angle: Expression | float) -> Callable:
-    if isinstance(angle, float):
-        angle = value(angle)
-    return parametric_operator("RY", angle, join=_join_rotation)
-
-
-def RZ(angle: Expression | float) -> Callable:
-    if isinstance(angle, float):
-        angle = value(angle)
-    return parametric_operator("RZ", angle, join=_join_rotation)
-
-
-def _join_rotation(lhs: Expression, rhs: Expression) -> Expression:
-    total_angle = lhs[1] + rhs[1]
-    if total_angle.is_zero:
-        return value(1)
-    return function(lhs[0], total_angle)
-
-
-def sin(x: Expression | complex | float | int) -> Expression:
-    if not isinstance(x, Expression):
-        x = value(x)
-    return function("sin", x)
-
-
-def cos(x: Expression | complex | float | int) -> Expression:
-    if not isinstance(x, Expression):
-        x = value(x)
-    return function("cos", x)

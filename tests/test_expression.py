@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import unittest
 
-from qadence2_expressions.core import (
+from qadence2_expressions.constructors import (
     symbol,
     unitary_hermitian_operator,
     value,
 )
-from qadence2_expressions.core.expression import Expression
-from qadence2_expressions.core.support import Support
+from qadence2_expressions.expression import Expression
+from qadence2_expressions.support import Support
 
 
 class TestExpression(unittest.TestCase):
