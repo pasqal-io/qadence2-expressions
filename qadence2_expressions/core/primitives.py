@@ -125,6 +125,9 @@ X = unitary_hermitian_operator("X")
 Y = unitary_hermitian_operator("Y")
 Z = unitary_hermitian_operator("Z")
 
+# Logic operators
+NOT = unitary_hermitian_operator("NOT")
+
 # Default projectors
 Z0 = projector("Z", "0")
 Z1 = projector("Z", "1")
