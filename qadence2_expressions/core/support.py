@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from typing import Any
 from functools import cached_property
+from typing import Any
 
 
 class Support:
@@ -58,7 +58,6 @@ class Support:
     @cached_property
     def subspace(self) -> set[int]:
         """Return a set containing all the indices covered by the support."""
-
         return set(self._subspace)
 
     @property
@@ -67,7 +66,11 @@ class Support:
 
     @property
     def control(self) -> tuple[int, ...]:
-        return self._subspace[self._control_start:]
+        return self._subspace[self._control_start :]
+
+    @cached_property
+    def max_index(self) -> int:
+        return max(self._subspace) if self._subspace else -1
 
     def overlap_with(self, other: Support) -> bool:
         """Returns true if both support cover common indices."""
@@ -107,7 +110,7 @@ class Support:
     def __repr__(self) -> str:
         targets = "*" if not self.target else " ".join(map(str, self.target))
         controls = " ".join(map(str, self.control))
-        return f"[{targets}]" if not controls else f"[{targets}; {controls}]"
+        return f"[{targets}]" if not controls else f"[{targets};\u2009{controls}]"
 
     def __hash__(self) -> int:
         return hash(self._subspace)
