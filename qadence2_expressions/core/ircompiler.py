@@ -2,10 +2,19 @@ from __future__ import annotations
 
 from typing import Any
 
+from qadence_ir import (
+    Alloc,
+    AllocQubits,
+    Assign,
+    Call,
+    Load,
+    Model,
+    QuInstruct,
+    Support,
+)
+
 from .expression import Expression
 from .primitives import get_grid_scale, get_grid_type, get_qubits_positions
-
-from qadence_ir.ir import *
 
 
 def irc(expr: Expression) -> Model:
