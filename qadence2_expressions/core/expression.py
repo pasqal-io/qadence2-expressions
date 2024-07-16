@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from functools import cached_property
+from re import sub
 from typing import Any
 
 from .support import Support
@@ -115,11 +117,11 @@ class Expression:
 
     @property
     def is_zero(self) -> bool:
-        return self.head == Expression.Tag.VALUE and self.args[0] == 0
+        return self.head == Expression.Tag.VALUE and self[0] == 0
 
     @property
     def is_one(self) -> bool:
-        return self.head == Expression.Tag.VALUE and self.args[0] == 1
+        return self.head == Expression.Tag.VALUE and self[0] == 1
 
     @property
     def is_symbol(self) -> bool:
@@ -149,24 +151,17 @@ class Expression:
     def is_power(self) -> bool:
         return self.head == Expression.Tag.POW
 
-    # Helper functions.
-    def get(self, attribute: str, default: Any | None = None) -> Any:
-        """
-        Return the value of the indicated expression `attribute` if present or
-        the `default` otherwise. Default value is `None`.
-        """
-        return self.attrs.get(attribute, default)
-
+    @cached_property
     def subspace(self) -> Support | None:
         if self.is_value or self.is_symbol:
             return None
 
         if self.is_quantum_operator:
-            return self.args[1]  # type: ignore
+            return self[1]  # type: ignore
 
         subspaces = []
         for arg in self.args:
-            sp = arg.subspace()
+            sp = arg.subspace
             if sp:
                 subspaces.append(sp)
 
@@ -177,6 +172,24 @@ class Expression:
             return total_subspace  # type: ignore
 
         return None
+
+    @cached_property
+    def max_index(self) -> int:
+        if self.is_value or self.is_symbol:
+            return -1
+
+        if self.is_quantum_operator:
+            return self.subspace.max_index  # type: ignore
+
+        return max(map(lambda arg: arg.max_index, self.args))  # type: ignore
+
+    # Helper functions.
+    def get(self, attribute: str, default: Any | None = None) -> Any:
+        """
+        Return the value of the indicated expression `attribute` if present or
+        the `default` otherwise. Default value is `None`.
+        """
+        return self.attrs.get(attribute, default)
 
     def as_quantum_operator(self) -> Expression:
         """
@@ -191,25 +204,32 @@ class Expression:
         exp(X(1)) exp(Y(1))
         """
 
-        subspace = self.subspace()
+        subspace = self.subspace
         if subspace:
             return Expression.quantum_operator(self, subspace)
 
         return self
 
-    # Python magic methods
     def __getitem__(self, index: int | slice) -> Any:
+        """Access expression `expr` arguments straight from expr[i]."""
         return self.args[index]
-    
-    def __repr__(self) -> str:
-        args = ", ".join(map(repr, self.args))
-        return f"{self.head}({args})"
 
     def __hash__(self) -> int:
         if self.is_addition or self.is_multiplication:
             return hash((self.head, frozenset(self.args)))
 
         return hash((self.head, self.args))
+
+    def __repr__(self) -> str:
+        args = ", ".join(map(repr, self.args))
+        return f"{self.head}({args})"
+
+    def __str__(self) -> str:
+        return visualize_expression(self)
+
+    def _repr_pretty_(self, p, _cycle) -> None:  # type: ignore
+        """Provide a friendly representation when using IPython/Jupyter notebook."""
+        p.text(str(self))
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Expression):
@@ -230,6 +250,7 @@ class Expression:
             and self.attrs == other.attrs
         )
 
+    # Algebraic operations
     def __add__(self, other: object) -> Expression:
         if not isinstance(other, Expression | complex | float | int):
             return NotImplemented
@@ -247,7 +268,7 @@ class Expression:
 
         # Numerical values are added right away
         if self.is_value and other.is_value:
-            return Expression.value(self.args[0] + other.args[0])
+            return Expression.value(self[0] + other[0])
 
         if self.is_addition and other.is_addition:
             args = (*self.args, *other.args)
@@ -291,7 +312,14 @@ class Expression:
 
         # Numerical values are multiplied right away.
         if self.is_value and other.is_value:
-            return Expression.value(self.args[0] * other.args[0])
+            return Expression.value(self[0] * other[0])
+
+        # Distributive rule
+        if self.is_addition and not (other.is_power and self == other[0]):
+            return sum(term * other for term in self.args)  # type: ignore
+
+        if other.is_addition and not (self.is_power and self[0] == other):
+            return sum(self * term for term in other.args)  # type: ignore
 
         if self.is_multiplication and other.is_multiplication:
             args = (*self.args, *other.args)
@@ -326,7 +354,7 @@ class Expression:
 
         # Numerical values are computed right away.
         if self.is_value and other.is_value:
-            return Expression.value(self.args[0] ** other.args[0])
+            return Expression.value(self[0] ** other[0])
 
         # Null power shortcut.
         if other.is_zero:
@@ -340,9 +368,7 @@ class Expression:
         # Whenever a quantum operator is present, the expression is promoted to
         # a quantum operator.
         if self.is_power:
-            return Expression.pow(
-                self.args[0], self.args[1] * other
-            ).as_quantum_operator()
+            return Expression.pow(self[0], self[1] * other).as_quantum_operator()
 
         return Expression.pow(self, other).as_quantum_operator()
 
@@ -429,11 +455,9 @@ def evaluate_addition(expr: Expression) -> Expression:
         if term.is_value:
             numerical_value = numerical_value + term
 
-        elif term.is_multiplication and term.args[0].is_value:
-            coef = term.args[0]
-            elem = (
-                term.args[1] if len(term.args) == 2 else Expression.mul(*term.args[1:])
-            )
+        elif term.is_multiplication and term[0].is_value:
+            coef = term[0]
+            elem = term[1] if len(term.args) == 2 else Expression.mul(*term[1:])
             general_terms[elem] = general_terms.get(elem, Expression.zero()) + coef
 
         else:
@@ -465,7 +489,7 @@ def evaluate_multiplication(expr: Expression) -> Expression:
             quantum_operators = quantum_operators.__kron__(term)
 
         elif term.is_power:
-            base, power = term.args[:2]
+            base, power = term[:2]
             general_terms[base] = general_terms.get(base, Expression.zero()) + power
 
         else:
@@ -490,8 +514,8 @@ def evaluate_multiplication(expr: Expression) -> Expression:
 
 
 def evaluate_kron(expr: Expression) -> Expression:
-    lhs = expr.args[0]
-    for rhs in expr.args[1:]:
+    lhs = expr[0]
+    for rhs in expr[1:]:
         if lhs.is_quantum_operator and rhs.is_quantum_operator:
             lhs = evaluate_kronop(lhs, rhs)
 
@@ -521,7 +545,7 @@ def evaluate_kronleft(lhs: Expression, rhs: Expression) -> Expression:
 
     args = rhs.args
     for i, rhs_arg in enumerate(args):
-        if rhs_arg.subspace() == lhs.subspace():  # type: ignore
+        if rhs_arg.subspace == lhs.subspace:  # type: ignore
             ii = i + 1
 
             result = evaluate_kronop(lhs, rhs_arg)
@@ -538,8 +562,8 @@ def evaluate_kronleft(lhs: Expression, rhs: Expression) -> Expression:
             break
 
         if (
-            rhs_arg.subspace() > lhs.subspace()  # type: ignore
-            or rhs_arg.subspace().overlap_with(lhs.subspace())  # type: ignore
+            rhs_arg.subspace > lhs.subspace  # type: ignore
+            or rhs_arg.subspace.overlap_with(lhs.subspace)  # type: ignore
         ):
             args = (*args[:i], lhs, *args[i:])
             break
@@ -566,7 +590,7 @@ def evaluate_kronright(lhs: Expression, rhs: Expression) -> Expression:
     for i in range(len(args) - 1, -1, -1):
         ii = i + 1
 
-        if args[i].subspace() == rhs.subspace():  # type: ignore
+        if args[i].subspace == rhs.subspace:  # type: ignore
             result = evaluate_kronop(args[i], rhs)
 
             if result.is_one:
@@ -580,11 +604,9 @@ def evaluate_kronright(lhs: Expression, rhs: Expression) -> Expression:
 
             break
 
-        if args[i].subspace() < rhs.subspace() or args[  # type: ignore
-            i
-        ].subspace().overlap_with(
-            rhs.subspace()
-        ):  # type: ignore
+        if args[i].subspace < rhs.subspace or args[i].subspace.overlap_with(
+            rhs.subspace
+        ):
             args = (*args[:ii], rhs, *args[ii:])
             break
 
@@ -621,16 +643,74 @@ def evaluate_kronop(lhs: Expression, rhs: Expression) -> Expression:
     # Multiplication of unitary Hermitian operators acting on the the same subspace.
     if lhs == rhs and (lhs.get("is_hermitian") and lhs.get("is_unitary")):
         return Expression.one()
-    
+
     # General multiplications of operators acting on the same subspace.
-    if lhs.subspace() == rhs.subspace():
+    if lhs.subspace == rhs.subspace:
         if lhs.get("is_projector") and rhs.get("is_projector"):
-            return Expression.one() if lhs.args[0] == rhs.args[0] else Expression.zero() 
+            return lhs if lhs[0] == rhs[0] else Expression.zero()
+
+        if lhs[0].is_function and rhs[0].is_function and lhs[0][0] == rhs[0][0]:
+            res = lhs.get("join")(lhs[0], rhs[0])
+            return (  # type: ignore
+                res
+                if res.is_zero or res.is_one
+                else Expression.quantum_operator(res, lhs[1])
+            )
 
     # Order the operators by subspace.
-    if lhs.subspace() < rhs.subspace() or lhs.subspace().overlap_with(  # type: ignore
-        rhs.subspace()  # type: ignore
+    if lhs.subspace < rhs.subspace or lhs.subspace.overlap_with(  # type: ignore
+        rhs.subspace  # type: ignore
     ):
         return Expression.kron(lhs, rhs)
 
     return Expression.kron(rhs, lhs)
+
+
+def visualize_expression(expr: Expression) -> str:
+    if expr.is_value or expr.is_symbol:
+        return str(expr[0])
+
+    if expr.is_quantum_operator:
+        return f"{expr[0]}{expr[1]}"
+
+    if expr.is_function:
+        args = ", ".join(map(str, expr[1:]))
+        return f"{expr[0]}({args})"
+
+    if expr.is_multiplication or expr.is_kronecker_product:
+        return visualize_sequence(expr, "\u2009")
+
+    if expr.is_kronecker_product:
+        return visualize_sequence(expr, "\u2003")
+
+    if expr.is_addition:
+        result = visualize_sequence(expr, " + ", with_brackets=False)
+        return sub(r"\s\+\s-(1\.0\s)?", " - ", result)
+
+    if expr.is_power:
+        return visualize_sequence(expr, "\u2009^\u2009")
+
+    return repr(expr)
+
+
+def visualize_sequence(
+    expr: Expression, operator: str, with_brackets: bool = True
+) -> str:
+    if (
+        expr.is_value
+        or expr.is_symbol
+        or (expr.is_quantum_operator and expr[0].is_symbol)
+    ):
+        raise SyntaxError("Only sequence of expression are allowed.")
+
+    if with_brackets:
+        return operator.join(map(visualize_with_brackets, expr.args))
+
+    return operator.join(map(str, expr.args))
+
+
+def visualize_with_brackets(expr: Expression) -> str:
+    if expr.is_multiplication or expr.is_addition:
+        return f"({str(expr)})"
+
+    return str(expr)
