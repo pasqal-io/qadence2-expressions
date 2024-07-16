@@ -2,32 +2,29 @@ from __future__ import annotations
 
 import unittest
 
-from qadence2_expressions.core.expression import Expression
-from qadence2_expressions.core.support import Support
-
 from qadence2_expressions.core import (
     symbol,
     unitary_hermitian_operator,
     value,
 )
+from qadence2_expressions.core.expression import Expression
+from qadence2_expressions.core.support import Support
 
 
 class TestExpression(unittest.TestCase):
     def test_consturctor(self) -> None:
-        self.assertEqual(value(1), Expression(Expression.Token.VALUE, 1))
-        self.assertEqual(
-            Expression.symbol("x"), Expression(Expression.Token.SYMBOL, "x")
-        )
+        self.assertEqual(value(1), Expression(Expression.Tag.VALUE, 1))
+        self.assertEqual(Expression.symbol("x"), Expression(Expression.Tag.SYMBOL, "x"))
         self.assertEqual(
             Expression.function("sin", 3.14),
-            Expression(Expression.Token.FN, "sin", 3.14),
+            Expression(Expression.Tag.FN, Expression.symbol("sin"), 3.14),
         )
         self.assertEqual(
             Expression.quantum_operator(
                 Expression.symbol("X"), Support(1), is_hermitian=True
             ),
             Expression(
-                Expression.Token.QUANTUM_OP,
+                Expression.Tag.QUANTUM_OP,
                 Expression.symbol("X"),
                 Support(1),
                 is_hermitian=True,
@@ -142,20 +139,20 @@ class TestExpression(unittest.TestCase):
         b = symbol("b")
         X = unitary_hermitian_operator("X")
 
-        self.assertEqual(value(1).subspace(), None)
-        self.assertEqual(a.subspace(), None)
-        self.assertEqual(X().subspace(), Support())
-        self.assertEqual(X(1).subspace(), Support(1))
-        self.assertEqual(X(1, 2).subspace(), Support(1, 2))
+        self.assertEqual(value(1).subspace, None)
+        self.assertEqual(a.subspace, None)
+        self.assertEqual(X().subspace, Support())
+        self.assertEqual(X(1).subspace, Support(1))
+        self.assertEqual(X(1, 2).subspace, Support(1, 2))
         self.assertEqual(
-            X(target=(1,), control=(0,)).subspace(),
+            X(target=(1,), control=(0,)).subspace,
             Support(control=(0,), target=(1,)),
         )
 
         expr = Expression.add(value(1), a)
-        self.assertEqual(expr.subspace(), None)
+        self.assertEqual(expr.subspace, None)
 
         term1 = Expression.mul(a, X(1))
         term2 = Expression.mul(b, X(2))
         expr = Expression.add(term1, term2)
-        self.assertEqual(expr.subspace(), Support(1, 2))
+        self.assertEqual(expr.subspace, Support(1, 2))
