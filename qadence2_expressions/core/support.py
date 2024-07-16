@@ -107,7 +107,7 @@ class Support:
     def __repr__(self) -> str:
         targets = "*" if not self.target else " ".join(map(str, self.target))
         controls = " ".join(map(str, self.control))
-        return f"[{targets}]" if not controls else f"[{targets} ; {controls}]"
+        return f"[{targets}]" if not controls else f"[{targets}; {controls}]"
 
     def __hash__(self) -> int:
         return hash(self._subspace)
