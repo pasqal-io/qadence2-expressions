@@ -7,6 +7,7 @@ from .constructors import (
     parameter,
     parametric_operator,
     projector,
+    promote,
     symbol,
     time_parameter,
     time_variable,
@@ -26,10 +27,9 @@ from .functions import (
     log,
     sin,
 )
-from .ircompiler import irc
 from .operators import (
     FreeEvolution,
-    NativeDriven,
+    NativeDrive,
     NOT,
     RX,
     RY,
@@ -42,6 +42,8 @@ from .operators import (
     Z0,
     Z1,
 )
+from .ircompiler import irc
+
 
 __all__ = [
     "array_parameter",
@@ -52,11 +54,12 @@ __all__ = [
     "function",
     "irc",
     "log",
-    "NativeDriven",
+    "NativeDrive",
     "NOT",
     "parameter",
     "parametric_operator",
     "projector",
+    "promote",
     "RX",
     "RY",
     "RZ",

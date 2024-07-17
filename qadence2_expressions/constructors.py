@@ -12,6 +12,12 @@ def value(x: complex | float | int) -> Expression:
     return Expression.value(x)
 
 
+def promote(x: Expression | complex | float | int) -> Expression:
+    if not isinstance(x, Expression):
+        return value(x)
+    return x
+
+
 def symbol(identifier: str, **attributes: Any) -> Expression:
     if identifier in Environment.protected:
         raise SyntaxError(f"'{identifier}' is protected.")
