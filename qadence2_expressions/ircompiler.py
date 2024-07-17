@@ -107,7 +107,9 @@ def _extract_quantum_instructions(
         operator_name = sym[0].lower()
         support = Support(target=expr[1].target, control=expr[1].control)
         attrs = {
-            k: v for k, v in expr.attrs.items() if k not in ["join", "instruction_name"]
+            k: v
+            for k, v in expr.attrs.items()
+            if not (k in ["join", "instruction_name"] or k.startswith("is_"))
         }
         acc.append(QuInstruct(operator_name, support, **attrs))
 
@@ -120,7 +122,9 @@ def _extract_quantum_instructions(
             term, count = _extract_classical_instructions(arg, mem, acc, count)
             args.append(term)
         attrs = {
-            k: v for k, v in expr.attrs.items() if k not in ["join", "instruction_name"]
+            k: v
+            for k, v in expr.attrs.items()
+            if not (k in ["join", "instruction_name"] or k.startswith("is_"))
         }
         acc.append(QuInstruct(operator_name, support, *args, **attrs))
 

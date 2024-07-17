@@ -32,6 +32,7 @@ from .functions import (
     sin,
 )
 from .operators import (
+    CZ,
     FreeEvolution,
     NativeDrive,
     NOT,
@@ -46,6 +47,7 @@ from .operators import (
     Z0,
     Z1,
 )
+from .replace import replace
 from .ircompiler import irc
 
 
@@ -56,6 +58,7 @@ __all__ = [
     "array_parameter",
     "array_variable",
     "cos",
+    "CZ",
     "exp",
     "FreeEvolution",
     "function",
@@ -67,6 +70,7 @@ __all__ = [
     "parametric_operator",
     "projector",
     "promote",
+    "replace",
     "reset_ir_options",
     "RX",
     "RY",

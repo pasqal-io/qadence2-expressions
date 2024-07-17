@@ -18,6 +18,9 @@ X = unitary_hermitian_operator("X")
 Y = unitary_hermitian_operator("Y")
 Z = unitary_hermitian_operator("Z")
 
+# Standard gates
+CZ = unitary_hermitian_operator("CZ")
+
 # Logic operators
 NOT = unitary_hermitian_operator("NOT")
 
