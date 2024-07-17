@@ -18,6 +18,9 @@ from .environment import (
     get_grid_type,
     get_number_qubits,
     get_qubits_positions,
+    get_grid_options,
+    get_qpu_directives,
+    get_settings,
 )
 from .expression import Expression
 
@@ -27,6 +30,8 @@ def irc(expr: Expression) -> Model:
         register=qubits_allocation(expr),
         inputs=extract_inputs(expr),
         instructions=extract_instructions(expr),
+        directives=get_qpu_directives() or {},
+        settings=get_settings() or {},
     )
 
 
@@ -44,8 +49,15 @@ def qubits_allocation(expr: Expression) -> AllocQubits:
 
     grid_type = get_grid_type()
     grid_scale = get_grid_scale()
+    options = get_grid_options() or {}
 
-    return AllocQubits(num_qubits, pos, grid_type=grid_type, grid_scale=grid_scale)  # type: ignore
+    return AllocQubits(
+        num_qubits,
+        pos,
+        grid_type=grid_type,
+        grid_scale=grid_scale,
+        options=options,
+    )
 
 
 def extract_inputs(expr: Expression) -> dict[str, Alloc]:

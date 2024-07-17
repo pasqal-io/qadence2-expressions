@@ -16,6 +16,10 @@ from .constructors import (
     variable,
 )
 from .environment import (
+    add_settings,
+    add_grid_options,
+    add_qpu_directives,
+    reset_ir_options,
     set_grid_scale,
     set_grid_type,
     set_number_qubits,
@@ -46,6 +50,9 @@ from .ircompiler import irc
 
 
 __all__ = [
+    "add_settings",
+    "add_grid_options",
+    "add_qpu_directives",
     "array_parameter",
     "array_variable",
     "cos",
@@ -60,6 +67,7 @@ __all__ = [
     "parametric_operator",
     "projector",
     "promote",
+    "reset_ir_options",
     "RX",
     "RY",
     "RZ",
