@@ -679,14 +679,15 @@ def visualize_expression(expr: Expression) -> str:
         return f"{expr[0]}{expr[1]}"
 
     if expr.is_function:
-        args = ", ".join(map(str, expr[1:]))
+        args = ",\u2009".join(map(str, expr[1:]))
         return f"{expr[0]}({args})"
 
-    if expr.is_multiplication or expr.is_kronecker_product:
-        return visualize_sequence(expr, "\u2009")
+    if expr.is_multiplication:
+        result = visualize_sequence(expr, "\u2009")
+        return sub(r"-1\.0\s", "-", result)
 
     if expr.is_kronecker_product:
-        return visualize_sequence(expr, "\u2003")
+        return visualize_sequence(expr, "\u2008")
 
     if expr.is_addition:
         result = visualize_sequence(expr, " + ", with_brackets=False)
