@@ -54,9 +54,9 @@ extras = [
 #PIP_EXTRA_INDEX_URL = "https://{env:PYPI_USERNAME}:{env:PYPI_PASSWORD}@gitlab.pasqal.com/api/v4/projects/190/packages/pypi/simple"
 
 [project.urls]
-Documentation = "https://pqs.pages.pasqal.com/wip-qadence2-expressions/"
-Issues = "https://github.com/pasqal-io/wip-qadence2-expressions/-/issues"
-Source = "https://github.com/pasqal-io/wip-qadence2-expressions"
+Documentation = "https://pqs.pages.pasqal.com/qadence2-expressions/"
+Issues = "https://github.com/pasqal-io/qadence2-expressions/-/issues"
+Source = "https://github.com/pasqal-io/qadence2-expressions"
 
 [tool.hatch.envs.default]
 features = ["extras"]

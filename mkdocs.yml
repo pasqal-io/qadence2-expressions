@@ -1,6 +1,12 @@
+<<<<<<< HEAD
 site_name: wip qadence2 expressions
 repo_url: "https://gitlab.pasqal.com/pqs/wip-qadence2-expressions"
 repo_name: "wip_qadence2_expressions"
+=======
+site_name: qadence2 expressions
+repo_url: "https://gitlab.pasqal.com/pqs/qadence2-expressions"
+repo_name: "qadence2_expressions"
+>>>>>>> fe95937 (Initial commit)
 
 nav:
   - Overview: index.md
@@ -62,7 +68,7 @@ plugins:
           docstring_section_style: spacy
 
 watch:
-  - qadence2-expressions
+  - qadence2_expressions
 
 extra:
  version:

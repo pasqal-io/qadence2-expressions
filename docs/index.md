@@ -1,4 +1,5 @@
-# "wip qadence2 expressions"
+# "qadence2 expressions"
+
 ## Installation
 Installation guidelines
 
