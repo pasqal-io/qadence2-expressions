@@ -1,33 +1,30 @@
 from __future__ import annotations
 
-from typing import Any
-
 from qadence2_ir import (
+    AST,
     AbstractIRBuilder,
     AllocQubits,
     Attributes,
-    AST,
     irc_factory,
 )
 
-from .expression import Expression
 from .environment import (
+    get_grid_options,
     get_grid_scale,
     get_grid_type,
     get_number_qubits,
-    get_qubits_positions,
-    get_grid_options,
     get_qpu_directives,
+    get_qubits_positions,
     get_settings,
 )
+from .expression import Expression
 
 
 class IRBuilder(AbstractIRBuilder[Expression]):
-
     @staticmethod
     def set_register(input_obj: Expression) -> AllocQubits:
         num_qubits_in_expr = input_obj.max_index + 1
-        pos = get_qubits_positions() or []
+        pos: list[tuple[int, int]] | list[int] = get_qubits_positions() or []  # type: ignore
         num_qubits_available = get_number_qubits()
 
         if pos and num_qubits_in_expr > num_qubits_available:

@@ -16,9 +16,9 @@ from .constructors import (
     variable,
 )
 from .environment import (
-    add_settings,
     add_grid_options,
     add_qpu_directives,
+    add_settings,
     reset_ir_options,
     set_grid_scale,
     set_grid_type,
@@ -31,25 +31,24 @@ from .functions import (
     log,
     sin,
 )
+from .ircompiler import irc
 from .operators import (
     CZ,
-    FreeEvolution,
-    NativeDrive,
     NOT,
     RX,
     RY,
     RZ,
+    Z0,
+    Z1,
+    FreeEvolution,
+    NativeDrive,
     X,
     Xm,
     Xp,
     Y,
     Z,
-    Z0,
-    Z1,
 )
 from .replace import replace
-from .ircompiler import irc
-
 
 __all__ = [
     "add_settings",

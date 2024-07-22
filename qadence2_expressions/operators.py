@@ -12,7 +12,6 @@ from .constructors import (
 )
 from .expression import Expression
 
-
 # Pauli operators
 X = unitary_hermitian_operator("X")
 Y = unitary_hermitian_operator("Y")
