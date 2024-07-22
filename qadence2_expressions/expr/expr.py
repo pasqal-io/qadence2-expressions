@@ -113,9 +113,7 @@ class Expr:
                 return sign + SPACE_SEPARATOR.join(
                     map(
                         lambda x: (
-                            f"({x})"
-                            if isinstance(x, Expr) and x.head == Operator.PLUS
-                            else str(x)
+                            f"({x})" if isinstance(x, Expr) and x.head == Operator.PLUS else str(x)
                         ),
                         self.args[1:],
                     )
@@ -137,9 +135,7 @@ class Expr:
             args = ", ".join(map(str, self.args[1:]))
             return f"{self.args[0]}({args})"
 
-        raise NotImplementedError(
-            f"Visualization with operator {self.head} not implemented"
-        )
+        raise NotImplementedError(f"Visualization with operator {self.head} not implemented")
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Expr):
@@ -237,11 +233,7 @@ class Expr:
                 return self.args[0] ** (self.args[1] + 1)  # type: ignore
 
             # <<< a * E(^, [a,m]) = E(^, [a,m+1])
-            if (
-                isinstance(other, Expr)
-                and other.head == Operator.POWER
-                and self == other.args[0]
-            ):
+            if isinstance(other, Expr) and other.head == Operator.POWER and self == other.args[0]:
                 power = other.args[1] + 1
                 return 1 if not power else Expr(Operator.POWER, self, power)
 
@@ -332,11 +324,7 @@ class Expr:
             # <<< E(^, [a,b]) ^ ? = E(^, [a,b*?])
             if self.head == Operator.POWER:
                 power = self.args[1] * other
-                return (
-                    self.args[0]
-                    if power == 1
-                    else Expr(Operator.POWER, self.args[0], power)
-                )
+                return self.args[0] if power == 1 else Expr(Operator.POWER, self.args[0], power)
 
             # <<< E(*, [a,b,…]) ^ ? = E(*, [a^?,b^?,…])
             if self.head == Operator.TIMES:
