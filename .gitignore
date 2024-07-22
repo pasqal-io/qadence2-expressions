@@ -50,3 +50,9 @@ runs/
 
 # Mkdocs
 site/
+
+
+# Added by cargo
+
+/target
+*.so
