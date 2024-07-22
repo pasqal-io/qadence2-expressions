@@ -28,9 +28,7 @@ class Support:
         control: tuple[int, ...] | None = None,
     ) -> None:
         if indices and (target or control):
-            raise SyntaxError(
-                "Please, provide either qubit indices or target-control tuples"
-            )
+            raise SyntaxError("Please, provide either qubit indices or target-control tuples")
 
         if control and not target:
             raise SyntaxError("A controlled operation needs both, control and target.")

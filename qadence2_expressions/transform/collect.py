@@ -28,11 +28,7 @@ def collect_operators_core(expr: object, acc: dict) -> None:
         and expr.args[-1].head == Operator.NONCOMMUTE
     ):
         key = expr.args[-1]
-        value = (
-            expr.args[0]
-            if len(expr.args[:-1]) == 1
-            else Expr(Operator.TIMES, *expr.args[:-1])
-        )
+        value = expr.args[0] if len(expr.args[:-1]) == 1 else Expr(Operator.TIMES, *expr.args[:-1])
         acc[key] = acc.get(key, 0) + value
 
     if isinstance(expr, Expr) and expr.head == Operator.PLUS:

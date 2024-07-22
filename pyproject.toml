@@ -6,9 +6,9 @@ build-backend = "hatchling.build"
 name = "qadence2-expressions"
 description = "Qadence 2 expressions consisting of symbolic expressions and blocks, i.e. quantum digital, analog, digital-analog and composite gates, together with their logic and engine."
 readme = "README.md"
-version = "0.1.0"
-requires-python = ">=3.10,<3.13"
-license = {text = "Proprietary"}
+version = "0.1.1"
+requires-python = ">=3.10,<3.12"
+license = { text = "Apache 2.0" }
 keywords = ["quantum"]
 authors = [
   { name = "Kaonan Micadei", email = "kaonan.micadei@pasqal.com" },
@@ -48,15 +48,10 @@ allow-ambiguous-features = true
 extras = [
 ]
 
-# uncomment to enable installing libraries from the PASQAL private PyPi repository
-# use a GitLab personal access token with registry permissions enable as credentials
-#[tool.hatch.envs.default.env-vars]
-#PIP_EXTRA_INDEX_URL = "https://{env:PYPI_USERNAME}:{env:PYPI_PASSWORD}@gitlab.pasqal.com/api/v4/projects/190/packages/pypi/simple"
-
 [project.urls]
-Documentation = "https://pqs.pages.pasqal.com/wip-qadence2-expressions/"
-Issues = "https://github.com/pasqal-io/wip-qadence2-expressions/-/issues"
-Source = "https://github.com/pasqal-io/wip-qadence2-expressions"
+Documentation = "https://pqs.pages.pasqal.com/qadence2-expressions/"
+Issues = "https://github.com/pasqal-io/qadence2-expressions/-/issues"
+Source = "https://github.com/pasqal-io/qadence2-expressions"
 
 [tool.hatch.envs.default]
 features = ["extras"]
@@ -68,8 +63,13 @@ dependencies = [
   "ipykernel",
   "pre-commit",
   "black",
-  "ruff"
+  "isort",
+  "ruff",
+  "pydocstringformatter",
 ]
+
+[tool.hatch.envs.default.scripts]
+test = "pytest -n auto --cov-config=pyproject.toml --ignore=./tests/test_examples.py {args}"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -104,6 +104,15 @@ test = "mkdocs build --clean --strict"
 
 [[tool.hatch.envs.test.matrix]]
 python = ["310", "311"]
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+    "/.gitignore",
+    "/.pre-commit-config.yml",
+    "/tests",
+    "/docs",
+    "/examples",
+]
 
 [tool.hatch.build.targets.wheel]
 packages = ["qadence2_expressions"]
@@ -141,6 +150,23 @@ max-complexity = 15
 
 [tool.ruff.flake8-quotes]
 docstring-quotes = "double"
+
+[tool.black]
+line-length = 100
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
 
 [tool.mypy]
 python_version = "3.10"
