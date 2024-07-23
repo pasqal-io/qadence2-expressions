@@ -116,7 +116,7 @@ class IRBuilder(AbstractIRBuilder[Expression]):
             acc = IRBuilder.parse_sequence(input_obj[0])
             for term in input_obj[1:]:
                 rhs = IRBuilder.parse_sequence(term)
-                acc = AST.binary_op(op, acc, rhs)
+                acc = AST.binary_op_comm(op, acc, rhs)
             return acc
 
         if input_obj.is_kronecker_product:
