@@ -38,20 +38,14 @@ def test_intialization_index_target_control_error() -> None:
     with pytest.raises(SyntaxError) as error:
         Support(1, 2, target=(1,), control=(2,))
 
-    assert (
-        str(error.value)
-        == "Please, provide either qubit indices or target-control tuples"
-    )
+    assert str(error.value) == "Please, provide either qubit indices or target-control tuples"
 
 
 def test_intialization_index_target_error() -> None:
     with pytest.raises(SyntaxError) as error:
         Support(1, 2, target=(1, 2))
 
-    assert (
-        str(error.value)
-        == "Please, provide either qubit indices or target-control tuples"
-    )
+    assert str(error.value) == "Please, provide either qubit indices or target-control tuples"
 
 
 def test_intialization_missing_target_error() -> None:
