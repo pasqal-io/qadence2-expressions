@@ -87,6 +87,7 @@ class IRBuilder(AbstractIRBuilder[Expression]):
                 "is_unitary",
                 "is_projector",
                 "join",
+                "instruction_name",
             ]
             attrs = {
                 k: v
