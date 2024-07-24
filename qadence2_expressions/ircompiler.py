@@ -80,6 +80,7 @@ class IRBuilder(AbstractIRBuilder[Expression]):
             expr = input_obj[0]
             target = input_obj[1].target
             control = input_obj[1].control
+            name = input_obj.attrs.get("instruction_name", expr[0][0].lower())
 
             expression_exclusive_attributes = [
                 "is_hermitian",
@@ -94,10 +95,9 @@ class IRBuilder(AbstractIRBuilder[Expression]):
             }
 
             if expr.is_symbol:
-                return AST.quantum_op(expr[0], target, control, **attrs)
+                return AST.quantum_op(name, target, control, **attrs)
 
             elif expr.is_function:
-                name = expr[0][0]
                 args = []
                 for arg in expr[1:]:
                     args.append(IRBuilder.parse_sequence(arg))
