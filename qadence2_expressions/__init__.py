@@ -49,6 +49,7 @@ from .operators import (
     Z,
 )
 from .replace import replace
+from .collect import collect_operators
 
 __all__ = [
     "add_settings",
@@ -57,6 +58,7 @@ __all__ = [
     "array_parameter",
     "array_variable",
     "cos",
+    "collect_operators",
     "CZ",
     "exp",
     "FreeEvolution",
