@@ -83,11 +83,12 @@ class IRBuilder(AbstractIRBuilder[Expression]):
             name = input_obj.attrs.get("instruction_name", expr[0][0].lower())
 
             expression_exclusive_attributes = [
+                "instruction_name",
+                "is_dagger",
                 "is_hermitian",
                 "is_unitary",
                 "is_projector",
                 "join",
-                "instruction_name",
             ]
             attrs = {
                 k: v
