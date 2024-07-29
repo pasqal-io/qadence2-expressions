@@ -43,11 +43,16 @@ def RZ(angle: Expression | float) -> Callable:
     return parametric_operator("RZ", promote(angle), join=_join_rotation)
 
 
-def _join_rotation(lhs: Expression, rhs: Expression) -> Expression:
-    total_angle = lhs[1] + rhs[1]
+def _join_rotation(
+    lhs_fn: Expression, rhs_fn: Expression, is_lhs_dagger: bool, is_rhs_dagger: bool
+) -> Expression:
+    lhs_sign = 1 - 2 * is_lhs_dagger
+    rhs_sign = 1 - 2 * is_rhs_dagger
+
+    total_angle = lhs_sign * lhs_fn[1] + rhs_sign * rhs_fn[1]
     if total_angle.is_zero:
         return value(1)
-    return function(lhs[0], total_angle)
+    return function(lhs_fn[0], total_angle)
 
 
 # Analog operations
@@ -68,6 +73,4 @@ def NativeDrive(
 
 
 def FreeEvolution(duration: Expression | float) -> Callable:
-    return parametric_operator(
-        "FreeEvolution", promote(duration), instruction_name="dyn_wait"
-    )
+    return parametric_operator("FreeEvolution", promote(duration), instruction_name="dyn_wait")
