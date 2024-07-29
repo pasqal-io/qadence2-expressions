@@ -223,11 +223,8 @@ class Expression:
 
             return Expression(self.head, *self.args, **{**self.attrs, "is_dagger": is_dagger})
 
-        args = (
-            tuple(arg.dag() for arg in self.args[:-1])
-            if self.is_kronecker_product
-            else tuple(arg.dag() for arg in self.args)
-        )
+        args = tuple(*self.args[:-1]) if self.is_kronecker_product else tuple(*self.args)
+        args = tuple(arg.dag() for arg in args)
 
         return Expression(self.head, *args, **self.attrs)
 
@@ -641,7 +638,9 @@ def evaluate_kronop(lhs: Expression, rhs: Expression) -> Expression:
             return lhs if lhs[0] == rhs[0] else Expression.zero()
 
         if lhs[0].is_function and rhs[0].is_function and lhs[0][0] == rhs[0][0] and lhs.get("join"):
-            res = lhs.get("join")(lhs[0], rhs[0], lhs.get("is_dagger", False), rhs.get("is_dagger", False))
+            res = lhs.get("join")(
+                lhs[0], rhs[0], lhs.get("is_dagger", False), rhs.get("is_dagger", False)
+            )
             return (  # type: ignore
                 res if res.is_zero or res.is_one else Expression.quantum_operator(res, lhs[1])
             )
@@ -660,7 +659,7 @@ def visualize_expression(expr: Expression) -> str:
         return str(expr[0])
 
     if expr.is_quantum_operator:
-        dag = "'" if expr.get("is_dagger") else "" 
+        dag = "'" if expr.get("is_dagger") else ""
         return f"{expr[0]}{dag}{expr[1]}"
 
     if expr.is_function:
