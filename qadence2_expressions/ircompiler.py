@@ -5,7 +5,7 @@ from qadence2_ir import (
     AbstractIRBuilder,
     AllocQubits,
     Attributes,
-    irc_factory,
+    ir_compiler_factory,
 )
 
 from .environment import (
@@ -130,4 +130,4 @@ class IRBuilder(AbstractIRBuilder[Expression]):
         )
 
 
-irc = irc_factory(IRBuilder)
+compile_to_model = ir_compiler_factory(IRBuilder)

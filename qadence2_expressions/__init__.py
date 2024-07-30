@@ -31,7 +31,7 @@ from .functions import (
     log,
     sin,
 )
-from .ircompiler import irc
+from .ircompiler import compile_to_model
 from .operators import (
     CZ,
     NOT,
@@ -59,11 +59,11 @@ __all__ = [
     "array_variable",
     "cos",
     "collect_operators",
+    "compile_to_model",
     "CZ",
     "exp",
     "FreeEvolution",
     "function",
-    "irc",
     "log",
     "NativeDrive",
     "NOT",
