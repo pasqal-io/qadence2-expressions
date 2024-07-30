@@ -62,11 +62,7 @@ class IRBuilder(AbstractIRBuilder[Expression]):
         if input_obj.is_symbol:
             size = input_obj.get("size", 1)
             trainable = input_obj.get("trainable", False)
-            attrs = {
-                k: v
-                for k, v in input_obj.attrs.items()
-                if k not in ["size", "trainable"]
-            }
+            attrs = {k: v for k, v in input_obj.attrs.items() if k not in ["size", "trainable"]}
             return AST.input_variable(input_obj[0], size, trainable, **attrs)
 
         if input_obj.is_function:
@@ -91,9 +87,7 @@ class IRBuilder(AbstractIRBuilder[Expression]):
                 "join",
             ]
             attrs = {
-                k: v
-                for k, v in input_obj.attrs.items()
-                if k not in expression_exclusive_attributes
+                k: v for k, v in input_obj.attrs.items() if k not in expression_exclusive_attributes
             }
 
             if expr.is_symbol:
@@ -125,9 +119,7 @@ class IRBuilder(AbstractIRBuilder[Expression]):
             args = [IRBuilder.parse_sequence(arg) for arg in input_obj.args]
             return AST.sequence(*args)
 
-        raise NotImplementedError(
-            f"Expression {repr(input_obj)} is not convertible to IR"
-        )
+        raise NotImplementedError(f"Expression {repr(input_obj)} is not convertible to IR")
 
 
 compile_to_model = ir_compiler_factory(IRBuilder)

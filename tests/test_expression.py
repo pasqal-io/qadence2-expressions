@@ -20,9 +20,7 @@ class TestExpression(unittest.TestCase):
             Expression(Expression.Tag.FN, Expression.symbol("sin"), 3.14),
         )
         self.assertEqual(
-            Expression.quantum_operator(
-                Expression.symbol("X"), Support(1), is_hermitian=True
-            ),
+            Expression.quantum_operator(Expression.symbol("X"), Support(1), is_hermitian=True),
             Expression(
                 Expression.Tag.QUANTUM_OP,
                 Expression.symbol("X"),
@@ -49,9 +47,7 @@ class TestExpression(unittest.TestCase):
         self.assertEqual(-value(2), value(-2))
         self.assertEqual(-a, Expression.mul(value(-1), a))
         self.assertEqual(-X(1), Expression.mul(value(-1), X(1)))
-        self.assertEqual(
-            -X(2) * X(1), Expression.mul(value(-1), Expression.kron(X(1), X(2)))
-        )
+        self.assertEqual(-X(2) * X(1), Expression.mul(value(-1), Expression.kron(X(1), X(2))))
 
     def test_subtractions(self) -> None:
         a = symbol("a")

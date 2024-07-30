@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from .collect import collect_operators
 from .constructors import (
     array_parameter,
     array_variable,
@@ -49,7 +50,6 @@ from .operators import (
     Z,
 )
 from .replace import replace
-from .collect import collect_operators
 
 __all__ = [
     "add_settings",
