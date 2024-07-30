@@ -25,9 +25,7 @@ classifiers = [
 
 # always specify a version for each package
 # to maintain consistency
-dependencies = [
-  "numpy"
-]
+dependencies = []
 
 [tool.hatch.metadata]
 allow-direct-references = true
