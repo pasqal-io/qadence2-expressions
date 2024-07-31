@@ -105,14 +105,14 @@ class IRBuilder(AbstractIRBuilder[Expression]):
         if input_obj.is_power:
             base = IRBuilder.parse_sequence(input_obj[0])
             power = IRBuilder.parse_sequence(input_obj[1])
-            return AST.binary_op("pow", base, power)
+            return AST.pow(base, power)
 
         if input_obj.is_addition or input_obj.is_multiplication:
             op = "add" if input_obj.is_addition else "mul"
             acc = IRBuilder.parse_sequence(input_obj[0])
             for term in input_obj[1:]:
                 rhs = IRBuilder.parse_sequence(term)
-                acc = AST.binary_op_comm(op, acc, rhs)
+                acc = getattr(AST, op)(acc, rhs)
             return acc
 
         if input_obj.is_kronecker_product:
