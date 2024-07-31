@@ -49,7 +49,7 @@ from .operators import (
     Y,
     Z,
 )
-from .replace import replace
+from .replace import prod, replace
 
 __all__ = [
     "add_settings",
@@ -69,6 +69,7 @@ __all__ = [
     "NOT",
     "parameter",
     "parametric_operator",
+    "prod",
     "projector",
     "promote",
     "replace",
