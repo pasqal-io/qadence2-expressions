@@ -8,7 +8,7 @@ from qadence2_ir import (
     ir_compiler_factory,
 )
 
-from .environment import (
+from .core.environment import (
     get_grid_options,
     get_grid_scale,
     get_grid_type,
@@ -17,7 +17,7 @@ from .environment import (
     get_qubits_positions,
     get_settings,
 )
-from .expression import Expression
+from .core.expression import Expression
 
 
 class IRBuilder(AbstractIRBuilder[Expression]):

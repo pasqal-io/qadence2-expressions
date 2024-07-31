@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-from .constructors import (
+from .core.constructors import (
     function,
     parametric_operator,
     projector,
@@ -10,7 +10,7 @@ from .constructors import (
     unitary_hermitian_operator,
     value,
 )
-from .expression import Expression
+from .core.expression import Expression
 
 # Pauli operators
 X = unitary_hermitian_operator("X")

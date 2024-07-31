@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .collect import collect_operators
-from .constructors import (
+from .core.constructors import (
     array_parameter,
     array_variable,
     function,
@@ -16,7 +16,7 @@ from .constructors import (
     value,
     variable,
 )
-from .environment import (
+from .core.environment import (
     add_grid_options,
     add_qpu_directives,
     add_settings,

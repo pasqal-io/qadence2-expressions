@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Iterable
 
-from .expression import Expression
+from .core.expression import Expression
 
 
 def prod(exprs: Iterable[Expression]) -> Expression:

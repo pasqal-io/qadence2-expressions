@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import reduce
 
-from .expression import Expression
+from .core.expression import Expression
 
 
 def collect_operators(expr: Expression) -> dict[Expression, Expression]:

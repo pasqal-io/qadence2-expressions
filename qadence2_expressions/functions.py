@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from .constructors import function, promote
-from .expression import Expression
+from .core.constructors import function, promote
+from .core.expression import Expression
 
 
 def sin(x: Expression | complex | float | int) -> Expression:
