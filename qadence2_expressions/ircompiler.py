@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from qadence2_ir import (
     AST,
-    AbstractIRBuilder,
+    IRBuilder as AbstractIRBuilder,
     AllocQubits,
     Attributes,
     ir_compiler_factory,
@@ -122,4 +122,4 @@ class IRBuilder(AbstractIRBuilder[Expression]):
         raise NotImplementedError(f"Expression {repr(input_obj)} is not convertible to IR")
 
 
-compile_to_model = ir_compiler_factory(IRBuilder)
+compile_to_model = ir_compiler_factory(IRBuilder)  # type: ignore
