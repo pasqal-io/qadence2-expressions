@@ -8,6 +8,16 @@ from .support import Support
 
 
 class Expression:
+    """A symbolic representation of mathematical expressions.
+
+    Besides arithmetic operations, the expression can contain classical functions such as sine,
+    cosine, and logarithm, and abstract representations of quantum operators.
+
+    Multiplication between quantum operators is stored as Kronecker products. Operators are ordered
+    by qubit index, preserving the order when the qubit indices of two operators overlap. This
+    ensures that operators acting on the same subspace are kept together, enhancing optimisation.
+    """
+
     class Tag:
         # Identifiers:
         VALUE = "Value"
@@ -30,6 +40,7 @@ class Expression:
     @classmethod
     def value(cls, x: complex | float | int) -> Expression:
         """Promote a numerical value (comples, float, int) to an expression."""
+
         if isinstance(x, int):
             return cls(cls.Tag.VALUE, float(x))
         return cls(cls.Tag.VALUE, x)
@@ -40,9 +51,8 @@ class Expression:
 
     @classmethod
     def one(cls) -> Expression:
-        """
-        The value(1) is used to represent both the concrete number 1 and the
-        identity operator.
+        """The value(1) is used to represent both the concrete number 1 and the identity
+        operator.
         """
         return cls.value(1)
 
@@ -54,8 +64,8 @@ class Expression:
     @classmethod
     def function(cls, name: str, *args: Any) -> Expression:
         """
-        Symbolic representation of a function. The `name` indicates the function
-        identifier, the remaining arguments are used as the function arguments.
+        Symbolic representation of a function. The `name` indicates the function identifier, the
+        remaining arguments are used as the function arguments.
 
             Expression.function("sin", 1.57) => sin(1.57)
         """
@@ -63,26 +73,27 @@ class Expression:
 
     @classmethod
     def quantum_operator(cls, expr: Expression, support: Support, **attributes: Any) -> Expression:
-        """Promote an expression to a quantum operator acting on the indicated  support.
-        The properties indicate behaviours for evaluation like:
-            - `is_hermitian` [bool]
-            - `is_dagger` [bool]
+        """To turn an expression into a quantum operator, specify the support it acts on. Attributes
+        like `is_projector` [bool], `is_hermitian` [bool], `is_unitary` [bool], `is_dagger` [bool],
+        and `join` [callable] indicate how the operator behaves during evaluation.
+
+        A parametric quantum operator is a function wrapped in a quantum operator. The `join`
+        attribute is used to combine the arguments of two parametric operators.
         """
         return cls(cls.Tag.QUANTUM_OP, expr, support, **attributes)
 
     @classmethod
     def add(cls, *args: Any) -> Expression:
-        """
-        Define an addition expression indication the sum of its arguments.
+        """In Expressions, addition is a variadic operation representing the sum of its arguments.
 
-            Expression.add(a, b, c) == a + b + c
+        Expression.add(a, b, c) == a + b + c
         """
         return cls(cls.Tag.ADD, *args)
 
     @classmethod
     def mul(cls, *args: Any) -> Expression:
-        """
-        Define an multiplication expression indication the product of its arguments.
+        """In Expressions, multiplication is a variadic operation representing the product of its
+        arguments.
 
             Expression.mul(a, b, c) == a * b * c
         """
@@ -91,19 +102,19 @@ class Expression:
 
     @classmethod
     def kron(cls, *args: Any) -> Expression:
-        """
-        Define an Krockener product expression indication the non-commutative
-        (order preserving) multiplication of its arguments.
+        """In Expressions, the Kronecker product is a variadic operation representing the
+        multiplication of its arguments applying commutative rules. When the qubit indices of two
+        operators overlap, the order is preserved. Otherwise, the operators are ordered by index,
+        with operators acting on the same qubits placed next to each other.
         """
 
         return cls(cls.Tag.KRON, *args)
 
     @classmethod
     def pow(cls, base: Expression, power: Expression) -> Expression:
-        """
-        Define a power expression.
+        """Define a power expression.
 
-            Expression.power(a, b) == a**b
+        Expression.power(a, b) == a**b
         """
 
         return cls(cls.Tag.POW, base, power)
@@ -183,18 +194,16 @@ class Expression:
 
     # Helper functions.
     def get(self, attribute: str, default: Any | None = None) -> Any:
-        """
-        Return the value of the indicated expression `attribute` if present or
-        the `default` otherwise. Default value is `None`.
+        """Retrieve the value of the chosen `attribute` if it exists, or return the `default` value
+        if it doesn't.
         """
         return self.attrs.get(attribute, default)
 
     def as_quantum_operator(self) -> Expression:
-        """
-        Promotes and expression to a quantum operator.
+        """Promotes and expression to a quantum operator.
 
-        When a function receives a quantum operator as input, the function itself must be turned
-        into a quantum operator in order to preserve commutation properties. For instance,
+        When a function takes a quantum operator as input, the function itself must be transformed
+        into a quantum operator to preserve commutation properties. For instance,
 
         >>> exp(2) * exp(3)
         exp(5)
@@ -229,7 +238,8 @@ class Expression:
         return Expression(self.head, *args, **self.attrs)
 
     def __getitem__(self, index: int | slice) -> Any:
-        """Access expression `expr` arguments straight from expr[i]."""
+        """Makes the arguments of the expression directly accessible through `expression[i]`."""
+
         return self.args[index]
 
     def __hash__(self) -> int:
@@ -246,7 +256,8 @@ class Expression:
         return visualize_expression(self)
 
     def _repr_pretty_(self, p, _cycle) -> None:  # type: ignore
-        """Provide a friendly representation when using IPython/Jupyter notebook."""
+        """IPython method: Provide a friendly visualisation when using IPython/Jupyter notebook."""
+
         p.text(str(self))
 
     def __eq__(self, other: object) -> bool:
@@ -451,25 +462,32 @@ def evaluate_addition(expr: Expression) -> Expression:
     if not expr.is_addition:
         return expr
 
-    numerical_value = Expression.zero()
+    # Numerical values are combined in a single element.
+    numerical_value_accumulator = Expression.zero()
+
+    # Other expressions are kept in a dictionary `{"expr": coefficient}` to merge their numerical
+    # coefficients.
     general_terms: dict[Expression, Expression] = dict()
 
     for term in expr.args:
         if term.is_value:
-            numerical_value = numerical_value + term
+            numerical_value_accumulator += term
 
         elif term.is_multiplication and term[0].is_value:
+            # Isolate the numerical coefficient from the other symbols.
             coef = term[0]
             elem = term[1] if len(term.args) == 2 else Expression.mul(*term[1:])
+
             general_terms[elem] = general_terms.get(elem, Expression.zero()) + coef
 
         else:
             general_terms[term] = general_terms.get(term, Expression.zero()) + Expression.one()
 
+    # The final terms are recombined multipling each one by their respective coefficients.
     args = tuple(elem * coef for elem, coef in general_terms.items())
 
-    if not numerical_value.is_zero:
-        args = (numerical_value, *args)
+    if not numerical_value_accumulator.is_zero:
+        args = (numerical_value_accumulator, *args)
 
     return args[0] if len(args) == 1 else Expression.add(*args)
 
@@ -478,13 +496,20 @@ def evaluate_multiplication(expr: Expression) -> Expression:
     if not expr.is_multiplication:
         return expr
 
-    numerical_value = Expression.one()
+    # Numerical values are combined in a single element.
+    numerical_value_accumulator = Expression.one()
+
+    # Quantum operators are kept in a separated Kronecker product since their evaluation has
+    # distinct rules.
     quantum_operators = Expression.one()
+
+    # Other expressions are kept in a dictionary `{"expr": power}` to merge their numerical
+    # power.
     general_terms: dict[Expression, Expression] = dict()
 
     for term in expr.args:
         if term.is_value:
-            numerical_value = numerical_value * term
+            numerical_value_accumulator = numerical_value_accumulator * term
 
         elif term.is_quantum_operator or term.is_kronecker_product:
             quantum_operators = quantum_operators.__kron__(term)
@@ -496,32 +521,39 @@ def evaluate_multiplication(expr: Expression) -> Expression:
         else:
             general_terms[term] = general_terms.get(term, Expression.zero()) + Expression.one()
 
-    if numerical_value.is_zero or quantum_operators.is_zero:
+    if numerical_value_accumulator.is_zero or quantum_operators.is_zero:
         return Expression.zero()
 
+    # The final terms are recombined exponentiating each one by their respective powers.
     args = tuple(base**power for base, power in general_terms.items() if not power.is_zero)
 
     if not quantum_operators.is_one:
         args = (*args, quantum_operators)
 
-    if not numerical_value.is_one or len(args) == 0:
-        args = (numerical_value, *args)
+    if not numerical_value_accumulator.is_one or len(args) == 0:
+        args = (numerical_value_accumulator, *args)
 
     return args[0] if len(args) == 1 else Expression.mul(*args)
 
 
 def evaluate_kron(expr: Expression) -> Expression:
+    """Evaluate Kronecker product expressions."""
+
     lhs = expr[0]
     for rhs in expr[1:]:
+        # Single operators multiplication, A ⊗ B
         if lhs.is_quantum_operator and rhs.is_quantum_operator:
             lhs = evaluate_kronop(lhs, rhs)
 
+        # Left associativity, A ⊗ (B ⊗ C ⊗ D) = (A ⊗ B ⊗ C ⊗ D)
         elif lhs.is_quantum_operator and rhs.is_kronecker_product:
             lhs = evaluate_kronleft(lhs, rhs)
 
+        # Right associativity, (A ⊗ B ⊗ C) ⊗ D = (A ⊗ B ⊗ C ⊗ D)
         elif lhs.is_kronecker_product and rhs.is_quantum_operator:
             lhs = evaluate_kronright(lhs, rhs)
 
+        # Combine two Kronecker products, (A ⊗ B) ⊗ (C ⊗ D) = (A ⊗ B ⊗ C ⊗ D)
         elif lhs.is_kronecker_product and rhs.is_kronecker_product:
             lhs = evaluate_kronjoin(lhs, rhs)
 
@@ -532,13 +564,17 @@ def evaluate_kron(expr: Expression) -> Expression:
 
 
 def evaluate_kronleft(lhs: Expression, rhs: Expression) -> Expression:
-    """
+    """Left associativity of the Kronecker product.
+
     Evaluate the Kronecker product between a LHS=quantum operators and a RHS=Kronecker product.
     """
+
     if not (lhs.is_quantum_operator or rhs.is_kronecker_product):
         raise SyntaxError("Only defined for a quantum operator and a Kronecker product.")
 
     args = rhs.args
+
+    # Using a insertion-sort-like to add the LHS term in the the RHS product.
     for i, rhs_arg in enumerate(args):
         if rhs_arg.subspace == lhs.subspace:  # type: ignore
             ii = i + 1
@@ -556,9 +592,7 @@ def evaluate_kronleft(lhs: Expression, rhs: Expression) -> Expression:
 
             break
 
-        if rhs_arg.subspace > lhs.subspace or rhs_arg.subspace.overlap_with(  # type: ignore
-            lhs.subspace
-        ):  # type: ignore
+        if rhs_arg.subspace > lhs.subspace or rhs_arg.subspace.overlap_with(lhs.subspace):
             args = (*args[:i], lhs, *args[i:])
             break
 
@@ -572,13 +606,17 @@ def evaluate_kronleft(lhs: Expression, rhs: Expression) -> Expression:
 
 
 def evaluate_kronright(lhs: Expression, rhs: Expression) -> Expression:
-    """
+    """Right associativity of the Kronecker product.
+
     Evaluate the Kronecker product between a LHS=quantum operators and a RHS=Kronecker product.
     """
+
     if not (lhs.is_kronecker_product or rhs.is_quantum_operator):
         raise SyntaxError("Only defined for a Kronecker product and a quantum operator.")
 
     args = lhs.args
+
+    # Using a insertion-sort-like to add the RHS term in the the LHS product.
     for i in range(len(args) - 1, -1, -1):
         ii = i + 1
 
@@ -610,9 +648,10 @@ def evaluate_kronright(lhs: Expression, rhs: Expression) -> Expression:
 
 
 def evaluate_kronjoin(lhs: Expression, rhs: Expression) -> Expression:
+    """Evaluate the Kronecker product between a LHS=quantum operators and a RHS=Kronecker
+    product.
     """
-    Evaluate the Kronecker product between a LHS=quantum operators and a RHS=Kronecker product.
-    """
+
     if not (lhs.is_kronecker_product or rhs.is_kronecker_product):
         raise SyntaxError("Only defined for LHS and RHS both Kronecker product.")
 
@@ -625,6 +664,7 @@ def evaluate_kronjoin(lhs: Expression, rhs: Expression) -> Expression:
 
 def evaluate_kronop(lhs: Expression, rhs: Expression) -> Expression:
     """Evaluate the Kronecker product between two quantum operators."""
+
     if not (lhs.is_quantum_operator or rhs.is_quantum_operator):
         raise SyntaxError("Operation only valid for LHS and RHS both quantum operators.")
 
@@ -655,6 +695,8 @@ def evaluate_kronop(lhs: Expression, rhs: Expression) -> Expression:
 
 
 def visualize_expression(expr: Expression) -> str:
+    """Stringfy expressions."""
+
     if expr.is_value or expr.is_symbol:
         return str(expr[0])
 
@@ -684,6 +726,11 @@ def visualize_expression(expr: Expression) -> str:
 
 
 def visualize_sequence(expr: Expression, operator: str, with_brackets: bool = True) -> str:
+    """Stringfy the arguments of an expression `expr` with the designed `operator`.
+
+    The `with_brackets` option wrap any argument that is either a multiplication or a sum.
+    """
+
     if expr.is_value or expr.is_symbol or (expr.is_quantum_operator and expr[0].is_symbol):
         raise SyntaxError("Only sequence of expression are allowed.")
 
@@ -694,6 +741,8 @@ def visualize_sequence(expr: Expression, operator: str, with_brackets: bool = Tr
 
 
 def visualize_with_brackets(expr: Expression) -> str:
+    """Stringfy addition and multiplication expression surrounded by brackets."""
+
     if expr.is_multiplication or expr.is_addition:
         return f"({str(expr)})"
 
