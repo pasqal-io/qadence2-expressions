@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from functools import cached_property
+from functools import cached_property, reduce
 from re import sub
 from typing import Any
 
@@ -217,8 +217,9 @@ class Expression:
 
         return self
 
+    @property
     def dag(self) -> Expression:
-        if self.is_function:
+        if self.is_symbol or self.is_function:
             return self
 
         if self.is_value:
@@ -230,11 +231,12 @@ class Expression:
 
             is_dagger = self.get("is_dagger", False) ^ True
 
-            return Expression(self.head, *self.args, **{**self.attrs, "is_dagger": is_dagger})
+            return Expression(self.head, self[0].dag, self[1], **{**self.attrs, "is_dagger": is_dagger})
 
-        args = tuple(*self.args[:-1]) if self.is_kronecker_product else tuple(*self.args)
-        args = tuple(arg.dag() for arg in args)
+        if self.is_kronecker_product:
+            return reduce(lambda acc, x: acc * x.dag, self.args[::-1], Expression.one())
 
+        args = tuple(arg.dag for arg in self.args)
         return Expression(self.head, *args, **self.attrs)
 
     def __getitem__(self, index: int | slice) -> Any:
@@ -702,18 +704,20 @@ def visualize_expression(expr: Expression) -> str:
 
     if expr.is_quantum_operator:
         dag = "'" if expr.get("is_dagger") else ""
-        return f"{expr[0]}{dag}{expr[1]}"
+        if expr[0].is_symbol or expr[0].is_function:
+            return f"{expr[0]}{dag}{expr[1]}"
+        return f"{expr[0]}"
 
     if expr.is_function:
         args = ",\u2009".join(map(str, expr[1:]))
         return f"{expr[0]}({args})"
 
     if expr.is_multiplication:
-        result = visualize_sequence(expr, "\u2009")
+        result = visualize_sequence(expr, "\u2009*\u2009")
         return sub(r"-1\.0\s", "-", result)
 
     if expr.is_kronecker_product:
-        return visualize_sequence(expr, "\u2008")
+        return visualize_sequence(expr, "\u2009*\u2009")
 
     if expr.is_addition:
         result = visualize_sequence(expr, " + ", with_brackets=False)
