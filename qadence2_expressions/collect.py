@@ -5,12 +5,16 @@ from functools import reduce
 from .core.expression import Expression
 
 
-def collect_operators(expr: Expression) -> dict[Expression, Expression]:
-    """Collect the coefficients of noncommutative expression, e.g.
+def collect_operators(polynomial: Expression) -> dict[Expression, Expression]:
+    """Collect the coefficients of noncommutative terms in a polynomial expression.
 
-    Z(1) + 2 * Z(1) * Z (2) - X(3)  --> {Z(1): 1, Z(1) * Z (2): 2, Z(3): -1}
+    Example:
+    ```
+    >>> expr = Z(1) + 2 * Z(1) * Z (2) - X(3)
+    >>> collect_operators(expr)
+    {Z[1]: 1, Z[1] * Z[2]: 2, Z[3]: -1}
     """
-    return _collect_operators_core({}, expr)
+    return _collect_operators_core({}, polynomial)
 
 
 def _collect_operators_core(
