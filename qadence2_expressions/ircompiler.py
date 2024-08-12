@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from qadence2_ir import (
     AST,
-    IRBuilder as AbstractIRBuilder,
     AllocQubits,
     Attributes,
     ir_compiler_factory,
+)
+from qadence2_ir import (
+    IRBuilder as AbstractIRBuilder,
 )
 
 from .core.environment import (

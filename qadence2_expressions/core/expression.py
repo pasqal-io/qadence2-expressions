@@ -231,7 +231,9 @@ class Expression:
 
             is_dagger = self.get("is_dagger", False) ^ True
 
-            return Expression(self.head, self[0].dag, self[1], **{**self.attrs, "is_dagger": is_dagger})
+            return Expression(
+                self.head, self[0].dag, self[1], **{**self.attrs, "is_dagger": is_dagger}
+            )
 
         if self.is_kronecker_product:
             return reduce(lambda acc, x: acc * x.dag, self.args[::-1], Expression.one())
