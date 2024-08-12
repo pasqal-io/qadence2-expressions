@@ -25,7 +25,9 @@ classifiers = [
 
 # always specify a version for each package
 # to maintain consistency
-dependencies = []
+dependencies = [
+  "qadence2-ir@git+https://github.com/pasqal-io/qadence2-ir.git"
+]
 
 [tool.hatch.metadata]
 allow-direct-references = true
