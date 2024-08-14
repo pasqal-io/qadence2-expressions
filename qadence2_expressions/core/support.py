@@ -57,7 +57,9 @@ class Support:
 
     @classmethod
     def target_all(cls) -> Support:
-        """Return a support that covers all qubits, regardless of range or total number of qubits."""
+        """
+        Return a support that covers all qubits, regardless of range or total number of qubits.
+        """
         return cls()
 
     @cached_property
