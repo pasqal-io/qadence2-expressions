@@ -1,21 +1,27 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import Any
 
 
 class Support:
-    """A class to handle the qubit support providing easy initialization for
-    single, multi, and controlled qubit operations.
+    """A class to handle the qubit support providing easy initialization for single, multi, and
+    controlled qubit operations.
 
     The class can be initializes in three ways:
 
-    - `Support(i)` for single qubit support.
-    - `Support(i₀,...,iₙ)` for supports covering indices `{i₀,...,iₙ}` use either by
-      multi-indices operation or to span single indices operations over multiple
-      indices.
-    - `Support(target=(i₀,...), control=(j₀,...))` for controled operations where
-      `target` and `control` are disjoint sets.
+    1. `Support(i)` for single qubit support.
+    2. `Support(i₀,...,iₙ)` for supports covering indices `{i₀,...,iₙ}` use either by multi-indices
+        operation or to span single indices operations over multiple indices.
+    3. `Support(target=(i₀,...), control=(j₀,...))` for controled operations where `target` and
+        `control` are disjoint sets.
+
+    Args:
+        - indices: Qubit indices where an operation is applied; all listed qubits are the target
+            qubits.
+        - target: Tuple of qubit indices where a given operation is applied; not valid if `indices`
+            is defined.
+        - control: Tuple of qubit indices used to control an operation; not valid without `target`.
+
 
     Methods:
         `subspace`: returns the set of indices covered by the support.
@@ -26,7 +32,7 @@ class Support:
 
     def __init__(
         self,
-        *indices: Any,
+        *indices: int,
         target: tuple[int, ...] | None = None,
         control: tuple[int, ...] | None = None,
     ) -> None:
@@ -51,32 +57,40 @@ class Support:
 
     @classmethod
     def target_all(cls) -> Support:
+        """Return a support that covers all qubits, regardless of range or total number of qubits."""
         return cls()
 
     @cached_property
     def subspace(self) -> set[int]:
-        """Return a set containing all the indices covered by the support."""
+        """Returns a set containing all the indices covered by the support."""
         return set(self._subspace)
 
     @property
     def target(self) -> tuple[int, ...]:
+        """Returns the indices to which a given operation is applied."""
         return self._subspace[: self._control_start]
 
     @property
     def control(self) -> tuple[int, ...]:
+        """Returns the indices used to control a given operation."""
         return self._subspace[self._control_start :]
 
     @cached_property
     def max_index(self) -> int:
+        """Returns the largest index within the specified subspace, whether it is a target or
+        control. If the support is applied to all qubits, it returns `-1`.
+        """
         return max(self._subspace) if self._subspace else -1
 
     def overlap_with(self, other: Support) -> bool:
-        """Returns true if both support cover common indices."""
+        """Returns true if both supports cover common indices."""
 
         # A support applied to all indices overlaps with any support.
         if not (self.target and other.target):
             return True
 
+        # Check the overlap bewtween the subspace and convert non-empty result to `True`, or `False`
+        # otherwise.
         return bool(self.subspace & other.subspace)
 
     def join(self, other: Support) -> Support:
