@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from enum import Enum
 from functools import cached_property, reduce
 from re import sub
 from typing import Any
@@ -18,7 +19,7 @@ class Expression:
     ensures that operators acting on the same subspace are kept together, enhancing optimisation.
     """
 
-    class Tag:
+    class Tag(Enum):
         # Identifiers:
         VALUE = "Value"
         SYMBOL = "Symbol"
@@ -31,7 +32,7 @@ class Expression:
         KRON = "KroneckerProduct"
         POW = "Power"
 
-    def __init__(self, head: str, *args: Any, **attributes: Any) -> None:
+    def __init__(self, head: Expression.Tag, *args: Any, **attributes: Any) -> None:
         self.head = head
         self.args = args
         self.attrs = attributes
@@ -47,13 +48,12 @@ class Expression:
 
     @classmethod
     def zero(cls) -> Expression:
+        """Used to represent both, the numerical value `0` and the null operator."""
         return cls.value(0)
 
     @classmethod
     def one(cls) -> Expression:
-        """The value(1) is used to represent both the concrete number 1 and the identity
-        operator.
-        """
+        """Used to represent both, the numerical value `1` and the identity operator."""
         return cls.value(1)
 
     @classmethod
@@ -254,7 +254,7 @@ class Expression:
 
     def __repr__(self) -> str:
         args = ", ".join(map(repr, self.args))
-        return f"{self.head}({args})"
+        return f"{self.head.value}({args})"
 
     def __str__(self) -> str:
         return visualize_expression(self)
