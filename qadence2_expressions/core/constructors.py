@@ -8,23 +8,29 @@ from .support import Support
 
 
 def value(x: complex | float | int) -> Expression:
-    """Create a numerical expression from a value."""
+    """Create a numerical expression from the value `x`."""
     return Expression.value(x)
 
 
 def promote(x: Expression | complex | float | int) -> Expression:
-    """Promotes a numerical value to an expression."""
+    """Used to type cast inputs as expressions."""
 
-    if not isinstance(x, Expression):
-        return value(x)
-    return x
+    return value(x) if not isinstance(x, Expression) else x
 
 
 def symbol(identifier: str, **attributes: Any) -> Expression:
-    """Create a new symbol from the `identfier` if it is not protected."""
+    """Create a new symbol from the `identfier` if it is not protected.
+    
+    Args:
+        - identifier: Symbol's name.
+    
+    Kwargs:
+        Keywords are used as flags for compilation.
+    """
 
     if identifier in Environment.protected:
         raise SyntaxError(f"'{identifier}' is protected.")
+    
     return Expression.symbol(identifier, **attributes)
 
 
@@ -65,7 +71,7 @@ def array_parameter(name: str, size: int) -> Expression:
 
 
 def array_variable(name: str, size: int) -> Expression:
-    """A non-trainable list of inputs."""
+    """A trainable list of inputs."""
 
     return symbol(name, trainable=True, size=size)
 
@@ -108,12 +114,15 @@ def projector(base: str, index: str) -> Callable:
     """A projector is a function that takes a list of indices (or a target and control tuples) and
     return an Expression with the orthogonality property.
 
+    Example:
+    ```
     >>> P0 = projector("Z", "0")
     >>> P1 = projector("Z", "1")
     >>> P0 * P0
     P0
     >>> P0 * P1
     0
+    ```
     """
 
     def core(

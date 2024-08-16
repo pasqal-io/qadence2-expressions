@@ -20,6 +20,8 @@ class Expression:
     """
 
     class Tag(Enum):
+        """This auxiliar class allows the `Expression` to be represented as a tagged union."""
+
         # Identifiers:
         VALUE = "Value"
         SYMBOL = "Symbol"
@@ -40,25 +42,49 @@ class Expression:
     # Constructors
     @classmethod
     def value(cls, x: complex | float | int) -> Expression:
-        """Promote a numerical value (comples, float, int) to an expression."""
+        """Promote a numerical value (comples, float, int) to an expression.
 
-        if isinstance(x, int):
-            return cls(cls.Tag.VALUE, float(x))
-        return cls(cls.Tag.VALUE, x)
+        Args:
+            - x: A numerical value.
+
+        Returns:
+            A `Value(x)` expression.
+        """
+
+        return cls(cls.Tag.VALUE, float(x)) if isinstance(x, int) else cls(cls.Tag.VALUE, x)
 
     @classmethod
     def zero(cls) -> Expression:
-        """Used to represent both, the numerical value `0` and the null operator."""
+        """Used to represent both, the numerical value `0` and the null operator.
+
+        Returns:
+            An `Value(0)` expression.
+        """
         return cls.value(0)
 
     @classmethod
     def one(cls) -> Expression:
-        """Used to represent both, the numerical value `1` and the identity operator."""
+        """Used to represent both, the numerical value `1` and the identity operator.
+
+        Returns:
+            An `Value(1)` expression.
+        """
         return cls.value(1)
 
     @classmethod
     def symbol(cls, identifier: str, **attributes: Any) -> Expression:
-        """Create a symbol from the identifier"""
+        """Create a symbol from the identifier
+
+        Args:
+            - indetifier: A string used as the symbol name.
+
+        Kwargs:
+            Keyword arguments are used as flags for compilation steps. The valid flags are dfined in
+            the Qadence2-IR.
+
+        Returns:
+            A `Symbol('identifier')` expression.
+        """
         return cls(cls.Tag.SYMBOL, identifier, **attributes)
 
     @classmethod
@@ -68,6 +94,13 @@ class Expression:
         remaining arguments are used as the function arguments.
 
             Expression.function("sin", 1.57) => sin(1.57)
+
+        Args:
+            - name: The function name.
+            - args: The arguments to be passed to the function.
+
+        Returns:
+            A `Function(Symbol('name'), args...)` expression.
         """
         return cls(cls.Tag.FN, cls.symbol(name), *args)
 
@@ -79,11 +112,34 @@ class Expression:
 
         A parametric quantum operator is a function wrapped in a quantum operator. The `join`
         attribute is used to combine the arguments of two parametric operators.
+
+        Args:
+            - expr: An expression that describes the operator. If `expr` is a symbol, it represents
+                a generic gate like Pauli and Clifford gates. If `expr` is a function, it represents
+                a parametric operator. Power expressions can be used to represent unitary evolution
+                operators.
+            - support: The qubit indices to what the operator is applied.
+
+        Kwargs:
+            Keyword arguments are used primarily to symbolic evaluation. Examples of keywords are:
+                - `is_projector` [bool]
+                - `is_hermitian` [bool]
+                - `is_unitary` [bool]
+                - `is_dagger` [bool]
+                - `join` [callable]
+
+            The keyword, `join` is used with parametric operators. Whe two parametric operator of
+            the same kind action on the same subspace are muliplied, the `join` is used to combine
+            their arguments.
+
+        Returns:
+            An expression of type `QuantumOperator`.
         """
+
         return cls(cls.Tag.QUANTUM_OP, expr, support, **attributes)
 
     @classmethod
-    def add(cls, *args: Any) -> Expression:
+    def add(cls, *args: Expression) -> Expression:
         """In Expressions, addition is a variadic operation representing the sum of its arguments.
 
         Expression.add(a, b, c) == a + b + c
@@ -91,7 +147,7 @@ class Expression:
         return cls(cls.Tag.ADD, *args)
 
     @classmethod
-    def mul(cls, *args: Any) -> Expression:
+    def mul(cls, *args: Expression) -> Expression:
         """In Expressions, multiplication is a variadic operation representing the product of its
         arguments.
 
@@ -101,11 +157,13 @@ class Expression:
         return cls(cls.Tag.MUL, *args)
 
     @classmethod
-    def kron(cls, *args: Any) -> Expression:
+    def kron(cls, *args: Expression) -> Expression:
         """In Expressions, the Kronecker product is a variadic operation representing the
         multiplication of its arguments applying commutative rules. When the qubit indices of two
         operators overlap, the order is preserved. Otherwise, the operators are ordered by index,
         with operators acting on the same qubits placed next to each other.
+
+            Expression.kron(X(1), X(2), Y(1)) == X(1)Y(1) ⊗  X(2)
         """
 
         return cls(cls.Tag.KRON, *args)
@@ -166,7 +224,7 @@ class Expression:
         no quantum operators, the subspace is None. If controlled operators are present, it returns
         a controlled support if there is no overlap between targets and controls; otherwise, all
         indices are treated as targets.
-        
+
         Example:
         ```python
         >>> value(1).subspace
@@ -259,6 +317,8 @@ class Expression:
 
     @property
     def dag(self) -> Expression:
+        """Returns the conjugated/dagger version of and expression."""
+
         if self.is_symbol or self.is_function:
             return self
 
