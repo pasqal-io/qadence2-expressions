@@ -162,18 +162,40 @@ class Expression:
 
     @cached_property
     def subspace(self) -> Support | None:
+        """Returns the total subspace coverage of an expression with quantum operators. If there are
+        no quantum operators, the subspace is None. If controlled operators are present, it returns
+        a controlled support if there is no overlap between targets and controls; otherwise, all
+        indices are treated as targets.
+        
+        Example:
+        ```python
+        >>> value(1).subspace
+        None
+        >>> (X(1) + Y(2)).subspace
+        [1 2]
+        >>> (X(target=(1,), control=(0,)) + Y(2)).subspace
+        [1 2|0]
+        >>> (X(target=(1,), control=(2,)) + Y(2)).subspace
+        [1 2]
+        ```
+        """
+
         if self.is_value or self.is_symbol:
             return None
 
+        # By definition, a quantum operator is `QuantumOperator(Expression, Support)`.
         if self.is_quantum_operator:
             return self[1]  # type: ignore
 
+        # Collecting only non-null term's subpaces.
         subspaces = []
         for arg in self.args:
             sp = arg.subspace
             if sp:
                 subspaces.append(sp)
 
+        # Merge all the valid subspaces in the expression. Targets and controls that overlap will be
+        # converted into target-only subspaces.
         if subspaces:
             total_subspace = subspaces[0]
             for subspace in subspaces[1:]:
@@ -184,12 +206,27 @@ class Expression:
 
     @cached_property
     def max_index(self) -> int:
+        """Returns the maximum qubit index present in the expression. An expression without quantum
+        operators or covering all the qubits will return -1.
+
+        Example:
+        ```
+        >>> value(2).max_index
+        -1
+        >>> (X() * Y(1)).max_index
+        -1
+        >>> (X(0, 2) * Y(1)).max_index
+        2
+        ```
+        """
+
         if self.is_value or self.is_symbol:
             return -1
 
         if self.is_quantum_operator:
             return self.subspace.max_index  # type: ignore
 
+        # Retrun the maximum index among all the terms.
         return max(map(lambda arg: arg.max_index, self.args))  # type: ignore
 
     # Helper functions.
@@ -205,10 +242,13 @@ class Expression:
         When a function takes a quantum operator as input, the function itself must be transformed
         into a quantum operator to preserve commutation properties. For instance,
 
+        Example:
+        ```
         >>> exp(2) * exp(3)
         exp(5)
         >>> exp(X(1)) * exp(Y(1))
         exp(X(1)) exp(Y(1))
+        ```
         """
 
         subspace = self.subspace
