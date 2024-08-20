@@ -16,11 +16,11 @@ class Support:
         `control` are disjoint sets.
 
     Args:
-        - indices: Qubit indices where an operation is applied; all listed qubits are the target
+        indices: Qubit indices where an operation is applied; all listed qubits are the target
             qubits.
-        - target: Tuple of qubit indices where a given operation is applied; not valid if `indices`
+        target: Tuple of qubit indices where a given operation is applied; not valid if `indices`
             is defined.
-        - control: Tuple of qubit indices used to control an operation; not valid without `target`.
+        control: Tuple of qubit indices used to control an operation; not valid without `target`.
 
 
     Methods:

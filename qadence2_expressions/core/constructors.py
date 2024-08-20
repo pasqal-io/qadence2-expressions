@@ -8,7 +8,12 @@ from .support import Support
 
 
 def value(x: complex | float | int) -> Expression:
-    """Create a numerical expression from the value `x`."""
+    """Create a numerical expression from the value `x`.
+
+    Args:
+        x: Any numerical value.
+    """
+
     return Expression.value(x)
 
 
@@ -20,17 +25,17 @@ def promote(x: Expression | complex | float | int) -> Expression:
 
 def symbol(identifier: str, **attributes: Any) -> Expression:
     """Create a new symbol from the `identfier` if it is not protected.
-    
+
     Args:
-        - identifier: Symbol's name.
-    
+        identifier: Symbol's name.
+
     Kwargs:
         Keywords are used as flags for compilation.
     """
 
     if identifier in Environment.protected:
         raise SyntaxError(f"'{identifier}' is protected.")
-    
+
     return Expression.symbol(identifier, **attributes)
 
 

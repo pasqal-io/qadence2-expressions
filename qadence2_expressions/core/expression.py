@@ -45,7 +45,7 @@ class Expression:
         """Promote a numerical value (comples, float, int) to an expression.
 
         Args:
-            - x: A numerical value.
+            x: A numerical value.
 
         Returns:
             A `Value(x)` expression.
@@ -76,7 +76,7 @@ class Expression:
         """Create a symbol from the identifier
 
         Args:
-            - indetifier: A string used as the symbol name.
+            indetifier: A string used as the symbol name.
 
         Kwargs:
             Keyword arguments are used as flags for compilation steps. The valid flags are dfined in
@@ -96,8 +96,8 @@ class Expression:
             Expression.function("sin", 1.57) => sin(1.57)
 
         Args:
-            - name: The function name.
-            - args: The arguments to be passed to the function.
+            name: The function name.
+            args: The arguments to be passed to the function.
 
         Returns:
             A `Function(Symbol('name'), args...)` expression.
@@ -114,11 +114,11 @@ class Expression:
         attribute is used to combine the arguments of two parametric operators.
 
         Args:
-            - expr: An expression that describes the operator. If `expr` is a symbol, it represents
+            expr: An expression that describes the operator. If `expr` is a symbol, it represents
                 a generic gate like Pauli and Clifford gates. If `expr` is a function, it represents
                 a parametric operator. Power expressions can be used to represent unitary evolution
                 operators.
-            - support: The qubit indices to what the operator is applied.
+            support: The qubit indices to what the operator is applied.
 
         Kwargs:
             Keyword arguments are used primarily to symbolic evaluation. Examples of keywords are:
