@@ -18,7 +18,12 @@ def value(x: complex | float | int) -> Expression:
 
 
 def promote(x: Expression | complex | float | int) -> Expression:
-    """Used to type cast inputs as expressions."""
+    """Used to type cast inputs as expressions.
+
+    Args:
+        x: A valid expression or numerical value. Numerical values are converted into `Value(x)``
+            expressions.
+    """
 
     return value(x) if not isinstance(x, Expression) else x
 
@@ -154,6 +159,9 @@ def parametric_operator(
 
     The `join` function is used to comabine the argumens of two parameteric operator of the same
     kind when they act on the same qubits.
+
+    Args:
+        name:
     """
 
     def core(
