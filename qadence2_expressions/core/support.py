@@ -122,10 +122,10 @@ class Support:
         return Support(target=tuple(target), control=tuple(control))
 
     def __repr__(self) -> str:
-        separator = ",\u2009"
+        separator = ","
         targets = "*" if not self.target else separator.join(map(str, self.target))
         controls = separator.join(map(str, self.control))
-        return f"[{targets}]" if not controls else f"[{targets}|\u200A{controls}]"
+        return f"[{targets}]" if not controls else f"[{targets}|{controls}]"
 
     def __hash__(self) -> int:
         return hash(self._subspace)
