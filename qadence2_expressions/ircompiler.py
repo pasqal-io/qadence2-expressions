@@ -22,6 +22,19 @@ from .core.environment import (
 from .core.expression import Expression
 
 
+def lowercase(s: str | Expression) -> str:
+    if not isinstance(s, str) or (not isinstance(s, Expression) and not s.is_symbol):
+        raise NotImplementedError(
+            "`lowercase` function only implemented for `str` and `Expression.symbol` types"
+        )
+
+    if isinstance(s, str):
+        return s.lower()
+
+    if s.is_symbol:
+        return s[0].lower()
+
+
 class IRBuilder(AbstractIRBuilder[Expression]):
     @staticmethod
     def set_register(input_obj: Expression) -> AllocQubits:
@@ -75,10 +88,14 @@ class IRBuilder(AbstractIRBuilder[Expression]):
             return AST.callable(name, *args)
 
         if input_obj.is_quantum_operator:
-            expr = input_obj[0]
+            if not (input_obj[0].is_symbol or input_obj[0].is_function):
+                raise ValueError(
+                    f"The operation {input_obj} must be in the reduced form to be added to the IR"
+                )
+            expr = input_obj[0] if input_obj[0].is_symbol else input_obj[0][0]
             target = input_obj[1].target
             control = input_obj[1].control
-            name = input_obj.attrs.get("instruction_name", expr[0][0].lower())
+            name = input_obj.attrs.get("instruction_name", expr[0].lower())
 
             expression_exclusive_attributes = [
                 "instruction_name",
