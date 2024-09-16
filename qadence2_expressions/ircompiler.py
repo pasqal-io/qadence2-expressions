@@ -22,19 +22,6 @@ from .core.environment import (
 from .core.expression import Expression
 
 
-def lowercase(s: str | Expression) -> str:
-    if not isinstance(s, str) or (not isinstance(s, Expression) and not s.is_symbol):
-        raise NotImplementedError(
-            "`lowercase` function only implemented for `str` and `Expression.symbol` types"
-        )
-
-    if isinstance(s, str):
-        return s.lower()
-
-    if s.is_symbol:
-        return s[0].lower()
-
-
 class IRBuilder(AbstractIRBuilder[Expression]):
     @staticmethod
     def set_register(input_obj: Expression) -> AllocQubits:
