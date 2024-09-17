@@ -79,10 +79,12 @@ class IRBuilder(AbstractIRBuilder[Expression]):
                 raise ValueError(
                     f"The operation {input_obj} must be in the reduced form to be added to the IR"
                 )
-            expr = input_obj[0] if input_obj[0].is_symbol else input_obj[0][0]
+            
+            expr = input_obj[0]
             target = input_obj[1].target
             control = input_obj[1].control
-            name = input_obj.attrs.get("instruction_name", expr[0].lower())
+            expr_identifier = expr if expr.is_symbol else expr[0]
+            name = input_obj.attrs.get("instruction_name", expr_identifier[0].lower())
 
             expression_exclusive_attributes = [
                 "instruction_name",
