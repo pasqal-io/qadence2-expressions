@@ -125,9 +125,10 @@ exclude_lines = [
 ]
 
 [tool.ruff]
-select = ["E", "F", "I", "Q"]
-extend-ignore = ["F841"]
+lint.select = ["E", "F", "I", "Q"]
+lint.extend-ignore = ["F841"]
 line-length = 100
+lint.exclude = ["*.ipynb"]
 
 [tool.ruff.isort]
 required-imports = ["from __future__ import annotations"]
@@ -138,7 +139,7 @@ required-imports = ["from __future__ import annotations"]
 [tool.ruff.mccabe]
 max-complexity = 15
 
-[tool.ruff.flake8-quotes]
+[tool.ruff.lint.flake8-quotes]
 docstring-quotes = "double"
 
 [tool.black]

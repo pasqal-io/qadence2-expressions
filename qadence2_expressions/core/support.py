@@ -22,7 +22,6 @@ class Support:
             is defined.
         control: Tuple of qubit indices used to control an operation; not valid without `target`.
 
-
     Methods:
         `subspace`: returns the set of indices covered by the support.
         `overlap_with`: returns true if a support overlaps with another (not
@@ -57,8 +56,8 @@ class Support:
 
     @classmethod
     def target_all(cls) -> Support:
-        """
-        Return a support that covers all qubits, regardless of range or total number of qubits.
+        """Return a support that covers all qubits, regardless of range or total number of
+        qubits.
         """
         return cls()
 
