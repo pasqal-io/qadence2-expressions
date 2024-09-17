@@ -79,7 +79,7 @@ class IRBuilder(AbstractIRBuilder[Expression]):
                 raise ValueError(
                     f"The operation {input_obj} must be in the reduced form to be added to the IR"
                 )
-            
+
             expr = input_obj[0]
             target = input_obj[1].target
             control = input_obj[1].control
