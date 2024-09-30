@@ -1,11 +1,18 @@
 from __future__ import annotations
 
-from qadence2_expressions import QSymbol, Symbol, replace
+from qadence2_expressions import (
+    X,
+    Y,
+    Z,
+    parameter,
+    replace,
+    value,
+)
 
 
 def test_replace_symbol_by_symbol() -> None:
-    a = Symbol("a")
-    b = Symbol("b")
+    a = parameter("a")
+    b = parameter("b")
 
     expr0 = 2 * a + b
     expr1 = replace(expr0, {b: a})
@@ -13,17 +20,17 @@ def test_replace_symbol_by_symbol() -> None:
 
 
 def test_replace_symbol_by_valuel() -> None:
-    a = Symbol("a")
-    b = Symbol("b")
+    a = parameter("a")
+    b = parameter("b")
 
     expr0 = 2 * a + b
-    expr1 = replace(expr0, {a: 2, b: -1})
-    assert expr1 == 3
+    expr1 = replace(expr0, {a: value(2), b: value(-1)})
+    assert expr1 == value(3)
 
 
 def test_replace_symbol_by_expression() -> None:
-    a = Symbol("a")
-    b = Symbol("b")
+    a = parameter("a")
+    b = parameter("b")
 
     expr0 = 2 + a
     expr1 = replace(expr0, {a: a + b})
@@ -33,10 +40,6 @@ def test_replace_symbol_by_expression() -> None:
 
 
 def test_replace_expression_by_expression() -> None:
-    X = QSymbol("X")
-    Y = QSymbol("Y")
-    Z = QSymbol("Z")
-
-    expr0 = 2j * Y + X * Z
-    expr1 = replace(expr0, {X * Z: -2j * Y})
-    assert expr1 == 0
+    expr0 = 2j * Y() + X() * Z()
+    expr1 = replace(expr0, {X() * Z(): -2j * Y()})
+    assert expr1 == value(0)
