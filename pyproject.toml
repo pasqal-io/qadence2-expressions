@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 name = "qadence2-expressions"
 description = "Qadence 2 expressions consisting of symbolic expressions and blocks, i.e. quantum digital, analog, digital-analog and composite gates, together with their logic and engine."
 readme = "README.md"
-version = "0.1.1"
+version = "0.1.2"
 requires-python = ">=3.10,<3.12"
 license = { text = "Apache 2.0" }
 keywords = ["quantum"]
