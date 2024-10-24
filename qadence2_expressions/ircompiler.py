@@ -62,13 +62,14 @@ class IRBuilder(AbstractIRBuilder[Expression]):
             return AST.numeric(input_obj[0])
 
         if input_obj.is_symbol:
+            name = str(input_obj)
             size = input_obj.get("size", 1)
             trainable = input_obj.get("trainable", False)
             attrs = {k: v for k, v in input_obj.attrs.items() if k not in ["size", "trainable"]}
-            return AST.input_variable(input_obj[0], size, trainable, **attrs)
+            return AST.input_variable(name, size, trainable, **attrs)
 
         if input_obj.is_function:
-            name = input_obj[0]
+            name = str(input_obj[0])
             args = []
             for arg in input_obj[1:]:
                 args.append(IRBuilder.parse_sequence(arg))
