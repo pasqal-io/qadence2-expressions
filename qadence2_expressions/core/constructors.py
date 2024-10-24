@@ -56,24 +56,6 @@ def variable(name: str) -> Expression:
     return symbol(name, trainable=True)
 
 
-def time_parameter(name: str) -> Expression:
-    """A non-trainble parameter flagged as `time_paramater`.
-
-    Some backends requires extra indications when a paremeter is used as time unit.
-    """
-
-    return symbol(name, time_parameter=True)
-
-
-def time_variable(name: str) -> Expression:
-    """A trainble parameter flagged as `time_paramater`.
-
-    Some backends requires extra indications when a paremeter is used as time unit.
-    """
-
-    return symbol(name, trainable=True, time_parameter=True)
-
-
 def array_parameter(name: str, size: int) -> Expression:
     """A non-trainable list of inputs."""
 
