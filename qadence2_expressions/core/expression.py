@@ -786,7 +786,9 @@ def evaluate_kronop(lhs: Expression, rhs: Expression) -> Expression:
                 lhs[0], rhs[0], lhs.get("is_dagger", False), rhs.get("is_dagger", False)
             )
             return (  # type: ignore
-                res if res.is_zero or res.is_one else Expression.quantum_operator(res, lhs[1])
+                res
+                if res.is_zero or res.is_one
+                else Expression.quantum_operator(res, lhs[1], **lhs.attrs)
             )
 
     # Order the operators by subspace.
