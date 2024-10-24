@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from qadence2_expressions import (
-    variable,
     RX,
+    variable,
 )
 
 
