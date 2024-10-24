@@ -52,7 +52,7 @@ def _join_rotation(
     total_angle = lhs_sign * lhs_fn[1] + rhs_sign * rhs_fn[1]
     if total_angle.is_zero:
         return value(1)
-    return function(lhs_fn[0], total_angle)
+    return function(lhs_fn[0][0], total_angle)
 
 
 # Analog operations
