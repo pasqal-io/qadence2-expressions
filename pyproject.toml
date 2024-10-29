@@ -48,6 +48,7 @@ Source = "https://github.com/pasqal-io/qadence2-expressions"
 [tool.hatch.envs.default]
 features = ["extras"]
 dependencies = [
+  "hypothesis",
   "pytest",
   "pytest-cov",
   "pytest-xdist",
