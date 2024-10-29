@@ -9,7 +9,7 @@ from qadence2_expressions.core.expression import Expression
 from qadence2_expressions.core.support import Support
 
 
-def test_consturctor() -> None:
+def test_constructor() -> None:
     assert value(1) == Expression(Expression.Tag.VALUE, 1)
     assert Expression.symbol("x") == Expression(Expression.Tag.SYMBOL, "x")
     assert Expression.function("sin", 3.14) == Expression(
@@ -47,7 +47,7 @@ def test_negation() -> None:
     assert -X(2) * X(1) == Expression.mul(value(-1), Expression.kron(X(1), X(2)))
 
 
-def test_subtractions() -> None:
+def test_subtraction() -> None:
     a = symbol("a")
     X = unitary_hermitian_operator("X")
 
