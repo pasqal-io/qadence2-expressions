@@ -10,7 +10,7 @@ from qadence2_expressions.core.support import Support
 
 
 def test_constructor() -> None:
-    assert value(1) == Expression(Expression.Tag.VALUE, 1)
+    assert Expression.value(1) == Expression(Expression.Tag.VALUE, 1)
     assert Expression.symbol("x") == Expression(Expression.Tag.SYMBOL, "x")
     assert Expression.function("sin", 3.14) == Expression(
         Expression.Tag.FN, Expression.symbol("sin"), 3.14
