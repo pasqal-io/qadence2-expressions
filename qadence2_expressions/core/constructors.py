@@ -11,7 +11,13 @@ def value(x: complex | float | int) -> Expression:
     """Create a numerical expression from the value `x`.
 
     Args:
-        x: Any numerical value.
+        x (complex | float | int): Any numerical value.
+
+    Returns:
+        Expression: An expression of type value.
+
+    Raises:
+        TypeError: If the argument is non-numerical.
     """
     if not isinstance(x, (complex, float, int)):
         raise TypeError(
@@ -23,24 +29,33 @@ def value(x: complex | float | int) -> Expression:
 
 
 def promote(x: Expression | complex | float | int) -> Expression:
-    """Used to type cast inputs as expressions.
+    """Type cast inputs as value type expressions.
 
     Args:
         x: A valid expression or numerical value. Numerical values are converted into `Value(x)``
             expressions.
+
+    Returns:
+        Expression: A value type or expression.
     """
 
     return value(x) if not isinstance(x, Expression) else x
 
 
 def symbol(identifier: str, **attributes: Any) -> Expression:
-    """Create a new symbol from the `identfier` if it is not protected.
+    """Create a new symbol from the `identifier` if not protected.
 
     Args:
         identifier: Symbol's name.
 
     Kwargs:
         Keywords are used as flags for compilation.
+
+    Returns:
+        Expression: A symbol type expression.
+
+    Raises:
+        SyntaxError: If argument is expression protected.
     """
 
     if identifier in Environment.protected:
