@@ -13,6 +13,11 @@ def value(x: complex | float | int) -> Expression:
     Args:
         x: Any numerical value.
     """
+    if not isinstance(x, (complex, float, int)):
+        raise TypeError(
+            "Input to 'value' constructor must be of type 'complex', 'float' or 'int'. "
+            f"Got {type(x)}."
+        )
 
     return Expression.value(x)
 
