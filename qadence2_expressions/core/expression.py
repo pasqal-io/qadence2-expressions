@@ -354,7 +354,9 @@ class Expression:
 
     def __repr__(self) -> str:
         args = ", ".join(map(repr, self.args))
-        return f"{self.head.value}({args})"
+        attrs = ", ".join(f"{k}={v}" for k, v in self.attrs.items())
+
+        return f"{self.head.value}({args}" + (f", {attrs}" if attrs else "") + ")"
 
     def __str__(self) -> str:
         return visualize_expression(self)
