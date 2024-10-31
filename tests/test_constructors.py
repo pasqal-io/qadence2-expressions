@@ -18,8 +18,12 @@ from qadence2_expressions.core.support import Support
 
 
 def test_constructor() -> None:
-    assert array_parameter("arr_par", size=5) == Expression(Expression.Tag.SYMBOL, "arr_par", size=5)
-    assert array_variable("arr_var", size=5) == Expression(Expression.Tag.SYMBOL, "arr_var", size=5, trainable=True)
+    assert array_parameter("arr_par", size=5) == Expression(
+        Expression.Tag.SYMBOL, "arr_par", size=5
+    )
+    assert array_variable("arr_var", size=5) == Expression(
+        Expression.Tag.SYMBOL, "arr_var", size=5, trainable=True
+    )
     assert value(1) == Expression(Expression.Tag.VALUE, 1)
     with pytest.raises(TypeError):
         value("Non-numerical type.")  # type: ignore [arg-type]
