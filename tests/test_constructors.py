@@ -31,7 +31,14 @@ def test_constructor() -> None:
     with pytest.raises(SyntaxError):
         symbol("E")
     assert parameter("phi") == Expression(Expression.Tag.SYMBOL, "phi")
-    assert variable("phi") == Expression(Expression.Tag.SYMBOL, "phi")
+    assert projector("Z", "0")(0) == Expression(
+        Expression.Tag.QUANTUM_OP,
+        Expression.symbol("Z{0}"),
+        support=Support(0),
+        base="Z",
+        is_projector=True,
+        is_hermitian=True,
+    )
     assert variable("psi") == Expression(Expression.Tag.SYMBOL, "psi", trainable=True)
 
     assert function("sin", 3.14) == Expression(Expression.Tag.FN, Expression.symbol("sin"), 3.14)
