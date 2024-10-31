@@ -196,7 +196,7 @@ def unitary_hermitian_operator(name: str) -> Callable:
     ) -> Expression:
         return Expression.quantum_operator(
             Expression.symbol(name),
-            Support(*indices, target=target, control=control),
+            support=Support(*indices, target=target, control=control),
             is_hermitian=True,
             is_unitary=True,
         )
@@ -237,7 +237,7 @@ def projector(base: str, index: str) -> Callable:
     ) -> Expression:
         return Expression.quantum_operator(
             symbol(f"{base}{{{index}}}"),
-            Support(*indices, target=target, control=control),
+            support=Support(*indices, target=target, control=control),
             base=base,
             is_projector=True,
             is_hermitian=True,
@@ -275,7 +275,7 @@ def parametric_operator(
     ) -> Expression:
         return Expression.quantum_operator(
             function(name, *args),
-            Support(*indices, target=target, control=control),
+            support=Support(*indices, target=target, control=control),
             join=join,
             **attributes,
         )

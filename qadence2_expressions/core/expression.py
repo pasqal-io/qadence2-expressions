@@ -136,7 +136,7 @@ class Expression:
             An expression of type `QuantumOperator`.
         """
 
-        return cls(cls.Tag.QUANTUM_OP, expr, support, **attributes)
+        return cls(cls.Tag.QUANTUM_OP, expr, support=support, **attributes)
 
     @classmethod
     def add(cls, *args: Expression) -> Expression:

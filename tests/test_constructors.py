@@ -38,7 +38,7 @@ def test_constructor() -> None:
     assert unitary_hermitian_operator("X")(1) == Expression(
         Expression.Tag.QUANTUM_OP,
         Expression.symbol("X"),
-        Support(1),
+        support=Support(1),
         is_hermitian=True,
         is_unitary=True,
     )
