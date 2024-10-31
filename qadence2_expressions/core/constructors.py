@@ -65,8 +65,8 @@ def promote(x: Expression | complex | float | int) -> Expression:
     """Type cast inputs as value type expressions.
 
     Args:
-        x: A valid expression or numerical value. Numerical values are converted into `Value(x)``
-            expressions.
+        x (Expression | complex | float | int): A valid expression or numerical value.
+         Numerical values are converted into `Value(x)` expressions.
 
     Returns:
         Expression: A value type or expression.
@@ -79,10 +79,10 @@ def symbol(identifier: str, **attributes: Any) -> Expression:
     """Create a new symbol from the `identifier` if not protected.
 
     Args:
-        identifier: Symbol's name.
+        identifier (str): Symbol's name.
 
     Kwargs:
-        Keywords are used as flags for compilation.
+        attributes (Any): Keywords used as flags for compilation.
 
     Returns:
         Expression: A symbol type expression.
@@ -98,46 +98,95 @@ def symbol(identifier: str, **attributes: Any) -> Expression:
 
 
 def parameter(name: str) -> Expression:
-    """A non-trainable input."""
+    """A non-trainable input.
+
+    Args:
+        name (str): Parameter's name.
+
+    Returns:
+        Expression: A parameter as a symbol expression.
+    """
 
     return symbol(name)
 
 
 def variable(name: str) -> Expression:
-    """A trainable input."""
+    """A trainable input.
+
+    Args:
+        name (str): Variable's name.
+
+    Returns:
+        Expression: A variable as a trainable symbol expression.
+    """
 
     return symbol(name, trainable=True)
 
 
 def array_parameter(name: str, size: int) -> Expression:
-    """A non-trainable list of inputs."""
+    """A non-trainable list of inputs.
+
+    Args:
+        name (str): Array of parameters name.
+        size (int): Array size.
+
+    Returns:
+        Expression: An array of parameters as sized symbol expression.
+    """
 
     return symbol(name, size=size)
 
 
 def array_variable(name: str, size: int) -> Expression:
-    """A trainable list of inputs."""
+    """A trainable list of inputs.
+
+    Args:
+        name (str): Array of variables name.
+        size (int): Array size.
+
+    Returns:
+        Expression: An array of variables as sized symbol expression.
+    """
 
     return symbol(name, trainable=True, size=size)
 
 
 def function(name: str, *args: Any) -> Expression:
-    """Symbolic representation of function where `name` is the name of the function and the
-    remaining arguments as the function arguments.
+    """Symbolic representation of a function.
+
+    Args:
+        name (str): Function's name.
+        args (Any): Remaining function arguments.
+
+    Returns:
+        Expression: A function expression.
     """
 
     return Expression.function(name, *args)
 
 
+@with_repr(lambda func, name: f"HermitianOperator(name='{name}')")
 def unitary_hermitian_operator(name: str) -> Callable:
-    """An unitary Hermitian operator is a function that takes a list of indices (or a target and
-    control tuples) and return an Expression with the following property:
+    """An unitary Hermitian operator.
 
-        > A = unitary_hermitian_operator("A")
-        > A(i) * A(i)
-        1
-        > A(i) * A(j)  ; for i≠j
-        A(i) * A(j)
+    A Hermitian operator is a function that takes a list of indices
+    (or a target and control tuples) and return an Expression with
+    hermitian and unitary properties.
+
+    Args:
+        name (str): The operator's name.
+
+    Returns:
+        Callable: A function to create a quantum operator expression.
+
+    Example:
+    ```
+    >>> A = unitary_hermitian_operator("A")
+    >>> A(i) * A(i)
+    1
+    >>> A(i) * A(j)  ; for i≠j
+    A(i) * A(j)
+    ```
     """
 
     def core(
@@ -157,8 +206,18 @@ def unitary_hermitian_operator(name: str) -> Callable:
 
 @with_repr(lambda func, base, index: f"Projector(base='{base}', index='{index}')")
 def projector(base: str, index: str) -> Callable:
-    """A projector is a function that takes a list of indices (or a target and control tuples) and
-    return an Expression with the orthogonality property.
+    """A projector operator.
+
+    A projector is a function that takes a list of indices
+    (or a target and control tuples) and return an Expression with
+    the orthogonality property.
+
+    Args:
+        base (str): The computational basis to project on.
+        index (str): The index in the basis to project on.
+
+    Returns:
+        Callable: A function to create a quantum operator expression.
 
     Example:
     ```
@@ -190,14 +249,23 @@ def projector(base: str, index: str) -> Callable:
 def parametric_operator(
     name: str, *args: Any, join: Callable | None = None, **attributes: Any
 ) -> Callable:
-    """A parametric operator is takes a list of posistional arguments and an generates a function
-    that takes a list of indices (or a target and control tuples) and return an Expression.
+    """A parametric operator.
 
-    The `join` function is used to comabine the argumens of two parameteric operator of the same
-    kind when they act on the same qubits.
+    A parametric operator takes a list of positional arguments and
+    generates a function that takes a list of indices
+    (or a target and control tuples) and return an Expression.
+
+    The `join` function is used to combine arguments of two parametric
+    operators of the same kind acting on the same qubit support.
 
     Args:
-        name:
+        name (str): The operator's name.
+        args (Any): The remaining operator arguments.
+        join (Callable): A function to join parameter arguments.
+        attributes (Any): Keywords used for compilation.
+
+    Returns:
+        Callable: A function to create a quantum operator.
     """
 
     def core(
