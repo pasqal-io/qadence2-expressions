@@ -246,6 +246,7 @@ def projector(base: str, index: str) -> Callable:
     return core
 
 
+@with_repr(lambda func, name: f"ParametricOperator(name='{name}')")
 def parametric_operator(
     name: str, *args: Any, join: Callable | None = None, **attributes: Any
 ) -> Callable:
