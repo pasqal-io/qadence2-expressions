@@ -7,6 +7,7 @@ from qadence2_expressions.core.constructors import (
     array_variable,
     function,
     parameter,
+    parametric_operator,
     projector,
     symbol,
     unitary_hermitian_operator,
@@ -48,4 +49,7 @@ def test_constructor() -> None:
         support=Support(1),
         is_hermitian=True,
         is_unitary=True,
+    )
+    assert parametric_operator("RX", 3.14)(1) == Expression(
+        Expression.Tag.QUANTUM_OP, Expression.function("RX", 3.14), support=Support(1), join=None
     )
