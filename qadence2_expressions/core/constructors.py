@@ -2,9 +2,42 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
+from functools import wraps
+
+
 from .environment import Environment
 from .expression import Expression
 from .support import Support
+
+
+def with_repr(repr_func: Callable) -> Callable:
+    """Decorator to give a dynamic __repr__ to a function based on its arguments."""
+
+    class CallableWithRepr:
+        def __init__(
+            self,
+            func: Callable,
+            *args: Any,
+            **kwargs: Any,
+        ) -> None:
+            self.func: Callable = func
+            self.args = args
+            self.kwargs = kwargs
+
+        def __call__(self, *args: Any, **kwargs: Any) -> Any:
+            # Call the original function with provided arguments
+            return self.func(*args, **kwargs)
+
+        def __repr__(self) -> str:
+            # Generate a custom repr using the provided repr_func
+            return str(repr_func(self.func, *self.args, **self.kwargs))
+
+    @wraps(repr_func)
+    def decorator(func: Callable) -> Callable:
+        # Return a wrapped CallableWithRepr instance
+        return lambda *args, **kwargs: CallableWithRepr(func(*args, **kwargs), *args, **kwargs)
+
+    return decorator
 
 
 def value(x: complex | float | int) -> Expression:
@@ -122,6 +155,7 @@ def unitary_hermitian_operator(name: str) -> Callable:
     return core
 
 
+@with_repr(lambda func, base, index: f"Projector(base='{base}', index='{index}')")
 def projector(base: str, index: str) -> Callable:
     """A projector is a function that takes a list of indices (or a target and control tuples) and
     return an Expression with the orthogonality property.
