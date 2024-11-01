@@ -29,31 +29,30 @@ from .operators import (
 )
 from .replace import prod, replace
 
-# __all__ = [
-#     "cos",
-#     "collect_operators",
-#     "compile_to_model",
-#     "CZ",
-#     "exp",
-#     "FreeEvolution",
-#     "log",
-#     "NativeDrive",
-#     "NOT",
-#     "prod",
-#     "promote",
-#     "replace",
-#     "RX",
-#     "RY",
-#     "RZ",
-#     "sin",
-#     "X",
-#     "Xm",
-#     "Xp",
-#     "Y",
-#     "Z",
-#     "Z0",
-#     "Z1",
-# ]
+__all__ = [
+    "cos",
+    "collect_operators",
+    "compile_to_model",
+    "CZ",
+    "exp",
+    "FreeEvolution",
+    "log",
+    "NativeDrive",
+    "NOT",
+    "prod",
+    "replace",
+    "RX",
+    "RY",
+    "RZ",
+    "sin",
+    "X",
+    "Xm",
+    "Xp",
+    "Y",
+    "Z",
+    "Z0",
+    "Z1",
+]
 
 
 """Fetch the functions defined in the __all__ of each sub-module.
@@ -71,7 +70,6 @@ submodules = [
     ".core",
 ]
 
-__all__ = []
 for submodule in submodules:
     __all_submodule__ = getattr(import_module(submodule, package="qadence2_expressions"), "__all__")
     __all__ += __all_submodule__
