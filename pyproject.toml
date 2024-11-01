@@ -62,7 +62,7 @@ dependencies = [
 ]
 
 [tool.hatch.envs.default.scripts]
-test = "pytest -n auto --cov=tests {args}"
+test = "pytest -n auto {args}"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
