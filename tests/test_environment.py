@@ -11,6 +11,7 @@ from qadence2_expressions import (
     get_qpu_directives,
     get_qubits_positions,
     get_settings,
+    reset_ir_options,
     set_grid_scale,
     set_grid_type,
     set_number_qubits,
@@ -51,3 +52,6 @@ def test_add_and_get_qpu_directives() -> None:
 def test_add_and_get_settings() -> None:
     add_settings({"Some": "Settings"})
     assert get_settings() == {"Some": "Settings"}
+
+def test_reset_options() -> None:
+    reset_ir_options()
