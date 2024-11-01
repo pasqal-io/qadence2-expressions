@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from qadence2_expressions.core.constructors import (
+from qadence2_expressions import (
+    Expression,
+    Support,
     array_parameter,
     array_variable,
     function,
@@ -14,8 +16,6 @@ from qadence2_expressions.core.constructors import (
     value,
     variable,
 )
-from qadence2_expressions.core.expression import Expression
-from qadence2_expressions.core.support import Support
 
 
 def test_constructor() -> None:

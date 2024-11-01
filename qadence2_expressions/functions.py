@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from .core.constructors import function, promote
-from .core.expression import Expression
+from qadence2_expressions import (
+    Expression,
+    function,
+    promote,
+)
 
 
 def sin(x: Expression | complex | float | int) -> Expression:
