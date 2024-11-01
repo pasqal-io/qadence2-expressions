@@ -136,7 +136,7 @@ class Expression:
             An expression of type `QuantumOperator`.
         """
 
-        return cls(cls.Tag.QUANTUM_OP, expr, support=support, **attributes)
+        return cls(cls.Tag.QUANTUM_OP, expr, support, **attributes)
 
     @classmethod
     def add(cls, *args: Expression) -> Expression:
@@ -243,7 +243,7 @@ class Expression:
 
         # By definition, a quantum operator is `QuantumOperator(Expression, Support)`.
         if self.is_quantum_operator:
-            return self[1]  # type: ignore
+            return self[1]
 
         # Collecting only non-null term's subpaces.
         subspaces = []
@@ -343,7 +343,6 @@ class Expression:
 
     def __getitem__(self, index: int | slice) -> Any:
         """Makes the arguments of the expression directly accessible through `expression[i]`."""
-
         return self.args[index]
 
     def __hash__(self) -> int:

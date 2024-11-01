@@ -35,7 +35,7 @@ def test_constructor() -> None:
     assert projector("Z", "0")(0) == Expression(
         Expression.Tag.QUANTUM_OP,
         Expression.symbol("Z{0}"),
-        support=Support(0),
+        Support(0),
         base="Z",
         is_projector=True,
         is_hermitian=True,
@@ -46,10 +46,10 @@ def test_constructor() -> None:
     assert unitary_hermitian_operator("X")(1) == Expression(
         Expression.Tag.QUANTUM_OP,
         Expression.symbol("X"),
-        support=Support(1),
+        Support(1),
         is_hermitian=True,
         is_unitary=True,
     )
     assert parametric_operator("RX", 3.14)(1) == Expression(
-        Expression.Tag.QUANTUM_OP, Expression.function("RX", 3.14), support=Support(1), join=None
+        Expression.Tag.QUANTUM_OP, Expression.function("RX", 3.14), Support(1), join=None
     )
