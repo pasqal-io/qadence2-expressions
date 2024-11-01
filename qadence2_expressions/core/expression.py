@@ -6,6 +6,7 @@ from re import sub
 from typing import Any
 
 from .support import Support
+from .utils import Numeric
 
 
 class Expression:
@@ -41,7 +42,7 @@ class Expression:
 
     # Constructors
     @classmethod
-    def value(cls, x: complex | float | int) -> Expression:
+    def value(cls, x: Numeric) -> Expression:
         """Promote a numerical value (comples, float, int) to an expression.
 
         Args:
@@ -76,7 +77,7 @@ class Expression:
         """Create a symbol from the identifier
 
         Args:
-            indetifier: A string used as the symbol name.
+            identifier: A string used as the symbol name.
 
         Kwargs:
             Keyword arguments are used as flags for compilation steps. The valid flags are dfined in
@@ -245,7 +246,7 @@ class Expression:
         if self.is_quantum_operator:
             return self[1]  # type: ignore
 
-        # Collecting only non-null term's subpaces.
+        # Collecting only non-null term's subspaces.
         subspaces = []
         for arg in self.args:
             sp = arg.subspace
@@ -375,11 +376,11 @@ class Expression:
 
     # Algebraic operations
     def __add__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | complex | float | int):
+        if not isinstance(other, Expression | Numeric):
             return NotImplemented
 
         # Promote numerial values to Expression.
-        if isinstance(other, complex | float | int):
+        if isinstance(other, Numeric):
             return self + Expression.value(other)
 
         # Addition identity: a + 0 = 0 + a = a
@@ -403,24 +404,24 @@ class Expression:
             args = (self, other)
 
         # ⚠️ Warning: Ideally, this step should not perform the evaluation of the
-        # the expression. However, we want to provide a friendly intercation to
-        # the users, and the inacessibility of Python's evaluation (without writing
-        # our on REPL) forces to add the evaluation at this point.
+        # expression. However, we want to provide a friendly interaction to the users,
+        # and the inaccessibility of Python's evaluation (without writing our own REPL)
+        # forces to add the evaluation at this point.
         return evaluate_addition(Expression.add(*args))
 
     def __radd__(self, other: object) -> Expression:
         # Promote numerical types to expression.
-        if isinstance(other, complex | float | int):
+        if isinstance(other, Numeric):
             return Expression.value(other) + self
 
         return NotImplemented
 
     def __mul__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | complex | float | int):
+        if not isinstance(other, Expression | Numeric):
             return NotImplemented
 
         # Promote numerical values to Expression.
-        if isinstance(other, complex | float | int):
+        if isinstance(other, Numeric):
             return self * Expression.value(other)
 
         # Null multiplication shortcut.
@@ -454,14 +455,14 @@ class Expression:
             args = (self, other)
 
         # ⚠️ Warning: Ideally, this step should not perform the evaluation of the
-        # the expression. However, we want to provide a friendly intercation to
-        # the users, and the inacessibility of Python's evaluation (without writing
-        # our on REPL) forces to add the evaluation at this point.
+        # expression. However, we want to provide a friendly interaction to the users,
+        # and the inaccessibility of Python's evaluation (without writing our own REPL)
+        # forces to add the evaluation at this point.
         return evaluate_multiplication(Expression.mul(*args))
 
     def __rmul__(self, other: object) -> Expression:
         # Promote numerical types to expression.
-        if isinstance(other, complex | float | int):
+        if isinstance(other, Numeric):
             return Expression.value(other) * self
 
         return NotImplemented
@@ -469,10 +470,10 @@ class Expression:
     def __pow__(self, other: object) -> Expression:
         """Power involving quantum operators always promote expression to quantum operators."""
 
-        if not isinstance(other, Expression | complex | float | int):
+        if not isinstance(other, Expression | Numeric):
             return NotImplemented
 
-        if isinstance(other, complex | float | int):
+        if isinstance(other, Numeric):
             return self ** Expression.value(other)
 
         # Numerical values are computed right away.
@@ -487,7 +488,7 @@ class Expression:
         if other.is_one:
             return self
 
-        # Power of power is an simple operation and can be evaluated here.
+        # Power of power is a simple operation and can be evaluated here.
         # Whenever a quantum operator is present, the expression is promoted to
         # a quantum operator.
         if self.is_power:
@@ -497,7 +498,7 @@ class Expression:
 
     def __rpow__(self, other: object) -> Expression:
         # Promote numerical types to expression.
-        if isinstance(other, complex | float | int):
+        if isinstance(other, Numeric):
             return Expression.value(other) ** self
 
         return NotImplemented
@@ -506,25 +507,25 @@ class Expression:
         return -1 * self
 
     def __sub__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | complex | float | int):
+        if not isinstance(other, Expression | Numeric):
             return NotImplemented
 
         return self + (-other)
 
     def __rsub__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | complex | float | int):
+        if not isinstance(other, Expression | Numeric):
             return NotImplemented
 
         return (-self) + other
 
     def __truediv__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | complex | float | int):
+        if not isinstance(other, Expression | Numeric):
             return NotImplemented
 
         return self * (other**-1)
 
     def __rtruediv__(self, other: object) -> Expression:
-        if not isinstance(other, complex | float | int):
+        if not isinstance(other, Numeric):
             return NotImplemented
 
         return other * (self**-1)
@@ -556,10 +557,13 @@ class Expression:
             return self
 
         # ⚠️ Warning: Ideally, this step should not perform the evaluation of the
-        # the expression. However, we want to provide a friendly intercation to
-        # the users, and the inacessibility of Python's evaluation (without writing
-        # our on REPL) forces to add the evaluation at this point.
+        # expression. However, we want to provide a friendly interaction to the users,
+        # and the inaccessibility of Python's evaluation (without writing our own REPL)
+        # forces to add the evaluation at this point.
         return evaluate_kron(Expression.kron(self, other))
+
+    def __matmul__(self, other: object) -> Expression:
+        return self.__kron__(other)
 
 
 def evaluate_addition(expr: Expression) -> Expression:
@@ -670,7 +674,7 @@ def evaluate_kron(expr: Expression) -> Expression:
 def evaluate_kronleft(lhs: Expression, rhs: Expression) -> Expression:
     """Left associativity of the Kronecker product.
 
-    Evaluate the Kronecker product between a LHS=quantum operators and a RHS=Kronecker product.
+    Evaluate the Kronecker product between LHS=quantum operators and RHS=Kronecker product.
     """
 
     if not (lhs.is_quantum_operator or rhs.is_kronecker_product):
@@ -678,7 +682,7 @@ def evaluate_kronleft(lhs: Expression, rhs: Expression) -> Expression:
 
     args = rhs.args
 
-    # Using a insertion-sort-like to add the LHS term in the the RHS product.
+    # Using a insertion-sort-like to add the LHS term in the RHS product.
     for i, rhs_arg in enumerate(args):
         if rhs_arg.subspace == lhs.subspace:  # type: ignore
             ii = i + 1
@@ -712,7 +716,7 @@ def evaluate_kronleft(lhs: Expression, rhs: Expression) -> Expression:
 def evaluate_kronright(lhs: Expression, rhs: Expression) -> Expression:
     """Right associativity of the Kronecker product.
 
-    Evaluate the Kronecker product between a LHS=quantum operators and a RHS=Kronecker product.
+    Evaluate the Kronecker product between LHS=quantum operators and RHS=Kronecker product.
     """
 
     if not (lhs.is_kronecker_product or rhs.is_quantum_operator):
@@ -720,7 +724,7 @@ def evaluate_kronright(lhs: Expression, rhs: Expression) -> Expression:
 
     args = lhs.args
 
-    # Using a insertion-sort-like to add the RHS term in the the LHS product.
+    # Using a insertion-sort-like to add the RHS term in the LHS product.
     for i in range(len(args) - 1, -1, -1):
         ii = i + 1
 
@@ -752,7 +756,7 @@ def evaluate_kronright(lhs: Expression, rhs: Expression) -> Expression:
 
 
 def evaluate_kronjoin(lhs: Expression, rhs: Expression) -> Expression:
-    """Evaluate the Kronecker product between a LHS=quantum operators and a RHS=Kronecker
+    """Evaluate the Kronecker product between LHS=quantum operators and RHS=Kronecker
     product.
     """
 
@@ -772,7 +776,7 @@ def evaluate_kronop(lhs: Expression, rhs: Expression) -> Expression:
     if not (lhs.is_quantum_operator or rhs.is_quantum_operator):
         raise SyntaxError("Operation only valid for LHS and RHS both quantum operators.")
 
-    # Multiplication of unitary Hermitian operators acting on the the same subspace.
+    # Multiplication of unitary Hermitian operators acting on the same subspace.
     if lhs == rhs and (lhs.get("is_hermitian") and lhs.get("is_unitary")):
         return Expression.one()
 

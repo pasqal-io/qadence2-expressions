@@ -73,7 +73,6 @@ class IRBuilder(AbstractIRBuilder[Expression]):
             args = []
             for arg in input_obj[1:]:
                 args.append(IRBuilder.parse_sequence(arg))
-            print(f"expressions.irbuilder.parse_seq: {name=}")
             return AST.callable(name, *args)
 
         if input_obj.is_quantum_operator:
