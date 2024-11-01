@@ -242,8 +242,10 @@ class Expression:
             return None
 
         # By definition, a quantum operator is `QuantumOperator(Expression, Support)`.
+        # TODO: Add support as an attribute for safer key accessing.
         if self.is_quantum_operator:
-            return self[1]
+            support: Support = self[1]
+            return support
 
         # Collecting only non-null term's subpaces.
         subspaces = []
