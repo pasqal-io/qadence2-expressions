@@ -22,6 +22,7 @@ from qadence2_expressions import (
 
 reset_ir_options()
 
+
 def test_ir_compilation() -> None:
     theta = parameter("theta")
     expr = Z() * RX(cos(theta / 2))(0)
