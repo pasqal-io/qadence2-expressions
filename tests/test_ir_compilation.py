@@ -20,10 +20,9 @@ from qadence2_expressions import (
     reset_ir_options,
 )
 
-reset_ir_options()
-
 
 def test_ir_compilation() -> None:
+    reset_ir_options()
     theta = parameter("theta")
     expr = Z() * RX(cos(theta / 2))(0)
     model = compile_to_model(expr)
