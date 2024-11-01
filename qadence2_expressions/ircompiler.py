@@ -82,8 +82,9 @@ class IRBuilder(AbstractIRBuilder[Expression]):
                 )
 
             expr = input_obj[0]
-            target = input_obj[1].target
-            control = input_obj[1].control
+            support = input_obj[1]
+            target = support.target
+            control = support.control
             expr_identifier = expr if expr.is_symbol else expr[0]
             name = input_obj.attrs.get("instruction_name", expr_identifier[0].lower())
 

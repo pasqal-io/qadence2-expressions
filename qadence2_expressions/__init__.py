@@ -1,29 +1,9 @@
 from __future__ import annotations
 
+from importlib import import_module
+
 from .collect import collect_operators
-from .core.constructors import (
-    array_parameter,
-    array_variable,
-    function,
-    parameter,
-    parametric_operator,
-    projector,
-    promote,
-    symbol,
-    unitary_hermitian_operator,
-    value,
-    variable,
-)
-from .core.environment import (
-    add_grid_options,
-    add_qpu_directives,
-    add_settings,
-    reset_ir_options,
-    set_grid_scale,
-    set_grid_type,
-    set_number_qubits,
-    set_qubits_positions,
-)
+from .core import *
 from .functions import (
     cos,
     exp,
@@ -50,40 +30,21 @@ from .operators import (
 from .replace import prod, replace
 
 __all__ = [
-    "add_settings",
-    "add_grid_options",
-    "add_qpu_directives",
-    "array_parameter",
-    "array_variable",
     "cos",
     "collect_operators",
     "compile_to_model",
     "CZ",
     "exp",
     "FreeEvolution",
-    "function",
     "log",
     "NativeDrive",
     "NOT",
-    "parameter",
-    "parametric_operator",
     "prod",
-    "projector",
-    "promote",
     "replace",
-    "reset_ir_options",
     "RX",
     "RY",
     "RZ",
-    "set_grid_scale",
-    "set_grid_type",
-    "set_number_qubits",
-    "set_qubits_positions",
     "sin",
-    "symbol",
-    "unitary_hermitian_operator",
-    "value",
-    "variable",
     "X",
     "Xm",
     "Xp",
@@ -92,3 +53,23 @@ __all__ = [
     "Z0",
     "Z1",
 ]
+
+
+"""Fetch the functions defined in the __all__ of each sub-module.
+
+Import to the qadence2_expressions name space.
+Make sure each added submodule has the respective definition:
+
+    - `__all__ = ["function0", "function1", ...]`
+
+Furthermore, add the submodule to the list below to automatically build
+the __all__ of the qadence2_expressions namespace. Make sure to keep alphabetical ordering.
+"""
+
+submodules = [
+    ".core",
+]
+
+for submodule in submodules:
+    __all_submodule__ = getattr(import_module(submodule, package="qadence2_expressions"), "__all__")
+    __all__ += __all_submodule__

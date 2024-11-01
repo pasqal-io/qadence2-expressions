@@ -32,15 +32,18 @@ Xm = projector("X", "-")
 
 # Rotations
 def RX(angle: Expression | float) -> Callable:
-    return parametric_operator("RX", promote(angle), join=_join_rotation)
+    param_op: Callable = parametric_operator("RX", promote(angle), join=_join_rotation)
+    return param_op
 
 
 def RY(angle: Expression | float) -> Callable:
-    return parametric_operator("RY", promote(angle), join=_join_rotation)
+    param_op: Callable = parametric_operator("RY", promote(angle), join=_join_rotation)
+    return param_op
 
 
 def RZ(angle: Expression | float) -> Callable:
-    return parametric_operator("RZ", promote(angle), join=_join_rotation)
+    param_op: Callable = parametric_operator("RZ", promote(angle), join=_join_rotation)
+    return param_op
 
 
 def _join_rotation(
@@ -62,7 +65,7 @@ def NativeDrive(
     detuning: Expression | float,
     phase: Expression | float,
 ) -> Callable:
-    return parametric_operator(
+    param_op: Callable = parametric_operator(
         "NativeDrive",
         promote(duration),
         promote(amplitude),
@@ -70,7 +73,11 @@ def NativeDrive(
         promote(phase),
         instruction_name="dyn_pulse",
     )
+    return param_op
 
 
 def FreeEvolution(duration: Expression | float) -> Callable:
-    return parametric_operator("FreeEvolution", promote(duration), instruction_name="dyn_wait")
+    param_op: Callable = parametric_operator(
+        "FreeEvolution", promote(duration), instruction_name="dyn_wait"
+    )
+    return param_op

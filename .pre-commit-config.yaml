@@ -6,6 +6,7 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
+        args: ['--maxkb=600']
 
 -   repo: https://github.com/ambv/black
     rev: 24.8.0
@@ -16,13 +17,13 @@ repos:
     rev: "v0.6.2"
     hooks:
       - id: ruff
-        args:
-          - --fix
+        args: [--fix, --show-fixes, --show-files]
 
 -   repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.11.0
     hooks:
       - id: mypy
+        args: [--install-types, --non-interactive]
         exclude: examples|docs
 
 -   repo: https://github.com/DanielNoord/pydocstringformatter

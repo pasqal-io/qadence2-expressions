@@ -13,6 +13,8 @@ keywords = ["quantum"]
 authors = [
   { name = "Kaonan Micadei", email = "kaonan.micadei@pasqal.com" },
   { name = "Eduardo Maschio", email = "eduardo.maschio@pasqal.com" },
+  { name = "Roland Guichard", email = "roland.guichard@pasqal.com" },
+  { name = "Pim Venderbosch", email = "pim.venderbosch@pasqal.com" },
 ]
 classifiers = [
   "Development Status :: 4 - Beta",
@@ -46,10 +48,11 @@ Source = "https://github.com/pasqal-io/qadence2-expressions"
 [tool.hatch.envs.default]
 features = ["extras"]
 dependencies = [
+  "hypothesis",
   "pytest",
   "pytest-cov",
+  "pytest-mypy",
   "pytest-xdist",
-  "nbconvert",
   "ipykernel",
   "pre-commit",
   "black",
@@ -59,11 +62,11 @@ dependencies = [
 ]
 
 [tool.hatch.envs.default.scripts]
-test = "pytest -n auto --cov-config=pyproject.toml --ignore=./tests/test_examples.py {args}"
+test = "pytest -n auto {args}"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = """-vvv --cov-report=term-missing --cov-config=pyproject.toml --cov=template_python --cov=tests"""
+addopts = """-vvv"""
 xfail_strict = true
 filterwarnings = [
   "ignore:Call to deprecated create function FieldDescriptor",
@@ -72,7 +75,8 @@ filterwarnings = [
   "ignore:Call to deprecated create function EnumValueDescriptor",
   "ignore:Call to deprecated create function FileDescriptor",
   "ignore:Call to deprecated create function OneofDescriptor",
-  "ignore:distutils Version classes are deprecated."
+  "ignore:distutils Version classes are deprecated.",
+  "ignore::DeprecationWarning",
 ]
 
 [tool.hatch.envs.docs]
