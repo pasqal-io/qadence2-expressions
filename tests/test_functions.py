@@ -22,7 +22,7 @@ def test_sin() -> None:
     assert sin(expr) == Expression(
         Expression.Tag.FN,
         Expression.symbol("sin"),
-        Expression.add(Expression.symbol("phi"), Expression.value(3.14))
+        Expression.add(Expression.symbol("phi"), Expression.value(3.14)),
     )
 
 
@@ -36,13 +36,10 @@ def test_cos() -> None:
             Expression.mul(
                 Expression.value(-1),
                 Expression.quantum_operator(
-                    Expression.symbol("X"),
-                    Support(1),
-                    is_hermitian=True,
-                    is_unitary=True
-                )
-            )
-        )
+                    Expression.symbol("X"), Support(1), is_hermitian=True, is_unitary=True
+                ),
+            ),
+        ),
     )
 
 
@@ -56,11 +53,8 @@ def test_exp() -> None:
                     Expression.value(-2),
                     Expression.symbol("phi"),
                     Expression.quantum_operator(
-                        Expression.symbol("X"),
-                        Support(1),
-                        is_hermitian=True,
-                        is_unitary=True
-                    )
+                        Expression.symbol("X"), Support(1), is_hermitian=True, is_unitary=True
+                    ),
                 ),
                 Expression.quantum_operator(
                     Expression.symbol("X"),
@@ -68,7 +62,7 @@ def test_exp() -> None:
                     is_hermitian=True,
                     is_unitary=True,
                 ),
-            )
+            ),
         ),
         Support(1, 3),  # Checking the full support is inferred correctly.
     )
@@ -86,6 +80,6 @@ def test_log() -> None:
                 Support(4),
                 is_hermitian=True,
                 is_unitary=True,
-            )
-        )
+            ),
+        ),
     )
