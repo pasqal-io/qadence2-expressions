@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-from typing import Any, Callable
-
 from functools import wraps
-
+from typing import Any, Callable
 
 from .environment import Environment
 from .expression import Expression
