@@ -242,7 +242,6 @@ class Expression:
             return None
 
         # By definition, a quantum operator is `QuantumOperator(Expression, Support)`.
-        # TODO: Add support as an attribute for safer key accessing.
         if self.is_quantum_operator:
             support: Support = self[1]
             return support
