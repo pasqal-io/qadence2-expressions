@@ -17,8 +17,10 @@ from qadence2_expressions import (
     compile_to_model,
     cos,
     parameter,
+    reset_ir_options,
 )
 
+reset_ir_options()
 
 def test_ir_compilation() -> None:
     theta = parameter("theta")
