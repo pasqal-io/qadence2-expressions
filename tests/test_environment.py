@@ -53,5 +53,6 @@ def test_add_and_get_settings() -> None:
     add_settings({"Some": "Settings"})
     assert get_settings() == {"Some": "Settings"}
 
+
 def test_reset_options() -> None:
     reset_ir_options()
