@@ -9,6 +9,7 @@ from .functions import (
     exp,
     log,
     sin,
+    sqrt,
 )
 from .ircompiler import compile_to_model
 from .operators import (
@@ -45,6 +46,7 @@ __all__ = [
     "RY",
     "RZ",
     "sin",
+    "sqrt",
     "X",
     "Xm",
     "Xp",

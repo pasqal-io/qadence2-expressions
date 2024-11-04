@@ -8,6 +8,7 @@ from qadence2_expressions import (
     log,
     parameter,
     sin,
+    sqrt,
     unitary_hermitian_operator,
     variable,
 )
@@ -70,16 +71,39 @@ def test_exp() -> None:
 
 def test_log() -> None:
     expr = psi * X(4)
-    assert log(expr) == Expression(
-        Expression.Tag.FN,
-        Expression.symbol("log"),
-        Expression.mul(
-            Expression.symbol("psi", trainable=True),
-            Expression.quantum_operator(
-                Expression.symbol("X"),
-                Support(4),
-                is_hermitian=True,
-                is_unitary=True,
+    assert log(expr) == Expression.quantum_operator(
+        Expression(
+            Expression.Tag.FN,
+            Expression.symbol("log"),
+            Expression.mul(
+                Expression.symbol("psi", trainable=True),
+                Expression.quantum_operator(
+                    Expression.symbol("X"),
+                    Support(4),
+                    is_hermitian=True,
+                    is_unitary=True,
+                ),
             ),
         ),
+        Support(4),
+    )
+
+
+def test_sqrt() -> None:
+    expr = psi * X(4)
+    assert sqrt(expr) == Expression.quantum_operator(
+        Expression(
+            Expression.Tag.POW,
+            Expression.mul(
+                Expression.symbol("psi", trainable=True),
+                Expression.quantum_operator(
+                    Expression.symbol("X"),
+                    Support(4),
+                    is_hermitian=True,
+                    is_unitary=True,
+                ),
+            ),
+            Expression.value(0.5),
+        ),
+        Support(4),
     )
