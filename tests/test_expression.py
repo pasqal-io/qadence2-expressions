@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-from qadence2_expressions.core.constructors import (
+from qadence2_expressions import (
+    Expression,
+    Support,
     symbol,
     unitary_hermitian_operator,
     value,
 )
-from qadence2_expressions.core.expression import Expression
-from qadence2_expressions.core.support import Support
 
 
-def test_consturctor() -> None:
-    assert value(1) == Expression(Expression.Tag.VALUE, 1)
+def test_constructor() -> None:
+    assert Expression.value(1) == Expression(Expression.Tag.VALUE, 1)
     assert Expression.symbol("x") == Expression(Expression.Tag.SYMBOL, "x")
     assert Expression.function("sin", 3.14) == Expression(
         Expression.Tag.FN, Expression.symbol("sin"), 3.14
@@ -47,7 +47,7 @@ def test_negation() -> None:
     assert -X(2) * X(1) == Expression.mul(value(-1), Expression.kron(X(1), X(2)))
 
 
-def test_subtractions() -> None:
+def test_subtraction() -> None:
     a = symbol("a")
     X = unitary_hermitian_operator("X")
 

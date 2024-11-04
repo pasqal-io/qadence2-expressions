@@ -244,7 +244,8 @@ class Expression:
 
         # By definition, a quantum operator is `QuantumOperator(Expression, Support)`.
         if self.is_quantum_operator:
-            return self[1]  # type: ignore
+            support: Support = self[1]
+            return support
 
         # Collecting only non-null term's subspaces.
         subspaces = []
@@ -344,7 +345,6 @@ class Expression:
 
     def __getitem__(self, index: int | slice) -> Any:
         """Makes the arguments of the expression directly accessible through `expression[i]`."""
-
         return self.args[index]
 
     def __hash__(self) -> int:
@@ -355,7 +355,9 @@ class Expression:
 
     def __repr__(self) -> str:
         args = ", ".join(map(repr, self.args))
-        return f"{self.head.value}({args})"
+        attrs = ", ".join(f"{k}={v}" for k, v in self.attrs.items())
+
+        return f"{self.head.value}({args}" + (f", {attrs}" if attrs else "") + ")"
 
     def __str__(self) -> str:
         return visualize_expression(self)
