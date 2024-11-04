@@ -21,4 +21,11 @@ def exp(x: Expression | complex | float | int) -> Expression:
 
 
 def log(x: Expression | complex | float | int) -> Expression:
-    return function("log", promote(x))
+    expr = function("log", promote(x))
+    # Logarithms of operators are also operators and need to be arranged as such.
+    return expr.as_quantum_operator()
+
+
+# Using square root as power makes symbolic simplifications easier.
+def sqrt(x: Expression | complex | float | int) -> Expression:
+    return promote(x) ** 0.5
