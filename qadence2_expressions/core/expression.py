@@ -43,7 +43,7 @@ class Expression:
     # Constructors
     @classmethod
     def value(cls, x: Numeric) -> Expression:
-        """Promote a numerical value (comples, float, int) to an expression.
+        """Promote a numerical value (complex, float, int) to an expression.
 
         Args:
             x: A numerical value.
@@ -286,7 +286,7 @@ class Expression:
         if self.is_quantum_operator:
             return self.subspace.max_index  # type: ignore
 
-        # Retrun the maximum index among all the terms.
+        # Return the maximum index among all the terms.
         return max(map(lambda arg: arg.max_index, self.args))  # type: ignore
 
     # Helper functions.
@@ -530,7 +530,7 @@ class Expression:
         if not isinstance(other, Numeric):
             return NotImplemented
 
-        return other * (self**-1)
+        return other * (self**-1)  # type: ignore [no-any-return]
 
     def __kron__(self, other: object) -> Expression:
         if not isinstance(other, Expression):

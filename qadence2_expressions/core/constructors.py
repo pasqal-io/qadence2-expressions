@@ -6,6 +6,7 @@ from typing import Any, Callable
 from .environment import Environment
 from .expression import Expression
 from .support import Support
+from .utils import Numeric
 
 
 def with_repr(repr_func: Callable) -> Callable:
@@ -38,7 +39,7 @@ def with_repr(repr_func: Callable) -> Callable:
     return decorator
 
 
-def value(x: complex | float | int) -> Expression:
+def value(x: Numeric) -> Expression:
     """Create a numerical expression from the value `x`.
 
     Args:
@@ -50,7 +51,7 @@ def value(x: complex | float | int) -> Expression:
     Raises:
         TypeError: If the argument is non-numerical.
     """
-    if not isinstance(x, (complex, float, int)):
+    if not isinstance(x, Numeric):
         raise TypeError(
             "Input to 'value' constructor must be of type 'complex', 'float' or 'int'. "
             f"Got {type(x)}."
@@ -59,7 +60,7 @@ def value(x: complex | float | int) -> Expression:
     return Expression.value(x)
 
 
-def promote(x: Expression | complex | float | int) -> Expression:
+def promote(x: Expression | Numeric) -> Expression:
     """Type cast inputs as value type expressions.
 
     Args:
