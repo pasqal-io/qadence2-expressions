@@ -43,7 +43,7 @@ def value(x: Numeric) -> Expression:
     """Create a numerical expression from the value `x`.
 
     Args:
-        x (complex | float | int): Any numerical value.
+        x (Numeric): Any numerical value.
 
     Returns:
         Expression: An expression of type value.
@@ -53,7 +53,8 @@ def value(x: Numeric) -> Expression:
     """
     if not isinstance(x, Numeric):
         raise TypeError(
-            "Input to 'value' constructor must be of type 'complex', 'float' or 'int'. "
+            "Input to 'value' constructor must be of type numeric, e.g.:'complex',"
+            " 'float', 'int', 'torch.Tensor', 'numpy.ndarray', etc. "
             f"Got {type(x)}."
         )
 
@@ -64,7 +65,7 @@ def promote(x: Expression | Numeric) -> Expression:
     """Type cast inputs as value type expressions.
 
     Args:
-        x (Expression | complex | float | int): A valid expression or numerical value.
+        x (Expression | Numeric): A valid expression or numerical value.
          Numerical values are converted into `Value(x)` expressions.
 
     Returns:
@@ -166,7 +167,7 @@ def function(name: str, *args: Any) -> Expression:
 
 @with_repr(lambda func, name: f"HermitianOperator(name='{name}')")
 def unitary_hermitian_operator(name: str) -> Callable:
-    """An unitary Hermitian operator.
+    """A unitary Hermitian operator.
 
     A Hermitian operator is a function that takes a list of indices
     (or a target and control tuples) and return an Expression with

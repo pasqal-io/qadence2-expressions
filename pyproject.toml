@@ -59,6 +59,8 @@ dependencies = [
   "isort",
   "ruff",
   "pydocstringformatter",
+  "numpy",
+  "torch",
 ]
 
 [tool.hatch.envs.default.scripts]
