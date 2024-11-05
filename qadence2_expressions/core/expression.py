@@ -42,7 +42,7 @@ class Expression:
     # Constructors
     @classmethod
     def value(cls, x: complex | float | int) -> Expression:
-        """Promote a numerical value (comples, float, int) to an expression.
+        """Promote a numerical value (complex, float, int) to an expression.
 
         Args:
             x: A numerical value.
@@ -76,7 +76,7 @@ class Expression:
         """Create a symbol from the identifier
 
         Args:
-            indetifier: A string used as the symbol name.
+            identifier: A string used as the symbol name.
 
         Kwargs:
             Keyword arguments are used as flags for compilation steps. The valid flags are dfined in
