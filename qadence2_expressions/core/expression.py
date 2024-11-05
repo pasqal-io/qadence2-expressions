@@ -73,14 +73,14 @@ class Expression:
 
     @classmethod
     def symbol(cls, identifier: str, **attributes: Any) -> Expression:
-        """Create a symbol from the identifier
+        """Create a symbol from the identifier.
 
         Args:
             identifier: A string used as the symbol name.
 
         Kwargs:
-            Keyword arguments are used as flags for compilation steps. The valid flags are dfined in
-            the Qadence2-IR.
+            Keyword arguments are used as flags for compilation steps.
+            The valid flags are defined in Qadence2-IR.
 
         Returns:
             A `Symbol('identifier')` expression.
@@ -405,7 +405,7 @@ class Expression:
             args = (self, other)
 
         # ⚠️ Warning: Ideally, this step should not perform the evaluation of the
-        # the expression. However, we want to provide a friendly intercation to
+        # the expression. However, we want to provide a friendly interaction to
         # the users, and the inacessibility of Python's evaluation (without writing
         # our on REPL) forces to add the evaluation at this point.
         return evaluate_addition(Expression.add(*args))
