@@ -13,7 +13,10 @@ nav:
       - License: getting_started/LICENSE.md
 
   - Contents:
-    - Block system: content/expression_system.md
+    - Expression system: contents/expression_system.md
+
+  - Tutorials:
+    - tutorials/index.md
 
 theme:
   name: material
@@ -78,8 +81,6 @@ plugins:
           merge_init_into_class: true
           docstring_section_style: spacy
 
-- markdown-exec
-
 watch:
   - qadence2_expressions
 
@@ -89,7 +90,7 @@ extra:
 
 # To get nice tabs
 extra_css:
-  - css/mkdocstrings.css
+  - extras/css/mkdocstrings.css
   - extras/css/colors.css
   - extras/css/home.css
 
