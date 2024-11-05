@@ -55,7 +55,7 @@ pip install -e .
 pytest
 ```
 
-### Useful things for your workflow: linting and testing
+## Linting and testing workflows
 
 Use `pre-commit` to lint your code and run the unit tests before pushing a new commit.
 

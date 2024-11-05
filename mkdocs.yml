@@ -1,10 +1,19 @@
-site_name: qadence2 expressions
+site_name: Qadence 2 expressions
 repo_url: "https://gitlab.pasqal.com/pqs/qadence2-expressions"
 repo_name: "qadence2_expressions"
 
 nav:
-  - Overview: index.md
-  - Sample page: sample_page.md
+  - Home: index.md
+
+  - Getting started:
+    - Installation: getting_started/installation.md
+    - Development & Info:
+      - Contributing: getting_started/CONTRIBUTING.md
+      - Code of conduct: getting_started/CODE_OF_CONDUCT.md
+      - License: getting_started/LICENSE.md
+
+  - Contents:
+    - Block system: content/expression_system.md
 
 theme:
   name: material
