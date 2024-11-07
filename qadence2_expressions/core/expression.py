@@ -820,14 +820,14 @@ def visualize_expression(expr: Expression) -> str:
 
     if expr.is_multiplication:
         result = visualize_sequence(expr, "\u2009*\u2009")
-        return sub(r"-1\.0\s", "-", result)
+        return sub(r"-1\.0(\s\*)?\s", "-", result)
 
     if expr.is_kronecker_product:
         return visualize_sequence(expr, "\u2009*\u2009")
 
     if expr.is_addition:
         result = visualize_sequence(expr, " + ", with_brackets=False)
-        return sub(r"\s\+\s-(1\.0\s)?", " - ", result)
+        return sub(r"\s\+\s-(1\.0(\s\*)?\s)?", " - ", result)
 
     if expr.is_power:
         return visualize_sequence(expr, "\u2009^\u2009")
