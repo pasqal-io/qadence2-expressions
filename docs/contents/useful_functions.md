@@ -20,6 +20,3 @@ replaced_ops = replace(Z(1) + 2 * Z(1) * Z (2) - X(3), rules)
 
 print(replaced_ops) # markdown-exec: hide
 ```
-
-
-

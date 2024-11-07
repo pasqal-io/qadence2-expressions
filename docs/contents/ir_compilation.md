@@ -1,6 +1,6 @@
 # Intermediate Representation compilation
 
-Qadence 2 expression package provides compilation functionality to target Qadence 2 Intermediate Representation (IR) defined [here](https://github.com/pasqal-io/qadence2-ir). 
+Qadence 2 expression package provides compilation functionality to target Qadence 2 Intermediate Representation (IR) defined [here](https://github.com/pasqal-io/qadence2-ir).
 
 
 In following is a pure digital program with local possibly parametrized gates compiled to the IR model.
