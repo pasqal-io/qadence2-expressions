@@ -14,7 +14,7 @@ nav:
 
   - Contents:
     - Expression system: contents/expression_system.md
-    - IR compilation: contents/ir_compilation.md  
+    - IR compilation: contents/ir_compilation.md
 
   - Tutorials:
     - tutorials/index.md

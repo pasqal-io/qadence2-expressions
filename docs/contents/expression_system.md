@@ -140,6 +140,3 @@ RX(phi / 2)(1) * RX(phi / 2)(2).dag
 
 print(f"{RX(phi / 2)(1) * RX(phi / 2)(2).dag}")  # markdown-exec: hide
 ```
-
-
-
