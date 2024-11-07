@@ -842,7 +842,7 @@ def visualize_sequence(expr: Expression, operator: str, with_brackets: bool = Tr
     """
 
     if expr.is_value or expr.is_symbol or (expr.is_quantum_operator and expr[0].is_symbol):
-        raise SyntaxError("Only sequence of expression are allowed.")
+        raise SyntaxError("Only a sequence of expressions is allowed.")
 
     if with_brackets:
         return operator.join(map(visualize_with_brackets, expr.args))
