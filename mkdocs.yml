@@ -14,9 +14,16 @@ nav:
 
   - Contents:
     - Expression system: contents/expression_system.md
+    - IR compilation: contents/ir_compilation.md  
 
   - Tutorials:
     - tutorials/index.md
+
+  - API:
+    - Expression: api/expressions.md
+    - Environment: api/environment.md
+    - Constructors: api/constructors.md
+    - Support: api/support.md
 
 theme:
   name: material
