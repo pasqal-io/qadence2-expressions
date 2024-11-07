@@ -63,8 +63,7 @@ def promote(x: Expression | complex | float | int) -> Expression:
     """Type cast inputs as value type expressions.
 
     Args:
-        x (Expression | complex | float | int): A valid expression or numerical value.
-         Numerical values are converted into `Value(x)` expressions.
+        x (Expression | complex | float | int): A valid expression or numerical value. Numerical values are converted into `Value(x)` expressions.
 
     Returns:
         Expression: A value type or expression.

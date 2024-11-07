@@ -15,6 +15,7 @@ nav:
   - Contents:
     - Expression system: contents/expression_system.md
     - IR compilation: contents/ir_compilation.md
+    - Useful functions: contents/useful_functions.md
 
   - Tutorials:
     - tutorials/index.md

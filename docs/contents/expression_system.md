@@ -9,7 +9,7 @@ The Expression system defines syntactic rules to generate symbolic quantum expre
 
 In these examples, basic arithmetic expressions on symbols (parameters) are evaluated to illustrate simplifications and reductions.
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 from qadence2_expressions import *
 
 a = parameter('a')
@@ -19,52 +19,52 @@ a + a
 print(f"{a + a}")  # markdown-exec: hide
 ```
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 a - a
 print(f"{a - a}")  # markdown-exec: hide
 ```
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 a / a
 print(f"{a / a}")  # markdown-exec: hide
 ```
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 a + b
 print(f"{a + b}")  # markdown-exec: hide
 ```
 
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 a / (2*b)
 print(f"{a / (2*b)}")  # markdown-exec: hide
 ```
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 a ** 0
 print(f"{a ** 0}")  # markdown-exec: hide
 ```
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 a ** 1
 print(f"{a ** 1}")  # markdown-exec: hide
 ```
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 2 ** (a + b)
 print(f"{2 ** (a + b)}")  # markdown-exec: hide
 ```
 
 Products of sums are expanded
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 (a + b) * (a + b)
 print(f"{(a + b) * (a + b)}")  # markdown-exec: hide
 ```
 
 But exponentiations of sums are not as power simplifications take precedence.
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 (a + b) * (a + b) ** 2 / (a + b)
 print(f"{(a + b) * (a + b) ** 2 / (a + b)}\n")  # markdown-exec: hide
 ```
@@ -73,35 +73,35 @@ print(f"{(a + b) * (a + b) ** 2 / (a + b)}\n")  # markdown-exec: hide
 
 Standard quantum operators are defined as Python `Callable` that accept a qubit support as argument. Please note that the support can either be a single `int` for single qubit operations or a tuple of qubit indices for operations that span across multiple qubits or nothing to create global operations that span across the whole register (denoted by the `*` wildcard).
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 X(2) * Y() * Z(1,2)
 print(f"{X(2) * Y() * Z(1,2)}")  # markdown-exec: hide
 ```
 
 (Multi-)Controlled operators need to be provided with non-overlapping tuples for control and target qubits. The notation convention is to display target indices first followed by control indices.
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 NOT(control=(1,), target=(2,)) * NOT(target=(1,3), control=(2,4))
 print(f"{NOT(control=(1,), target=(2,)) * NOT(target=(1,3), control=(2,4))}")  # markdown-exec: hide
 ```
 
 Quantum operators can be parametrized and expressions expanded.
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 X() * (cos(a) * X() + 1j * sin(a) * Y()) / 2
 print(f"{X() * (cos(a) * X() + 1j * sin(a) * Y()) / 2}")  # markdown-exec: hide
 ```
 
 Global and local operators can be combined.
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 X(1) * (cos(a) * X() + 1j * sin(a) * Y()) * Z(1) / 2
 print(f"{X(1) * (cos(a) * X() + 1j * sin(a) * Y()) * Z(1) / 2}")  # markdown-exec: hide
 ```
 
 Custom operators can be created as functions or based on other operators. For instance, the `CNOT`:
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 CNOT = lambda ctrl, tgt: NOT(target=(tgt,), control=(ctrl,))
 Y(4) * X(3) * Y(5,4) * CNOT(1,2) * Z(3)
 print(f"{Y(4) * X(3) * Y(5,4) * CNOT(1,2) * Z(3)}")  # markdown-exec: hide
@@ -109,7 +109,7 @@ print(f"{Y(4) * X(3) * Y(5,4) * CNOT(1,2) * Z(3)}")  # markdown-exec: hide
 
 Or the number operator. Expansion rules still hold.
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 N = lambda k: (1 - Z(k)) / 2
 
 sum(a * X(i) - b * Z(i) + N(i) * N(i + 1) for i in range(1))
@@ -118,7 +118,7 @@ print(f"{sum(a * X(i) - b * Z(i) + N(i) * N(i + 1) for i in range(1))}")  # mark
 
 Parametric operators need to get passed a parameter as first argument, then the qubit support. This ensures syntactic consistency across operators. Unitarity still holds.
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 phi = variable("phi")
 
 RX(phi / 2)(1) * RX(phi / 2)(1).dag
@@ -127,7 +127,7 @@ print(f"{RX(phi / 2)(1) * RX(phi / 2)(1).dag}")  # markdown-exec: hide
 
 Arithmetic operations still hold for operator parameters defined over the same support.
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 RX(phi / 2)(1) * RX(- phi / 2)(1)
 
 print(f"{RX(phi / 2)(1) * RX(- phi / 2)(1)}")  # markdown-exec: hide
@@ -135,7 +135,7 @@ print(f"{RX(phi / 2)(1) * RX(- phi / 2)(1)}")  # markdown-exec: hide
 
 As opposed to:
 
-```python exec="on" source="material-block" html="1" session="getting_started"
+```python exec="on" source="material-block" html="1" session="expressions"
 RX(phi / 2)(1) * RX(phi / 2)(2).dag
 
 print(f"{RX(phi / 2)(1) * RX(phi / 2)(2).dag}")  # markdown-exec: hide
