@@ -809,7 +809,7 @@ def visualize_expression(expr: Expression) -> str:
         return str(expr[0])
 
     if expr.is_quantum_operator:
-        dag = "'" if expr.get("is_dagger") else ""
+        dag = "\u2020" if expr.get("is_dagger") else ""
         if expr[0].is_symbol or expr[0].is_function:
             return f"{expr[0]}{dag}{expr[1]}"
         return f"{expr[0]}"
