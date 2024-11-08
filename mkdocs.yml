@@ -1,13 +1,34 @@
-site_name: qadence2 expressions
-repo_url: "https://gitlab.pasqal.com/pqs/qadence2-expressions"
+site_name: Qadence 2 expressions
+repo_url: "https://github.com/pasqal-io/qadence2-expressions"
 repo_name: "qadence2_expressions"
 
 nav:
-  - Overview: index.md
-  - Sample page: sample_page.md
+  - Home: index.md
+
+  - Getting started:
+    - Installation: getting_started/installation.md
+    - Development & Info:
+      - Contributing: getting_started/CONTRIBUTING.md
+      - Code of conduct: getting_started/CODE_OF_CONDUCT.md
+      - License: getting_started/LICENSE.md
+
+  - Contents:
+    - Expression system: contents/expression_system.md
+    - IR compilation: contents/ir_compilation.md
+    - Useful functions: contents/useful_functions.md
+
+  - Tutorials:
+    - tutorials/index.md
+
+  - API:
+    - Expression: api/expressions.md
+    - Environment: api/environment.md
+    - Constructors: api/constructors.md
+    - Support: api/support.md
 
 theme:
   name: material
+  custom_dir: docs/extras/overrides/
   features:
   - content.code.annotate
   - content.action.view
@@ -35,13 +56,20 @@ theme:
 
 markdown_extensions:
 - admonition  # for notes
+- footnotes
 - pymdownx.arithmatex: # for mathjax
     generic: true
 - pymdownx.highlight:
     anchor_linenums: true
 - pymdownx.inlinehilite
 - pymdownx.snippets
-- pymdownx.superfences
+- pymdownx.superfences:
+    custom_fences:
+    - name: python
+      class: python
+      validator: "!!python/name:markdown_exec.validator"
+      format: "!!python/name:markdown_exec.formatter"
+
 
 plugins:
 - search
@@ -70,7 +98,9 @@ extra:
 
 # To get nice tabs
 extra_css:
-- css/mkdocstrings.css
+  - extras/css/mkdocstrings.css
+  - extras/css/colors.css
+  - extras/css/home.css
 
 # For mathjax
 extra_javascript:

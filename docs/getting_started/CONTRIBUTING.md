@@ -1,6 +1,6 @@
 # How to contribute
 
-We're grateful for your interest in participating in Qadence Expressions. Please follow our guidelines to ensure a smooth contribution process.
+We're grateful for your interest in participating in Qadence 2 Expressions. Please follow our guidelines to ensure a smooth contribution process.
 
 ## Reporting an issue or proposing a feature
 
@@ -55,7 +55,7 @@ pip install -e .
 pytest
 ```
 
-### Useful things for your workflow: linting and testing
+## Linting and testing workflows
 
 Use `pre-commit` to lint your code and run the unit tests before pushing a new commit.
 
