@@ -804,6 +804,16 @@ def evaluate_kronop(lhs: Expression, rhs: Expression) -> Expression:
                 else Expression.quantum_operator(res, lhs[1], **lhs.attrs)
             )
 
+        # Simplify the multiplication of unitary Hermitian operators with fractional
+        # power, e.g., `√X() * √X() == X()`.
+        if (
+            lhs[0].is_power
+            and rhs[0].is_power
+            and lhs[0][0] == rhs[0][0]  # both are the same operator
+            and (lhs[0][0].get("is_hermitian") and lhs[0][0].get("is_unitary"))
+        ):
+            return lhs[0][0] ** (lhs[0][1] + rhs[0][1])  # type: ignore
+
     # Order the operators by subspace.
     if lhs.subspace < rhs.subspace or lhs.subspace.overlap_with(  # type: ignore
         rhs.subspace  # type: ignore

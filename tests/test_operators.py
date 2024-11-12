@@ -12,6 +12,7 @@ from qadence2_expressions import (
     X,
     Y,
     Z,
+    sqrt,
     value,
     variable,
 )
@@ -23,9 +24,16 @@ def test_idempotency_unitary_hermitian_operators(operator: Callable) -> None:
 
 
 @pytest.mark.parametrize("operator", [CZ, H, X, Y, Z, NOT, SWAP])
-def test_power_unitary_hermitian_operators(operator: Callable) -> None:
+def test_int_power_unitary_hermitian_operators(operator: Callable) -> None:
     assert operator() ** 2 == value(1)
     assert operator() ** 3 == operator()
+
+
+@pytest.mark.parametrize("operator", [CZ, H, X, Y, Z, NOT, SWAP])
+def test_fractional_power_unitary_hermitian_operators(operator: Callable) -> None:
+    # Simplify only acting on same subspace.
+    assert sqrt(operator()) * sqrt(operator()) == operator()
+    assert sqrt(operator(0)) * sqrt(operator(1)) == sqrt(operator(0)) * sqrt(operator(1))
 
 
 def test_parametric_opertor() -> None:
