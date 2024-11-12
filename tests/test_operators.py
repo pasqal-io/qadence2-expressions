@@ -14,7 +14,7 @@ from qadence2_expressions import (
 )
 
 
-def test_unitary_hermitian_operators() -> None:
+def test_idempotency_unitary_hermitian_operators() -> None:
     assert H() * H() == value(1)
     assert X() * X() == value(1)
     assert Y() * Y() == value(1)
