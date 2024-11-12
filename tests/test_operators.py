@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import pytest
+from typing import Callable
+
 from qadence2_expressions import (
     CZ,
     H,
@@ -14,14 +17,15 @@ from qadence2_expressions import (
 )
 
 
-def test_idempotency_unitary_hermitian_operators() -> None:
-    assert H() * H() == value(1)
-    assert X() * X() == value(1)
-    assert Y() * Y() == value(1)
-    assert Z() * Z() == value(1)
-    assert CZ() * CZ() == value(1)
-    assert NOT() * NOT() == value(1)
-    assert SWAP() * SWAP() == value(1)
+@pytest.mark.parametrize("operator", [CZ, H, X, Y, Z, NOT, SWAP])
+def test_idempotency_unitary_hermitian_operators(operator: Callable) -> None:
+    assert operator() * operator() == value(1)
+
+
+@pytest.mark.parametrize("operator", [CZ, H, X, Y, Z, NOT, SWAP])
+def test_power_unitary_hermitian_operators(operator: Callable) -> None:
+    assert operator() ** 2 == value(1)
+    assert operator() ** 3 == operator()
 
 
 def test_parametric_opertor() -> None:

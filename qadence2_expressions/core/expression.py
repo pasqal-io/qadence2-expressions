@@ -489,6 +489,17 @@ class Expression:
         if other.is_one:
             return self
 
+        if (
+            self.is_quantum_operator
+            and self.get("is_hermitian")
+            and self.get("is_unitary")
+            and isinstance(other, Expression)
+            and other.is_value
+            and other[0] == int(other[0])
+        ):
+            power = int(other[0]) % 2
+            return self if power == 1 else Expression.one()
+
         # Power of power is an simple operation and can be evaluated here.
         # Whenever a quantum operator is present, the expression is promoted to
         # a quantum operator.
