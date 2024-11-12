@@ -43,7 +43,7 @@ class Expression:
     # Constructors
     @classmethod
     def value(cls, x: Numeric) -> Expression:
-        """Promote a numerical value (complex, float, int) to an expression.
+        """Promote a numerical value (Numeric) to an expression.
 
         Args:
             x: A numerical value.
@@ -74,14 +74,14 @@ class Expression:
 
     @classmethod
     def symbol(cls, identifier: str, **attributes: Any) -> Expression:
-        """Create a symbol from the identifier
+        """Create a symbol from the identifier.
 
         Args:
             identifier: A string used as the symbol name.
 
         Kwargs:
-            Keyword arguments are used as flags for compilation steps. The valid flags are dfined in
-            the Qadence2-IR.
+            Keyword arguments are used as flags for compilation steps.
+            The valid flags are defined in Qadence2-IR.
 
         Returns:
             A `Symbol('identifier')` expression.
@@ -813,7 +813,7 @@ def visualize_expression(expr: Expression) -> str:
         return str(expr[0])
 
     if expr.is_quantum_operator:
-        dag = "'" if expr.get("is_dagger") else ""
+        dag = "\u2020" if expr.get("is_dagger") else ""
         if expr[0].is_symbol or expr[0].is_function:
             return f"{expr[0]}{dag}{expr[1]}"
         return f"{expr[0]}"
@@ -824,14 +824,14 @@ def visualize_expression(expr: Expression) -> str:
 
     if expr.is_multiplication:
         result = visualize_sequence(expr, "\u2009*\u2009")
-        return sub(r"-1\.0\s", "-", result)
+        return sub(r"-1\.0(\s\*)?\s", "-", result)
 
     if expr.is_kronecker_product:
         return visualize_sequence(expr, "\u2009*\u2009")
 
     if expr.is_addition:
         result = visualize_sequence(expr, " + ", with_brackets=False)
-        return sub(r"\s\+\s-(1\.0\s)?", " - ", result)
+        return sub(r"\s\+\s-(1\.0(\s\*)?\s)?", " - ", result)
 
     if expr.is_power:
         return visualize_sequence(expr, "\u2009^\u2009")
@@ -846,7 +846,7 @@ def visualize_sequence(expr: Expression, operator: str, with_brackets: bool = Tr
     """
 
     if expr.is_value or expr.is_symbol or (expr.is_quantum_operator and expr[0].is_symbol):
-        raise SyntaxError("Only sequence of expression are allowed.")
+        raise SyntaxError("Only a sequence of expressions is allowed.")
 
     if with_brackets:
         return operator.join(map(visualize_with_brackets, expr.args))

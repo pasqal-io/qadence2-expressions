@@ -7,7 +7,7 @@ class Support:
     """A class to handle the qubit support providing easy initialization for single, multi, and
     controlled qubit operations.
 
-    The class can be initializes in three ways:
+    The class can be initialized in three ways:
 
     1. `Support(i)` for single qubit support.
     2. `Support(i₀,...,iₙ)` for supports covering indices `{i₀,...,iₙ}` use either by multi-indices
