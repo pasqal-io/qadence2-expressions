@@ -14,10 +14,12 @@ from .functions import (
 from .ircompiler import compile_to_model
 from .operators import (
     CZ,
+    H,
     NOT,
     RX,
     RY,
     RZ,
+    SWAP,
     Z0,
     Z1,
     FreeEvolution,
@@ -37,6 +39,7 @@ __all__ = [
     "CZ",
     "exp",
     "FreeEvolution",
+    "H",
     "log",
     "NativeDrive",
     "NOT",
@@ -45,6 +48,7 @@ __all__ = [
     "RX",
     "RY",
     "RZ",
+    "SWAP",
     "sin",
     "sqrt",
     "X",

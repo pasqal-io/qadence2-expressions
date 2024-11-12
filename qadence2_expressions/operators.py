@@ -23,6 +23,10 @@ CZ = unitary_hermitian_operator("CZ")
 # Logic operators
 NOT = unitary_hermitian_operator("NOT")
 
+# Digital operators
+SWAP = unitary_hermitian_operator("SWAP")
+H = unitary_hermitian_operator("H")  # Hadamard gate
+
 # Default projectors
 Z0 = projector("Z", "0")
 Z1 = projector("Z", "1")
