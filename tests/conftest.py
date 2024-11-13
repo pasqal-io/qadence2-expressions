@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Callable
+from typing import Callable
 import pytest
 
 from qadence2_expressions import (
@@ -15,5 +15,5 @@ from qadence2_expressions import (
 
 
 @pytest.fixture
-def unitary_hermitian_operators() -> List[Callable]:
+def unitary_hermitian_operators() -> list[Callable]:
     return [CZ, H, X, Y, Z, NOT, SWAP]
