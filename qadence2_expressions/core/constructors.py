@@ -5,14 +5,13 @@ from typing import Any, Callable
 from .environment import Environment
 from .expression import Expression
 from .support import Support
-from .utils import Numeric
 
 
-def value(x: Numeric) -> Expression:
+def value(x: complex | float | int) -> Expression:
     """Create a numerical expression from the value `x`.
 
     Args:
-        x (Numeric): Any numerical value.
+        x (complex | float | int): Any numerical value.
 
     Returns:
         Expression: An expression of type value.
@@ -20,7 +19,7 @@ def value(x: Numeric) -> Expression:
     Raises:
         TypeError: If the argument is non-numerical.
     """
-    if not isinstance(x, Numeric):
+    if not isinstance(x, (complex, float, int)):
         raise TypeError(
             "Input to 'value' constructor must be of type numeric, e.g.:'complex',"
             " 'float', 'int', 'torch.Tensor', 'numpy.ndarray', etc. "
@@ -30,11 +29,11 @@ def value(x: Numeric) -> Expression:
     return Expression.value(x)
 
 
-def promote(x: Expression | Numeric) -> Expression:
+def promote(x: Expression | complex | float | int) -> Expression:
     """Type cast inputs as value type expressions.
 
     Args:
-        x (Expression | Numeric): A valid expression or numerical value.
+        x (Expression | complex | float | int): A valid expression or numerical value.
          Numerical values are converted into `Value(x)` expressions.
 
     Returns:

@@ -6,7 +6,6 @@ from re import sub
 from typing import Any
 
 from .support import Support
-from .utils import Numeric
 
 
 class Expression:
@@ -42,8 +41,8 @@ class Expression:
 
     # Constructors
     @classmethod
-    def value(cls, x: Numeric) -> Expression:
-        """Promote a numerical value (Numeric) to an expression.
+    def value(cls, x: complex | float | int) -> Expression:
+        """Promote a numerical value (complex | float | int) to an expression.
 
         Args:
             x: A numerical value.
@@ -378,11 +377,11 @@ class Expression:
 
     # Algebraic operations
     def __add__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | Numeric):
+        if not isinstance(other, Expression | complex | float | int):
             return NotImplemented
 
         # Promote numerial values to Expression.
-        if isinstance(other, Numeric):
+        if isinstance(other, (complex, float, int)):
             return self + Expression.value(other)
 
         # Addition identity: a + 0 = 0 + a = a
@@ -413,17 +412,17 @@ class Expression:
 
     def __radd__(self, other: object) -> Expression:
         # Promote numerical types to expression.
-        if isinstance(other, Numeric):
+        if isinstance(other, (complex, float, int)):
             return Expression.value(other) + self
 
         return NotImplemented
 
     def __mul__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | Numeric):
+        if not isinstance(other, Expression | complex | float | int):
             return NotImplemented
 
         # Promote numerical values to Expression.
-        if isinstance(other, Numeric):
+        if isinstance(other, (complex, float, int)):
             return self * Expression.value(other)
 
         # Null multiplication shortcut.
@@ -464,7 +463,7 @@ class Expression:
 
     def __rmul__(self, other: object) -> Expression:
         # Promote numerical types to expression.
-        if isinstance(other, Numeric):
+        if isinstance(other, (complex, float, int)):
             return Expression.value(other) * self
 
         return NotImplemented
@@ -472,10 +471,10 @@ class Expression:
     def __pow__(self, other: object) -> Expression:
         """Power involving quantum operators always promote expression to quantum operators."""
 
-        if not isinstance(other, Expression | Numeric):
+        if not isinstance(other, Expression | complex | float | int):
             return NotImplemented
 
-        if isinstance(other, Numeric):
+        if isinstance(other, (complex, float, int)):
             return self ** Expression.value(other)
 
         # Numerical values are computed right away.
@@ -500,7 +499,7 @@ class Expression:
 
     def __rpow__(self, other: object) -> Expression:
         # Promote numerical types to expression.
-        if isinstance(other, Numeric):
+        if isinstance(other, (complex, float, int)):
             return Expression.value(other) ** self
 
         return NotImplemented
@@ -509,25 +508,25 @@ class Expression:
         return -1 * self
 
     def __sub__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | Numeric):
+        if not isinstance(other, Expression | complex | float | int):
             return NotImplemented
 
         return self + (-other)
 
     def __rsub__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | Numeric):
+        if not isinstance(other, Expression | complex | float | int):
             return NotImplemented
 
         return (-self) + other
 
     def __truediv__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | Numeric):
+        if not isinstance(other, Expression | complex | float | int):
             return NotImplemented
 
         return self * (other**-1)
 
     def __rtruediv__(self, other: object) -> Expression:
-        if not isinstance(other, Numeric):
+        if not isinstance(other, (complex, float, int)):
             return NotImplemented
 
         return other * (self**-1)  # type: ignore [no-any-return]
