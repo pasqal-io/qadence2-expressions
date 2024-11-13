@@ -489,6 +489,17 @@ class Expression:
         if other.is_one:
             return self
 
+        if (
+            self.is_quantum_operator
+            and self.get("is_hermitian")
+            and self.get("is_unitary")
+            and isinstance(other, Expression)
+            and other.is_value
+            and other[0] == int(other[0])
+        ):
+            power = int(other[0]) % 2
+            return self if power == 1 else Expression.one()
+
         # Power of power is an simple operation and can be evaluated here.
         # Whenever a quantum operator is present, the expression is promoted to
         # a quantum operator.
@@ -792,6 +803,16 @@ def evaluate_kronop(lhs: Expression, rhs: Expression) -> Expression:
                 if res.is_zero or res.is_one
                 else Expression.quantum_operator(res, lhs[1], **lhs.attrs)
             )
+
+        # Simplify the multiplication of unitary Hermitian operators with fractional
+        # power, e.g., `√X() * √X() == X()`.
+        if (
+            lhs[0].is_power
+            and rhs[0].is_power
+            and lhs[0][0] == rhs[0][0]  # both are the same operator
+            and (lhs[0][0].get("is_hermitian") and lhs[0][0].get("is_unitary"))
+        ):
+            return lhs[0][0] ** (lhs[0][1] + rhs[0][1])  # type: ignore
 
     # Order the operators by subspace.
     if lhs.subspace < rhs.subspace or lhs.subspace.overlap_with(  # type: ignore
