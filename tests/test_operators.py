@@ -6,6 +6,6 @@ from qadence2_expressions import (
 )
 
 
-def test_parametric_opertor() -> None:
+def test_parametric_operator() -> None:
     theta = variable("theta")
     assert RX(theta / 2)() * RX(theta / 2)() == RX(theta)()

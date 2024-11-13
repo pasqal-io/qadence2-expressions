@@ -1,42 +1,11 @@
 from __future__ import annotations
 
-from functools import wraps
 from typing import Any, Callable
 
 from .environment import Environment
 from .expression import Expression
 from .support import Support
 from .utils import Numeric
-
-
-def with_repr(repr_func: Callable) -> Callable:
-    """Decorator to give a dynamic __repr__ to a function based on its arguments."""
-
-    class CallableWithRepr:
-        def __init__(
-            self,
-            func: Callable,
-            *args: Any,
-            **kwargs: Any,
-        ) -> None:
-            self.func: Callable = func
-            self.args = args
-            self.kwargs = kwargs
-
-        def __call__(self, *args: Any, **kwargs: Any) -> Any:
-            # Call the original function with provided arguments
-            return self.func(*args, **kwargs)
-
-        def __repr__(self) -> str:
-            # Generate a custom repr using the provided repr_func
-            return str(repr_func(self.func, *self.args, **self.kwargs))
-
-    @wraps(repr_func)
-    def decorator(func: Callable) -> Callable:
-        # Return a wrapped CallableWithRepr instance
-        return lambda *args, **kwargs: CallableWithRepr(func(*args, **kwargs), *args, **kwargs)
-
-    return decorator
 
 
 def value(x: Numeric) -> Expression:
@@ -165,7 +134,6 @@ def function(name: str, *args: Any) -> Expression:
     return Expression.function(name, *args)
 
 
-@with_repr(lambda func, name: f"HermitianOperator(name='{name}')")
 def unitary_hermitian_operator(name: str) -> Callable:
     """A unitary Hermitian operator.
 
@@ -204,7 +172,6 @@ def unitary_hermitian_operator(name: str) -> Callable:
     return core
 
 
-@with_repr(lambda func, base, index: f"Projector(base='{base}', index='{index}')")
 def projector(base: str, index: str) -> Callable:
     """A projector operator.
 
@@ -246,7 +213,6 @@ def projector(base: str, index: str) -> Callable:
     return core
 
 
-@with_repr(lambda func, name: f"ParametricOperator(name='{name}')")
 def parametric_operator(
     name: str, *args: Any, join: Callable | None = None, **attributes: Any
 ) -> Callable:
