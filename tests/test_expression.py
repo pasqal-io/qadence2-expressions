@@ -103,10 +103,11 @@ def test_kron() -> None:
     term1 = Expression.kron(X(1), X(4))
     term2 = Expression.kron(X(2), X(3))
 
-    assert term1.__kron__(term2) == Expression.kron(X(1), X(2), X(3), X(4))
-    assert term2.__kron__(term1) == Expression.kron(X(1), X(2), X(3), X(4))
-    assert term1 @ term2 == Expression.kron(X(1), X(2), X(3), X(4))
-    assert term2 @ term1 == Expression.kron(X(1), X(2), X(3), X(4))
+    expected = Expression.kron(X(1), X(2), X(3), X(4))
+    assert term1.__kron__(term2) == expected
+    assert term2.__kron__(term1) == expected
+    assert term1 @ term2 == expected
+    assert term2 @ term1 == expected
 
 
 def test_commutativity() -> None:
