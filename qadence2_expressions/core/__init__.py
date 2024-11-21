@@ -32,6 +32,7 @@ from .environment import (
 )
 from .expression import Expression
 from .support import Support
+from .utils import Numeric
 
 __all__ = [
     "add_grid_options",
@@ -62,4 +63,5 @@ __all__ = [
     "unitary_hermitian_operator",
     "value",
     "variable",
+    "Numeric",
 ]

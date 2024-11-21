@@ -5,13 +5,14 @@ from typing import Any, Callable
 from .environment import Environment
 from .expression import Expression
 from .support import Support
+from .utils import Numeric
 
 
-def value(x: complex | float | int) -> Expression:
+def value(x: Numeric) -> Expression:
     """Create a numerical expression from the value `x`.
 
     Args:
-        x (complex | float | int): Any numerical value.
+        x (Numeric): Any numerical value.
 
     Returns:
         Expression: An expression of type value.
@@ -29,11 +30,11 @@ def value(x: complex | float | int) -> Expression:
     return Expression.value(x)
 
 
-def promote(x: Expression | complex | float | int) -> Expression:
+def promote(x: Expression | Numeric) -> Expression:
     """Type cast inputs as value type expressions.
 
     Args:
-        x (Expression | complex | float | int): A valid expression or numerical value.
+        x (Expression | Numeric): A valid expression or numerical value.
          Numerical values are converted into `Value(x)` expressions.
 
     Returns:

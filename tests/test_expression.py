@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from qadence2_expressions import (
     Expression,
     Support,
@@ -90,24 +92,26 @@ def test_division() -> None:
 def test_kron() -> None:
     X = unitary_hermitian_operator("X")
     term = Expression.kron(X(1), X(2), X(4))
+    expected = Expression.kron(X(1), X(2), X(3), X(4))
 
     # Push term from the right.
-    assert term.__kron__(X(3)) == Expression.kron(X(1), X(2), X(3), X(4))
-    assert term @ X(3) == Expression.kron(X(1), X(2), X(3), X(4))
+    assert term.__kron__(X(3)) == expected
+    assert term @ X(3) == expected
 
     # Push term from the left.
-    assert X(3).__kron__(term) == Expression.kron(X(1), X(2), X(3), X(4))
-    assert X(3) @ term == Expression.kron(X(1), X(2), X(3), X(4))
+    assert X(3).__kron__(term) == expected
+    assert X(3) @ term == expected
 
     # Join `kron` expressions.
     term1 = Expression.kron(X(1), X(4))
     term2 = Expression.kron(X(2), X(3))
 
-    expected = Expression.kron(X(1), X(2), X(3), X(4))
     assert term1.__kron__(term2) == expected
     assert term2.__kron__(term1) == expected
     assert term1 @ term2 == expected
     assert term2 @ term1 == expected
+    with pytest.deprecated_call():
+        term1 @ term2
 
 
 def test_commutativity() -> None:
