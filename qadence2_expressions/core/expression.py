@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import warnings
 from enum import Enum
 from functools import cached_property, reduce
 from re import sub
 from typing import Any
 
 from .support import Support
+from .utils import Numeric
 
 
 class Expression:
@@ -41,7 +43,7 @@ class Expression:
 
     # Constructors
     @classmethod
-    def value(cls, x: complex | float | int) -> Expression:
+    def value(cls, x: Numeric) -> Expression:
         """Promote a numerical value (complex, float, int) to an expression.
 
         Args:
@@ -246,7 +248,7 @@ class Expression:
             support: Support = self[1]
             return support
 
-        # Collecting only non-null term's subpaces.
+        # Collecting only non-null term's subspaces.
         subspaces = []
         for arg in self.args:
             sp = arg.subspace
@@ -285,7 +287,7 @@ class Expression:
         if self.is_quantum_operator:
             return self.subspace.max_index  # type: ignore
 
-        # Retrun the maximum index among all the terms.
+        # Return the maximum index among all the terms.
         return max(map(lambda arg: arg.max_index, self.args))  # type: ignore
 
     # Helper functions.
@@ -377,11 +379,11 @@ class Expression:
 
     # Algebraic operations
     def __add__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | complex | float | int):
+        if not isinstance(other, Expression | Numeric):
             return NotImplemented
 
         # Promote numerial values to Expression.
-        if isinstance(other, complex | float | int):
+        if isinstance(other, Numeric):
             return self + Expression.value(other)
 
         # Addition identity: a + 0 = 0 + a = a
@@ -405,24 +407,24 @@ class Expression:
             args = (self, other)
 
         # ⚠️ Warning: Ideally, this step should not perform the evaluation of the
-        # the expression. However, we want to provide a friendly interaction to
-        # the users, and the inacessibility of Python's evaluation (without writing
-        # our on REPL) forces to add the evaluation at this point.
+        # expression. However, we want to provide a friendly interaction to the users,
+        # and the inaccessibility of Python's evaluation (without writing our own REPL)
+        # forces to add the evaluation at this point.
         return evaluate_addition(Expression.add(*args))
 
     def __radd__(self, other: object) -> Expression:
         # Promote numerical types to expression.
-        if isinstance(other, complex | float | int):
+        if isinstance(other, Numeric):
             return Expression.value(other) + self
 
         return NotImplemented
 
     def __mul__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | complex | float | int):
+        if not isinstance(other, Expression | Numeric):
             return NotImplemented
 
         # Promote numerical values to Expression.
-        if isinstance(other, complex | float | int):
+        if isinstance(other, Numeric):
             return self * Expression.value(other)
 
         # Null multiplication shortcut.
@@ -456,14 +458,14 @@ class Expression:
             args = (self, other)
 
         # ⚠️ Warning: Ideally, this step should not perform the evaluation of the
-        # the expression. However, we want to provide a friendly intercation to
-        # the users, and the inacessibility of Python's evaluation (without writing
-        # our on REPL) forces to add the evaluation at this point.
+        # expression. However, we want to provide a friendly interaction to the users,
+        # and the inaccessibility of Python's evaluation (without writing our own REPL)
+        # forces to add the evaluation at this point.
         return evaluate_multiplication(Expression.mul(*args))
 
     def __rmul__(self, other: object) -> Expression:
         # Promote numerical types to expression.
-        if isinstance(other, complex | float | int):
+        if isinstance(other, Numeric):
             return Expression.value(other) * self
 
         return NotImplemented
@@ -471,10 +473,10 @@ class Expression:
     def __pow__(self, other: object) -> Expression:
         """Power involving quantum operators always promote expression to quantum operators."""
 
-        if not isinstance(other, Expression | complex | float | int):
+        if not isinstance(other, Expression | Numeric):
             return NotImplemented
 
-        if isinstance(other, complex | float | int):
+        if isinstance(other, Numeric):
             return self ** Expression.value(other)
 
         # Numerical values are computed right away.
@@ -489,6 +491,7 @@ class Expression:
         if other.is_one:
             return self
 
+        # Power of power is a simple operation and can be evaluated here.
         if (
             self.is_quantum_operator
             and self.get("is_hermitian")
@@ -510,7 +513,7 @@ class Expression:
 
     def __rpow__(self, other: object) -> Expression:
         # Promote numerical types to expression.
-        if isinstance(other, complex | float | int):
+        if isinstance(other, Numeric):
             return Expression.value(other) ** self
 
         return NotImplemented
@@ -519,28 +522,28 @@ class Expression:
         return -1 * self
 
     def __sub__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | complex | float | int):
+        if not isinstance(other, Expression | Numeric):
             return NotImplemented
 
         return self + (-other)
 
     def __rsub__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | complex | float | int):
+        if not isinstance(other, Expression | Numeric):
             return NotImplemented
 
         return (-self) + other
 
     def __truediv__(self, other: object) -> Expression:
-        if not isinstance(other, Expression | complex | float | int):
+        if not isinstance(other, Expression | Numeric):
             return NotImplemented
 
         return self * (other**-1)
 
     def __rtruediv__(self, other: object) -> Expression:
-        if not isinstance(other, complex | float | int):
+        if not isinstance(other, Numeric):
             return NotImplemented
 
-        return other * (self**-1)
+        return other * (self**-1)  # type: ignore
 
     def __kron__(self, other: object) -> Expression:
         if not isinstance(other, Expression):
@@ -569,10 +572,18 @@ class Expression:
             return self
 
         # ⚠️ Warning: Ideally, this step should not perform the evaluation of the
-        # the expression. However, we want to provide a friendly intercation to
-        # the users, and the inacessibility of Python's evaluation (without writing
-        # our on REPL) forces to add the evaluation at this point.
+        # expression. However, we want to provide a friendly interaction to the users,
+        # and the inaccessibility of Python's evaluation (without writing our own REPL)
+        # forces to add the evaluation at this point.
         return evaluate_kron(Expression.kron(self, other))
+
+    def __matmul__(self, other: object) -> Expression:
+        warnings.warn(
+            "The `@` (`__matmul__`) operator will be deprecated. Use `*` instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return self.__kron__(other)
 
 
 def evaluate_addition(expr: Expression) -> Expression:
