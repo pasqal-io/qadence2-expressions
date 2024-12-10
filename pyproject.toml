@@ -21,6 +21,8 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
   "Programming Language :: Python :: Implementation :: PyPy",
 ]
@@ -28,7 +30,7 @@ classifiers = [
 # always specify a version for each package
 # to maintain consistency
 dependencies = [
-  "qadence2-ir"
+  "qadence2-ir>=0.2.0"
 ]
 
 [tool.hatch.metadata]
@@ -99,7 +101,7 @@ serve = "mkdocs serve --dev-addr localhost:8000"
 test = "mkdocs build --clean --strict"
 
 [[tool.hatch.envs.test.matrix]]
-python = ["310", "311"]
+python = ["310", "311", "312", "313"]
 
 [tool.hatch.build.targets.sdist]
 exclude = [
