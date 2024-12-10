@@ -66,11 +66,11 @@ dependencies = [
 ]
 
 [tool.hatch.envs.default.scripts]
-test = "pytest -n auto {args}"
+test = "pytest -n auto --cov-config=pyproject.toml --cov=qadence2_expressions {args}"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = """-vvv"""
+addopts = """-vvv --cov-config=pyproject.toml --cov=qadence2_expressions"""
 xfail_strict = true
 filterwarnings = [
   "ignore:Call to deprecated create function FieldDescriptor",
