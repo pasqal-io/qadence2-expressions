@@ -102,7 +102,7 @@ def PiecewiseDrive(
         raise ValueError("For N-size duration array, N+1-size amplitude and detuning is required.")
 
     param_op: Callable = parametric_operator(
-        "PiecwiseDrive",
+        "PiecewiseDrive",
         duration,
         amplitude,
         detuning,
