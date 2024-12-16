@@ -79,13 +79,14 @@ def NativeDrive(
     )
     return param_op
 
+
 def PiecewiseDrive(
     duration: Expression,
     amplitude: Expression,
     detuning: Expression,
     phase: Expression,
 ) -> Callable:
-    
+
     duration = promote(duration)
     amplitude = promote(amplitude)
     detuning = promote(detuning)
