@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import pytest
 
+from typing import Callable
+
 from qadence2_expressions import (
     RX,
     sqrt,
@@ -47,31 +49,23 @@ def test_native_drive() -> None:
     assert drive().is_quantum_operator
 
 
-def test_piecewise_drive() -> None:
-    drive = PiecewiseDrive(
-        array_parameter("duration", size=2),
-        array_parameter("amplitude", size=3),
-        array_parameter("detuning", size=3),
-    )
-    assert drive().is_quantum_operator
+@pytest.mark.parametrize("sizes", [(2, 3, 3), (1, 3, 3), (2, 3, 4)])
+def test_piecewise_drive(sizes: tuple) -> None:
 
-
-def test_piecewise_drive_validation() -> None:
-    # N duration requires N+1 amplitude and detuning
-    with pytest.raises(ValueError):
-        drive = PiecewiseDrive(
-            array_parameter("duration", size=1),
-            array_parameter("amplitude", size=3),
-            array_parameter("detuning", size=3),
+    def _get_drive(dur_size: int, amp_size: int, det_size: int) -> Callable:
+        return PiecewiseDrive(
+            array_parameter("duration", size=dur_size),
+            array_parameter("amplitude", size=amp_size),
+            array_parameter("detuning", size=det_size),
         )
 
-    # Amplitude and detuning must be equal
-    with pytest.raises(ValueError):
-        drive = PiecewiseDrive(
-            array_parameter("duration", size=2),
-            array_parameter("amplitude", size=3),
-            array_parameter("detuning", size=4),
-        )
+    match sizes:
+        case (2, 3, 3):
+            drive = _get_drive(*sizes)
+            assert drive().is_quantum_operator
+        case (1, 3, 3) | (2, 3, 4):
+            with pytest.raises(ValueError):
+                drive = _get_drive(*sizes)
 
 
 def test_analog_operator_combination() -> None:
