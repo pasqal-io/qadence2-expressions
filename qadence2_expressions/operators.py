@@ -67,7 +67,7 @@ def NativeDrive(
     duration: Expression | float,
     amplitude: Expression | float,
     detuning: Expression | float,
-    phase: Expression | float,
+    phase: Expression | float = 0.0,
 ) -> Callable:
     param_op: Callable = parametric_operator(
         "NativeDrive",
@@ -84,7 +84,7 @@ def PiecewiseDrive(
     duration: Expression,
     amplitude: Expression,
     detuning: Expression,
-    phase: Expression,
+    phase: Expression | float = 0.0,
 ) -> Callable:
 
     duration = promote(duration)
