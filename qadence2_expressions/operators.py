@@ -67,7 +67,7 @@ def NativeDrive(
     duration: Expression | float,
     amplitude: Expression | float,
     detuning: Expression | float,
-    phase: Expression | float,
+    phase: Expression | float = 0.0,
 ) -> Callable:
     param_op: Callable = parametric_operator(
         "NativeDrive",
@@ -76,6 +76,37 @@ def NativeDrive(
         promote(detuning),
         promote(phase),
         instruction_name="dyn_pulse",
+    )
+    return param_op
+
+
+def PiecewiseDrive(
+    duration: Expression,
+    amplitude: Expression,
+    detuning: Expression,
+    phase: Expression | float = 0.0,
+) -> Callable:
+
+    duration = promote(duration)
+    amplitude = promote(amplitude)
+    detuning = promote(detuning)
+    phase = promote(phase)
+
+    sizes = [item.get("size") for item in [duration, amplitude, detuning]]
+
+    if None in sizes:
+        raise ValueError("Duration, amplitude, detuning must be arrays.")
+
+    if (sizes[0] != sizes[1] - 1) or (sizes[1] != sizes[2]):
+        raise ValueError("For N-size duration array, N+1-size amplitude and detuning is required.")
+
+    param_op: Callable = parametric_operator(
+        "PiecewiseDrive",
+        duration,
+        amplitude,
+        detuning,
+        phase,
+        instruction_name="piecewise_pulse",
     )
     return param_op
 
