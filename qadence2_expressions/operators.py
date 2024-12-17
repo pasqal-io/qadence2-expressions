@@ -94,9 +94,8 @@ def PiecewiseDrive(
 
     sizes = [item.get("size") for item in [duration, amplitude, detuning]]
 
-    for size in sizes:
-        if size is None:
-            raise ValueError("Duration, amplitude, detuning must be arrays.")
+    if None in sizes:
+        raise ValueError("Duration, amplitude, detuning must be arrays.")
 
     if (sizes[0] != sizes[1] - 1) or (sizes[1] != sizes[2]):
         raise ValueError("For N-size duration array, N+1-size amplitude and detuning is required.")
