@@ -8,6 +8,8 @@
 
 Qadence 2 Expressions consisting of symbolic expressions and blocks, i.e. quantum digital, analog, digital-analog and composite gates, together with their logic and engine.
 
+![Coverage](https://img.shields.io/codecov/c/github/pasqal-io/qadence2-expressions?style=flat-square)
+
 ## Installation
 
 !!! note
