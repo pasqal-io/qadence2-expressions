@@ -36,12 +36,11 @@ jobs:
     - name: Run tests
       run: |
         hatch -v run test
-    - name: Upload coverage data
-      uses: actions/upload-artifact@v4
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v5
       with:
-        name: "coverage-data-${{ matrix.python-version }}"
-        path: .coverage
-        if-no-files-found: ignore
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: pasqal-io/qadence2-expressions
 
   publish:
     name: Publish to PyPI
